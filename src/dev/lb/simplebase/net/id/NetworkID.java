@@ -7,7 +7,6 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import dev.lb.simplebase.net.annotation.Immutable;
-import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.annotation.ValueType;
 
 /**
@@ -15,7 +14,6 @@ import dev.lb.simplebase.net.annotation.ValueType;
  * Instances can be created through static methods in this class.
  */
 @ValueType
-@Threadsafe
 @Immutable
 public abstract class NetworkID implements Cloneable {
 
