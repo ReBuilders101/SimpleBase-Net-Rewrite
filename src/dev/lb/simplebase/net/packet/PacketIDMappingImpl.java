@@ -33,7 +33,7 @@ class PacketIDMappingImpl implements PacketIDMapping {
 		}
 		//Once we have the instance, we can validate parallel
 		if(newPacket.getClass() != packetClass) throw new ClassCastException("PacketIDMapping supplier returned a packet with class '" +
-				newPacket.getClass().getSimpleName() + "', mapping expected class '" + packetClass.getSimpleName() + "' |IN: " + toString());
+				newPacket.getClass().getCanonicalName() + "', mapping expected class '" + packetClass.getCanonicalName() + "' |IN: " + toString());
 		return newPacket;
 	}
 

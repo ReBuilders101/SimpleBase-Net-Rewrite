@@ -19,11 +19,11 @@ import dev.lb.simplebase.net.packet.PacketIDMappingContainer;
 
 @Threadsafe
 @Internal
-class PacketIDMappingContainerHash implements PacketIDMappingContainer {
+class PacketIDMappingContainerImpl implements PacketIDMappingContainer {
 
 	private final Set<PacketIDMapping> mappings;
 	
-	protected PacketIDMappingContainerHash() {
+	protected PacketIDMappingContainerImpl() {
 		mappings = new HashSet<>(); //Will be manually synchronized
 	}
 
@@ -89,7 +89,7 @@ class PacketIDMappingContainerHash implements PacketIDMappingContainer {
 							"PacketIDMappingContainer implementation does not allow any duplicates (ID=" + id.getPacketID() + ")");
 				} else if(id.getPacketClass() == newMapping.getPacketClass()) { //Or class
 					throw new IllegalArgumentException(
-							"PacketIDMappingContainer implementation does not allow any duplicates (Class=" + id.getPacketClass().getSimpleName() + ")");
+							"PacketIDMappingContainer implementation does not allow any duplicates (Class=" + id.getPacketClass().getCanonicalName() + ")");
 				}
 			}
 			//4. If no exception was thrown by now, the mapping can be inserted
