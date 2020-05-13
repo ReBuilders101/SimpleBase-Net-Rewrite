@@ -4,15 +4,7 @@ import java.util.function.Supplier;
 
 public interface AbstractLogger {
 	
-	public default void enterMethod() {
-		enterMethod(null);
-	}
-	
 	public void enterMethod(String comment);
-	
-	public default void exitMethod() {
-		exitMethod(null);
-	}
 	
 	public void exitMethod(String comment);
 	

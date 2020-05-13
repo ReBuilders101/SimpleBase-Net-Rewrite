@@ -2,6 +2,7 @@ package dev.lb.simplebase.net.log;
 
 import java.io.PrintStream;
 import java.util.Objects;
+import java.util.logging.Logger;
 
 import dev.lb.simplebase.net.annotation.StaticType;
 
@@ -64,6 +65,16 @@ public class Loggers {
 		Objects.requireNonNull(minimumLevel, "'minimumLevel' parameter must not be null");
 		Objects.requireNonNull(formatter, "'formatter' parameter must not be null");
 		return new PrintStreamLogger(minimumLevel, true, formatter, System.out);
+	}
+	
+	/**
+	 * Creates an {@link AbstractLogger} implementation that passes all log calls to a {@link Logger} instance
+	 * @param logger The logger that handles the actual logging; must not be {@code null}
+	 * @return The wrapping {@link AbstractLogger}
+	 */
+	public static AbstractLogger wrapJava(Logger logger) {
+		Objects.requireNonNull(logger, "'logger' parameter must not be null");
+		return new JavaLogger(logger);
 	}
 	
 }

@@ -33,7 +33,7 @@ class DefaultFormatter implements Formatter {
 	 * @param builder
 	 * @param elements
 	 */
-	private static void appendStacktrace(StringBuilder builder, StackTraceElement[] elements) {
+	protected static void appendStacktrace(StringBuilder builder, StackTraceElement[] elements) {
 		for(StackTraceElement e : elements) {
 			builder.append("\n		"); //indent with tow tabs
 			builder.append(e);

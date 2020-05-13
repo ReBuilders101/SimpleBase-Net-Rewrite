@@ -127,7 +127,7 @@ public interface Formatter {
 				if(level instanceof Enum) { //Use the enum constant name
 					return "[" + level.toString() + "]";
 				} else {
-					return "[Custom Priority:" + level.getPriority() + "]";
+					return "[CustomPriority:" + level.getPriority() + "]";
 				}
 			}
 		};
