@@ -49,7 +49,7 @@ class PacketIDMappingImpl implements PacketIDMapping {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(packetClass, packetID, packetSource);
+		return Objects.hash(packetClass, packetID); //Source is not considered for hashCode and equals
 	}
 
 	@Override
@@ -61,8 +61,7 @@ class PacketIDMappingImpl implements PacketIDMapping {
 			return false;
 		}
 		PacketIDMappingImpl other = (PacketIDMappingImpl) obj;
-		return Objects.equals(packetClass, other.packetClass) && packetID == other.packetID
-				&& Objects.equals(packetSource, other.packetSource);
+		return Objects.equals(packetClass, other.packetClass) && packetID == other.packetID; //Source is not considered for hashCode and equals
 	}
 
 	@Override

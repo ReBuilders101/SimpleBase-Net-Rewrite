@@ -30,7 +30,7 @@ public interface PacketIDMappingContainer extends ThreadsafeIterable<PacketIDMap
 	 * @throws NullPointerException If one of the mappings is null and the implementation does not allow null elements
 	 * @throws IllegalArgumentException If a mapping with the same ID or Class as one those to add already exists in this set and the implementation does not allow duplicate elements
 	 */
-	public void addMappings(PacketIDMapping...mappings);
+	public void addMappings(PacketIDMapping[] mappings);
 	
 	/**
 	 * Adds several {@link PacketIDMapping} to the collection.<br>
