@@ -10,7 +10,12 @@ import dev.lb.simplebase.net.log.Loggers;
 public final class NetworkManager {
 	
 	private NetworkManager() {/*No instantiation possible, contains only static utility methods*/}
-	public static final AbstractLogger NET_LOG = Loggers.printSysOut(LogLevel.DEBUG, Formatter.getComplex(
+	
+	/**
+	 * The {@link AbstractLogger} used by the API to give information to the user.<br>
+	 * Call {@link AbstractLogger#setLogLevel(AbstractLogLevel)} to set detail level.
+	 */
+	public static final AbstractLogger NET_LOG = Loggers.printSysOut(LogLevel.METHOD, Formatter.getComplex(
 					Formatter.getStaticText("Net-Simplebase"),
 					Formatter.getLogLevel(),
 					Formatter.getCurrentTime(),
@@ -18,7 +23,7 @@ public final class NetworkManager {
 					Formatter.getDefault()));
 	
 	public static void main(String[] args) {
-		NET_LOG.info("Test");
+		
 	}
 	
 }

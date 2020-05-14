@@ -18,7 +18,7 @@ class DefaultFormatter implements Formatter {
 			return NULL_STR;
 		} else {
 			final StringBuilder builder = new StringBuilder();
-			builder.append("Exception: ");
+			builder.append("\nException: ");
 			builder.append(rawMessage.getClass().getCanonicalName());
 			builder.append("\nMessage: ");
 			builder.append(rawMessage.getMessage());
@@ -35,7 +35,7 @@ class DefaultFormatter implements Formatter {
 	 */
 	protected static void appendStacktrace(StringBuilder builder, StackTraceElement[] elements) {
 		for(StackTraceElement e : elements) {
-			builder.append("\n		"); //indent with tow tabs
+			builder.append("\n	"); //indent with one tab
 			builder.append(e);
 		}
 	}

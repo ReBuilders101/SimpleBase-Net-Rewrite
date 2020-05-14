@@ -55,12 +55,12 @@ public abstract class LevelBasedLogger implements AbstractLogger {
 	
 	@Override
 	public void enterMethod(String comment) {
-		if(LogLevel.METHOD.isAbove(cutoff)) methodImpl(LogLevel.METHOD, comment, true, 2); //this and impl
+		if(LogLevel.METHOD.isAbove(cutoff)) methodImpl(LogLevel.METHOD, comment, true, 3); //this and impl
 	}
 
 	@Override
 	public void exitMethod(String comment) {
-		if(LogLevel.METHOD.isAbove(cutoff)) methodImpl(LogLevel.METHOD, comment, false, 2); //this and impl
+		if(LogLevel.METHOD.isAbove(cutoff)) methodImpl(LogLevel.METHOD, comment, false, 3); //this and impl
 	}
 
 	@Override
@@ -90,25 +90,25 @@ public abstract class LevelBasedLogger implements AbstractLogger {
 	@Override
 	public void stack(AbstractLogLevel level) {
 		Objects.requireNonNull(level, "'level' parameter must not be null");
-		if(level.isAbove(cutoff)) stackImpl(level, null, 2); //pop this method and stackImpl
+		if(level.isAbove(cutoff)) stackImpl(level, null, 3); //pop this method and stackImpl
 	}
 
 	@Override
 	public void stack(AbstractLogLevel level, int popEntries) {
 		Objects.requireNonNull(level, "'level' parameter must not be null");
-		if(level.isAbove(cutoff)) stackImpl(level, null, popEntries + 2); //pop this method and stackImpl
+		if(level.isAbove(cutoff)) stackImpl(level, null, popEntries + 3); //pop this method and stackImpl
 	}
 
 	@Override
 	public void stack(AbstractLogLevel level, String comment) {
 		Objects.requireNonNull(level, "'level' parameter must not be null");
-		if(level.isAbove(cutoff)) stackImpl(level, comment, 2); //pop this method and stackImpl
+		if(level.isAbove(cutoff)) stackImpl(level, comment, 3); //pop this method and stackImpl
 	}
 
 	@Override
 	public void stack(AbstractLogLevel level, int popEntries, String comment) {
 		Objects.requireNonNull(level, "'level' parameter must not be null");
-		if(level.isAbove(cutoff)) stackImpl(level, comment, popEntries + 2); //pop this method and stackImpl
+		if(level.isAbove(cutoff)) stackImpl(level, comment, popEntries + 3); //pop this method and stackImpl
 	}
 
 	@Override
