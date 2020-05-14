@@ -2,7 +2,12 @@ package dev.lb.simplebase.net.log;
 
 import java.util.function.Supplier;
 
+/**
+ * Logs data and stuff.
+ * Create using the {@link Loggers} class.
+ */
 public interface AbstractLogger {
+//Loggers are generally pretty self-explanatory, so no doc for all of these methods
 	
 	public void enterMethod(String comment);
 	
