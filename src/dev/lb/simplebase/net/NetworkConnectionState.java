@@ -1,4 +1,4 @@
-package dev.lb.simplebase.net.connection;
+package dev.lb.simplebase.net;
 
 /**
  * Stores the current state of a {@link NetworkConnection} in its lifecycle.
@@ -7,7 +7,8 @@ package dev.lb.simplebase.net.connection;
  * <li>After creation, the connection will have the {@link #INITIALIZED} state. No data receiver thread will be active with this state</li>
  * <li>By calling {@link NetworkConnection#openConnection()}, the connection will switch into the {@link #OPENING} state.
  * 	   In this phase, the data receiver thread will be activated and will run during the following phases. If completing the
- *     connection fails, the state will change to {@link #CLOSING} instead</li>
+ *     connection fails, the state will change to {@link #CLOSING} instead.<br>
+ *     A connection can also start in the {@link #OPENING} state if it was created by a server socket accepting a connection</li>
  * <li>After the connection is established, the state will be set to {@link #OPEN}. Some connection implementations can
  * 	   skip step 2 and transition directly from {@link #INITIALIZED} to {@link #OPEN}</li>
  * <li>The connection state can change from {@link #OPEN} to {@link #CHECKING} by calling {@link NetworkConnection#checkConnection()}.

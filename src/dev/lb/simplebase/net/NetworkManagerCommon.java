@@ -2,6 +2,8 @@ package dev.lb.simplebase.net;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+
+import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.event.EventAccessor;
 import dev.lb.simplebase.net.event.EventDispatcher;
@@ -50,6 +52,13 @@ public abstract class NetworkManagerCommon {
 	 */
 	@Threadsafe public final EventAccessor<PacketRejectedEvent> PacketReceiveRejected;
 	
+	/**
+	 * The {@link ConnectionCheckEvent} will be posted when a {@link NetworkConnection} remote
+	 * partner confirms that the connection is still alive. If the connection was closed from this
+	 * side before the reply from the remote side was received, the event will be pre-cancelled.
+	 */
+	@Threadsafe public final EventAccessor<ConnectionCheckEvent> ConnectionCheckSuccess;
+	
 	private final NetworkID local;
 	
 	private final AtomicReference<PacketHandler> singleThreadHandler;
@@ -68,8 +77,9 @@ public abstract class NetworkManagerCommon {
 		ConnectionClosed = new EventAccessor<>(ConnectionClosedEvent.class);
 		PacketSendingFailed = new EventAccessor<>(PacketFailedEvent.class);
 		PacketReceiveRejected = new EventAccessor<>(PacketRejectedEvent.class);
+		ConnectionCheckSuccess = new EventAccessor<>(ConnectionCheckEvent.class);
 		
-		dispatcher = new EventDispatcher();
+		dispatcher = new EventDispatcher(this);
 		singleThreadHandler = new AtomicReference<>(new EmptyPacketHandler());
 		if(useManagedThread) {
 			multiThreadHandler = new PacketThreadReceiver(singleThreadHandler, dispatcher.postTask(PacketReceiveRejected));
@@ -137,5 +147,19 @@ public abstract class NetworkManagerCommon {
 		} else {
 			singleThreadHandler.get().handlePacket(packet, context);
 		}
+	}
+	
+	/**
+	 * Removes a connection that is already in CLOSING state. || NOT used to disconnect a client
+	 */
+	@Internal
+	protected abstract void removeConnectionWhileClosing(NetworkConnection connection);
+	
+	/**
+	 * The event dispatcher. Only API-internal code may post events
+	 */
+	@Internal
+	protected EventDispatcher getEventDispatcher() {
+		return dispatcher;
 	}
 }

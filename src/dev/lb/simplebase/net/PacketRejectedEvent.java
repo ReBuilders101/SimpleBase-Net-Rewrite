@@ -27,7 +27,7 @@ public class PacketRejectedEvent extends Event {
 	 */
 	@Internal
 	protected PacketRejectedEvent(NetworkID source, Class<? extends Packet> packetType) {
-		super(true);
+		super(true, false);
 		this.source = source;
 		this.packetType = packetType;
 	}
