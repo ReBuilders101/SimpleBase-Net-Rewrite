@@ -21,11 +21,21 @@ class LocalNetworkID extends NetworkID {
 	}
 
 	@Override
-	public boolean hasFunction(NetworkIDFunction function) {
+	public boolean hasFunction(NetworkIDFunction<?> function) {
 		//Only return true if the function is LOCAL.
 		return function == NetworkIDFunction.LOCAL;
 	}
 
+	@Override
+	@SuppressWarnings("unchecked")
+	public <E> E getFunction(NetworkIDFunction<E> function) {
+		if(function == NetworkIDFunction.LOCAL) {
+			return (E) description;
+		} else {
+			throw new UnsupportedOperationException("Unsupported NetworkID function: " + function);
+		}
+	}
+	
 	@Override
 	public String toString(boolean includeDetails) {
 		return "NetworkID: Description:" + description + (includeDetails ? ", Functions:[LOCAL]" : "");
@@ -55,5 +65,4 @@ class LocalNetworkID extends NetworkID {
 	public NetworkID clone(String newDescription) {
 		return new LocalNetworkID(newDescription);
 	}
-
 }

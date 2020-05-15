@@ -30,14 +30,26 @@ class ConnectNetworkID extends NetworkID {
 	 * The address that can be used to connect a socket to an endpoint.
 	 * @return The {@link SocketAddress} for this NetworkID
 	 */
-	public SocketAddress getConnectAddress() {
+	protected SocketAddress getConnectAddress() {
 		return address;
 	}
 	
 	@Override
-	public boolean hasFunction(NetworkIDFunction function) {
+	public boolean hasFunction(NetworkIDFunction<?> function) {
 		//Implements NETWORK and CONNECT
 		return function == NetworkIDFunction.NETWORK || function == NetworkIDFunction.CONNECT;
+	}
+	
+	@Override
+	@SuppressWarnings("unchecked")
+	public <E> E getFunction(NetworkIDFunction<E> function) {
+		if(function == NetworkIDFunction.NETWORK) {
+			return (E) NetworkIDFunction.CONNECT;
+		} else if(function == NetworkIDFunction.CONNECT) {
+			return (E) address;
+		} else {
+			throw new UnsupportedOperationException("Unsupported NetworkID function: " + function);
+		}
 	}
 
 	@Override

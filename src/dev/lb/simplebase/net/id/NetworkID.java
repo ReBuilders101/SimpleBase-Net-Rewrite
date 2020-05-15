@@ -39,7 +39,17 @@ public abstract class NetworkID implements Cloneable {
 	 * @param function The optional functionality that this NetworkID might implement
 	 * @return Whether this NetworkID implements the functionality.
 	 */
-	public abstract boolean hasFunction(NetworkIDFunction function);
+	public abstract boolean hasFunction(NetworkIDFunction<?> function);
+	
+	/**
+	 * Gets a parameter from a functionality only if that functionality is implemented by this type
+	 * of NetworkID ({@link #hasFunction(NetworkIDFunction)}).
+	 * @param <E> The type of the functionality parameter value
+	 * @param function The functionality that contains the value
+	 * @return The value, if the functionality is implemented
+	 * @throws UnsupportedOperationException If the requested function is not implemented
+	 */
+	public abstract <E> E getFunction(NetworkIDFunction<E> function);
 	
 	/**
 	 * An alternate {@link #toString()} implementation. While the normal {@code toString} method lists all member values

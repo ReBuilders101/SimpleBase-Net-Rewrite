@@ -26,11 +26,23 @@ class BindNetworkID extends NetworkID {
 	}
 
 	@Override
-	public boolean hasFunction(NetworkIDFunction function) {
+	public boolean hasFunction(NetworkIDFunction<?> function) {
 		return function == NetworkIDFunction.NETWORK || function == NetworkIDFunction.BIND;
 	}
+	
+	@Override
+	@SuppressWarnings("unchecked")
+	public <E> E getFunction(NetworkIDFunction<E> function) {
+		if(function == NetworkIDFunction.NETWORK) {
+			return (E) NetworkIDFunction.BIND;
+		} else if(function == NetworkIDFunction.BIND) {
+			return (E) getBindAddress();
+		} else {
+			throw new UnsupportedOperationException("Unsupported NetworkID function: " + function);
+		}
+	}
 
-	public SocketAddress getBindAddress() {
+	protected SocketAddress getBindAddress() {
 		return new InetSocketAddress(port);
 	}
 	

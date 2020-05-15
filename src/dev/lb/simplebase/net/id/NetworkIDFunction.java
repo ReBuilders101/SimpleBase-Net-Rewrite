@@ -1,51 +1,69 @@
 package dev.lb.simplebase.net.id;
 
 import java.net.SocketAddress;
-
-import dev.lb.simplebase.net.annotation.Internal;
+import java.util.Objects;
 
 /**
  * Depending on how a {@link NetworkID} was created an what network object it represents,
  * it can have different functions. A NetworkID can have more than one function, but not all combinations are possible.
+ * <p>
+ * Every {@link NetworkIDFunction} encodes a parameter for a NetworkID if present. It
+ * can be accessed through {@link NetworkID#getFunction(NetworkIDFunction)}.
  */
-public enum NetworkIDFunction {
+public final class NetworkIDFunction<E> {
 	
 	/**
 	 * The NetworkID has no actual networking information and only serves as a label for a network object. Usually used
-	 * for the local side of a connection.<br>Cannot be combined with any other NetworkIDFunction. 
+	 * for the local side of a connection.<br>Cannot be combined with any other NetworkIDFunction.
+	 * <p> 
+	 * Its parameter is the description string of the NetworkID, as this is the only information
+	 * stored by a local ID.
 	 */
-	LOCAL,
+	public static final NetworkIDFunction<String> LOCAL = new NetworkIDFunction<>("LOCAL");
 	
 	/**
 	 * The NetworkID contains any kind networking data. This NetworkIDFunction is usually combined with either
 	 * {@link #CONNECT} or {@link #BIND} to specify the type of network information present.
+	 * <p>
+	 * Its parameter is the {@link NetworkIDFunction} it is combined with, either {@link #CONNECT} or
+	 * {@link #BIND}.
 	 */
-	NETWORK,
+	public static final NetworkIDFunction<NetworkIDFunction<SocketAddress>> NETWORK = new NetworkIDFunction<>("NETWORK");
 	
 	/**
 	 * The NetworkID contains all networking information necessary to connect a socket to a remote endpoint.
 	 * Always combined with {@link #NETWORK}.
+	 * <p>
+	 * Its parameter is the the address that the socket should be connected to.
 	 */
-	CONNECT,
+	public static final NetworkIDFunction<SocketAddress> CONNECT = new NetworkIDFunction<>("CONNECT");
 	
 	/**
 	 * The NetworkID contains all networking information necessary to bind a server socket to a local endpoint.
+	 * <p>
+	 * Its parameter is the address that the socket should be bound to.
 	 */
-	BIND;
+	public static final NetworkIDFunction<SocketAddress> BIND = new NetworkIDFunction<>("BIND");
 	
-	/**
-	 * Internal utiliy method
-	 */
-	@Internal
-	protected SocketAddress connectAddressOrNull(NetworkID id) {
-		return id instanceof ConnectNetworkID ? ((ConnectNetworkID) id).getConnectAddress() : null;
+	private final String textDescription;
+	
+	//No other instances
+	private NetworkIDFunction(String textDescription) {
+		this.textDescription = textDescription;
 	}
-	
-	/**
-	 * Internal utiliy method
-	 */
-	@Internal
-	protected SocketAddress bindAddressOrNull(NetworkID id) {
-		return id instanceof BindNetworkID ? ((BindNetworkID) id).getBindAddress() : null;
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(textDescription);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return this == obj;
+	}
+
+	@Override
+	public String toString() {
+		return textDescription;
 	}
 }
