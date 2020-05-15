@@ -15,9 +15,11 @@ public abstract class Event {
 	/**
 	 * Creates a new event base instance
 	 * @param canCancel Whether this event can be cancelled
+	 * @param The flag of the cancelled status when the event is posted
 	 */
-	protected Event(boolean canCancel) {
+	protected Event(boolean canCancel, boolean cancelledInitially) {
 		this.canCancel = canCancel;
+		this.cancelled = cancelledInitially;
 	}
 	
 	/**

@@ -97,6 +97,19 @@ public class EventAccessor<E extends Event> { //NOT Iterable on purpose!!
 		return eventClass;
 	}
 	
+	/**
+	 * The amount of handlers registered with this {@link EventAccessor}.
+	 * @return The amount of handlers
+	 */
+	public int getHandlerCount() {
+		try {
+			lockHandlers.readLock().lock();
+			return handlers.size();
+		} finally {
+			lockHandlers.readLock().unlock();
+		}
+	}
+	
 	protected void post(E event) {
 		try {
 			lockHandlers.readLock().lock();

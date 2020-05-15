@@ -3,6 +3,8 @@ package dev.lb.simplebase.net.event;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+import dev.lb.simplebase.net.NetworkManager;
+import dev.lb.simplebase.net.NetworkManagerCommon;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 
 /**
@@ -12,10 +14,15 @@ import dev.lb.simplebase.net.annotation.Threadsafe;
 @Threadsafe
 public class EventDispatcher {
 
+	private final NetworkManagerCommon manager;
+	
 	/**
 	 * Creates a new {@link EventDispatcher}.
+	 * @param manager The network manager that generates the posted events
 	 */
-	public EventDispatcher() {}
+	public EventDispatcher(NetworkManagerCommon manager) {
+		this.manager = manager;
+	}
 	
 	/**
 	 * Post the event to the handler using this dispatcher.
@@ -29,6 +36,8 @@ public class EventDispatcher {
 	public synchronized <E extends Event> void post(EventAccessor<E> handler, E event) {
 		Objects.requireNonNull(handler, "'handler' parameter must not be null");
 		Objects.requireNonNull(event, "'event' parameter must not be null");
+		NetworkManager.NET_LOG.debug("Posted event (" + handler.getEventClass() + ") to " +
+				handler.getHandlerCount() + " handlers for " + manager.getLocalID().getDescription());
 		handler.post(event);
 	}
 	

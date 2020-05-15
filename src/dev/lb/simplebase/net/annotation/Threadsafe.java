@@ -15,6 +15,7 @@ import java.lang.annotation.Target;
  * <li>For methods: Calls to this method can be made form any number of threads at the same time</li>
  * <li>For fields: The implementation used in this field is guaranteed to be threadsafe as if its class had the annotation</li>
  * </ul>
+ * <b>Deprecated members and methods</b> of an annotated class might not be threadsafe.
  */
 @Retention(CLASS)
 @Target({ FIELD, METHOD, TYPE})
