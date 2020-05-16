@@ -2,10 +2,10 @@ package dev.lb.simplebase.net.events;
 
 import dev.lb.simplebase.net.event.Event;
 
-public class PacketFailedEvent extends Event {
+public class UnknownConnectionlessPacketEvent extends Event {
 
 	//Cancel to prevent warning
-	protected PacketFailedEvent() {
+	protected UnknownConnectionlessPacketEvent() {
 		super(true, false);
 	}
 

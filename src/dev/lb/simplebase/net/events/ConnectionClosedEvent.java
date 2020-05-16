@@ -1,4 +1,4 @@
-package dev.lb.simplebase.net;
+package dev.lb.simplebase.net.events;
 
 import dev.lb.simplebase.net.event.Event;
 

@@ -1,5 +1,6 @@
-package dev.lb.simplebase.net;
+package dev.lb.simplebase.net.events;
 
+import dev.lb.simplebase.net.NetworkManagerCommon;
 import dev.lb.simplebase.net.annotation.Immutable;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.event.Event;
