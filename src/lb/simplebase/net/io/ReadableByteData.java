@@ -1,4 +1,4 @@
-package lb.simplebase.io;
+package lb.simplebase.net.io;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -226,5 +226,4 @@ public interface ReadableByteData {
 			}
 		};
 	}
-	
 }
