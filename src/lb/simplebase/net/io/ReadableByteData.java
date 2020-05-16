@@ -210,10 +210,6 @@ public interface ReadableByteData {
 	 */
 	public boolean canRead();
 	
-	public byte[] getByteData();
-	
-	public int getByteLength();
-	
 	public int getRemainingLength();
 	
 	public default InputStream getInStream() {
