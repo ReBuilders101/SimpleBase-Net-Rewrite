@@ -1,6 +1,10 @@
 package dev.lb.simplebase.net;
 
+import java.net.SocketAddress;
+
 import dev.lb.simplebase.net.annotation.StaticType;
+import dev.lb.simplebase.net.id.NetworkID;
+import dev.lb.simplebase.net.id.NetworkIDFunction;
 import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.log.Formatter;
 import dev.lb.simplebase.net.log.LogLevel;
@@ -23,7 +27,42 @@ public final class NetworkManager {
 					Formatter.getDefault()));
 	
 	public static void main(String[] args) {
+		NetworkConnection con = (NetworkConnection) new Object();
 		
+		//OK, state is read once and not relevan afterward
+		System.out.println(con.getCurrentState());
+		
+		//NOT OK: state may be outdated as soon as the condition is checked
+		if(con.getCurrentState() == NetworkConnectionState.OPEN) {
+			con.closeConnection();
+		}
+		
+		//INSTEAD: lock the state while comparing and using results
+		con.action((c) -> {
+			if(c.getThreadsafeState() == NetworkConnectionState.OPEN) {
+				c.closeConnection();
+			}
+		}); 
+		
+		//NOT OK: [WITH VALUE] state may be outdated as soon as the condition is checked
+		boolean res1 = false;
+		if(con.getCurrentState() == NetworkConnectionState.OPEN) {
+			con.closeConnection();
+			res1 = true;
+		}
+
+		//INSTEAD: [WITH VALUE] lock the state while comparing and using results
+		boolean res2 = con.actionReturn((c) -> {
+			if(c.getThreadsafeState() == NetworkConnectionState.OPEN) {
+				c.closeConnection();
+				return true;
+			}
+			return false;
+		}); 
+		
+		NetworkID id = con.getLocalID();
+		
+		SocketAddress address = id.getFunction(NetworkIDFunction.CONNECT);
 	}
 	
 }
