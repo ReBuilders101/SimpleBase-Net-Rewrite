@@ -7,6 +7,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.packet.Packet;
+import dev.lb.simplebase.net.packet.PacketContext;
 
 /**
  * A {@link PacketHandler} that maintains a list of other handlers.<br>

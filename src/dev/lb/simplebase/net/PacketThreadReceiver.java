@@ -8,7 +8,9 @@ import java.util.function.Consumer;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.event.EventDispatcher;
+import dev.lb.simplebase.net.events.PacketRejectedEvent;
 import dev.lb.simplebase.net.packet.Packet;
+import dev.lb.simplebase.net.packet.PacketContext;
 
 
 /**

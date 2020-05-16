@@ -1,14 +1,22 @@
 package dev.lb.simplebase.net;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
+import dev.lb.simplebase.net.config.CommonConfig;
 import dev.lb.simplebase.net.event.EventAccessor;
 import dev.lb.simplebase.net.event.EventDispatcher;
+import dev.lb.simplebase.net.events.ConnectionCheckEvent;
+import dev.lb.simplebase.net.events.ConnectionClosedEvent;
+import dev.lb.simplebase.net.events.PacketFailedEvent;
+import dev.lb.simplebase.net.events.PacketRejectedEvent;
+import dev.lb.simplebase.net.events.UnknownConnectionlessPacketEvent;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.packet.Packet;
+import dev.lb.simplebase.net.packet.PacketContext;
 import dev.lb.simplebase.net.packet.PacketIDMapping;
 import dev.lb.simplebase.net.packet.PacketIDMappingContainer;
 
@@ -59,7 +67,13 @@ public abstract class NetworkManagerCommon {
 	 */
 	@Threadsafe public final EventAccessor<ConnectionCheckEvent> ConnectionCheckSuccess;
 	
+	/**
+	 * 
+	 */
+	@Threadsafe public final EventAccessor<UnknownConnectionlessPacketEvent> UnknownConnectionlessPacket;
+	
 	private final NetworkID local;
+	private final CommonConfig config;
 	
 	private final AtomicReference<PacketHandler> singleThreadHandler;
 	private final PacketThreadReceiver multiThreadHandler;
@@ -69,19 +83,25 @@ public abstract class NetworkManagerCommon {
 	/**
 	 * Constructor that initializes {@link NetworkManagerCommon} base features
 	 * @param local The local {@link NetworkID} representing this manager
-	 * @param useManagedThread If true, all incoming packets will be handled on a single thread, otherwise on the connection thread
+	 * @param config The configuration object to create this manager. Will be locked if it is not already.
 	 */
-	protected NetworkManagerCommon(NetworkID local, boolean useManagedThread) {
+	protected NetworkManagerCommon(NetworkID local, CommonConfig config) {
+		Objects.requireNonNull(local, "'local' parameter must not be null");
+		Objects.requireNonNull(config, "'config' parameter must not be null");
+		config.lock(); //To be sure, now we can use config without caching the values
+		
 		this.local = local;
+		this.config = config; //It is now locked and can't be changed, so it can be stored
 		MappingContainer = new PacketIDMappingContainerImpl();
 		ConnectionClosed = new EventAccessor<>(ConnectionClosedEvent.class);
 		PacketSendingFailed = new EventAccessor<>(PacketFailedEvent.class);
 		PacketReceiveRejected = new EventAccessor<>(PacketRejectedEvent.class);
 		ConnectionCheckSuccess = new EventAccessor<>(ConnectionCheckEvent.class);
+		UnknownConnectionlessPacket = new EventAccessor<>(UnknownConnectionlessPacketEvent.class);
 		
 		dispatcher = new EventDispatcher(this);
 		singleThreadHandler = new AtomicReference<>(new EmptyPacketHandler());
-		if(useManagedThread) {
+		if(config.getUseManagedThread()) {
 			multiThreadHandler = new PacketThreadReceiver(singleThreadHandler, dispatcher.postTask(PacketReceiveRejected));
 			managedThread = Optional.of(multiThreadHandler.getOutputThread());
 		} else {
@@ -150,6 +170,15 @@ public abstract class NetworkManagerCommon {
 	}
 	
 	/**
+	 * Returns the PacketSource matching the source ID for connectionless
+	 * protocols like UDP that don't know their own PacketSource when received
+	 * @param source The source ID of the packet
+	 * @return The corresponding context, or {@code null} if the source is not registered
+	 */
+	@Internal
+	protected abstract PacketContext getConnectionlessPacketContext(NetworkID source);
+	
+	/**
 	 * Removes a connection that is already in CLOSING state. || NOT used to disconnect a client
 	 */
 	@Internal
@@ -161,5 +190,14 @@ public abstract class NetworkManagerCommon {
 	@Internal
 	protected EventDispatcher getEventDispatcher() {
 		return dispatcher;
+	}
+	
+	/**
+	 * The configuration object used by this network manager. The returned object will
+	 * be locked ({@link CommonConfig#isLocked()}) and effectively immutable.
+	 * @return The configuation object for this manager
+	 */
+	public CommonConfig getConfig() {
+		return config;
 	}
 }

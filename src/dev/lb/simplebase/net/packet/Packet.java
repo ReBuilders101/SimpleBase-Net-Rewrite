@@ -1,8 +1,8 @@
 package dev.lb.simplebase.net.packet;
 
 import dev.lb.simplebase.net.annotation.ValueType;
-import lb.simplebase.io.ReadableByteData;
-import lb.simplebase.io.WritableByteData;
+import lb.simplebase.net.io.ReadableByteData;
+import lb.simplebase.net.io.WritableByteData;
 
 /**
  * A Packet is a container for data that is sent through a NetworkConnection.

@@ -27,7 +27,7 @@ public class PacketRejectedEvent extends Event {
 	 * Params can't be null!!
 	 */
 	@Internal
-	protected PacketRejectedEvent(NetworkID source, Class<? extends Packet> packetType) {
+	public PacketRejectedEvent(NetworkID source, Class<? extends Packet> packetType) {
 		super(true, false);
 		this.source = source;
 		this.packetType = packetType;

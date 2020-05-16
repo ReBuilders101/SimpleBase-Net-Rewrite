@@ -4,17 +4,19 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
+import dev.lb.simplebase.net.config.CommonConfig;
+import dev.lb.simplebase.net.events.ConnectionCheckEvent;
+import dev.lb.simplebase.net.events.ConnectionClosedEvent;
+import dev.lb.simplebase.net.events.PacketFailedEvent;
 import dev.lb.simplebase.net.id.NetworkID;
+import dev.lb.simplebase.net.packet.Packet;
+import dev.lb.simplebase.net.packet.PacketContext;
 
 /**
  * A {@link NetworkConnection} object exists for every client-to-server connection.
  * It can handle opening, closing and checking the status.
- * <p>
- * The class is one of the connection points between public and internal API:<br>
- * Most functions provided can be done by calling the corresponding functions on the
- * network manager with the matching {@link NetworkID}, but all public methods
- * of this class are also safe to use.
  */
 @Threadsafe
 public abstract class NetworkConnection implements ThreadsafeAction<NetworkConnection> {
@@ -22,11 +24,15 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	protected NetworkConnectionState currentState;
 	protected final Object lockCurrentState;
 	
+	private final Context packetContext;
 	private final NetworkManagerCommon networkManager;
 	private final NetworkID localID;
 	private final NetworkID remoteID;
+	private final int checkTimeoutMS;
+	private final boolean isServerSide;
 	
-	protected NetworkConnection(NetworkID localID, NetworkID remoteID, NetworkManagerCommon networkManager, NetworkConnectionState initialState) {
+	protected NetworkConnection(NetworkID localID, NetworkID remoteID, NetworkManagerCommon networkManager,
+			NetworkConnectionState initialState, int checkTimeoutMS, boolean serverSide, Object customObject) {
 		Objects.requireNonNull(localID, "'localID' parameter must not be null");
 		Objects.requireNonNull(remoteID, "'remoteID' parameter must not be null");
 		Objects.requireNonNull(networkManager, "'networkManager' parameter must not be null");
@@ -35,6 +41,9 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 		this.localID = localID;
 		this.remoteID = remoteID;
 		this.networkManager = networkManager;
+		this.packetContext = new Context(customObject);
+		this.checkTimeoutMS = checkTimeoutMS;
+		this.isServerSide = serverSide;
 		this.currentState = initialState;
 		this.lockCurrentState = new Object();
 	}
@@ -102,11 +111,54 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	 */
 	protected abstract void closeConnectionImpl();
 	
-	
-	public void checkConnection() {
-		
+	/**
+	 * Checks whether the connection is still alive by sending a ping signal through the connection.
+	 * Can only be called if the current state is {@link NetworkConnectionState#OPEN}.
+	 * <p>
+	 * Calling this will change the state to {@link NetworkConnectionState#CHECKING}, but data can still be sent.
+	 * The state will then change back to {@link NetworkConnectionState#OPEN} if the partner responded, 
+	 * or to {@link NetworkConnectionState#CLOSING} if the timeout ({@link #getCheckTimeout()}) expired.
+	 * It may also be closed for other reasons during the checking period.
+	 * <p>
+	 * The checking process is not guaranteed to be completed when this method returns: The state after this
+	 * method returns can be {@link NetworkConnectionState#CHECKING}, {@link NetworkConnectionState#OPEN}
+	 * and {@link NetworkConnectionState#CLOSING}. If the remote peer does not respond, the connection will
+	 * begin its closing routine as described in {@link #closeConnection()}. If the check succeeds, a {@link ConnectionCheckEvent}
+	 * will be posted to this connections manager.
+	 * @return  {@code true} if checking the connection was <b>attempted</b>, {@code false} if it was not attempted
+	 * because the connection was in a state where this is not possible.
+	 * The returned value does not contain any information about the success of the connection check.
+	 */
+	public boolean checkConnection() {
+		synchronized (lockCurrentState) {
+			if(currentState == NetworkConnectionState.OPEN) {
+				checkConnectionImpl();
+				return true;
+			} else {
+				return false;
+			}
+ 		}
 	}
+	
+	/**
+	 * Will be called when checking. State is already checked and synced.
+	 */
+	protected abstract void checkConnectionImpl();
 
+	/**
+	 * The time (in ms) after which no response from the remote side
+	 * after calling {@link #checkConnection()} will be considered disconnected.<br>
+	 * Any negative value means that no interval was set, and the connection will
+	 * wait in the {@link NetworkConnectionState#CHECKING} state indefinitely if
+	 * the partner does not respond.
+	 * <p>
+	 * Can be set in the {@link CommonConfig} of the manager.
+	 * @return The timeout in {@code ms} until a connection is considered disconnected
+	 */
+	public int getCheckTimeout() {
+		return checkTimeoutMS;
+	}
+	
 	/**
 	 * Ensures that the state of the connection is not altered while the {@link Consumer}
 	 * is running.<p>
@@ -184,15 +236,111 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	}
 	
 	/**
-	 * The {@link NetworkID} of the remote side of this connection. Contains the 
-	 * remote 
-	 * @return
+	 * The {@link NetworkID} of the remote side of this connection.
+	 * @return The remote sides connection ID
 	 */
 	public NetworkID getRemoteID() {
 		return remoteID;
 	}
 	
+	/**
+	 * The {@link NetworkManagerCommon} that holds or held the connection.<br>
+	 * A connection can only ever be held by one manager. After the connection has been
+	 * closed, this method will still return the Network Manager instance that 
+	 * once held this connection.
+	 * @return The network manager associated with this connection
+	 */
 	public NetworkManagerCommon getNetworkManager() {
 		return networkManager;
+	}
+	
+	/**
+	 * Sends a {@link Packet} through this connection. Sending is only possible
+	 * in certain connection states ({@link NetworkConnectionState#canSendData()}).
+	 * <p>
+	 * To increase performance, this method does not acquire the exclusive monitor of the state.
+	 * The sending process may fail even if this method returned {@code true} initially.
+	 * If sending the packet was not possible, a {@link PacketFailedEvent} will be posted to this
+	 * connection's manager
+	 * @param packet The packet to send
+	 * @return {@code true} if it was attempted to send the packet, {@code false} if it failed
+	 * because the connection was in the wrong state. <b>If this method returns {@code false},
+	 * no {@link PacketFailedEvent} will be posted</b>
+	 */
+	public boolean sendPacket(Packet packet) {
+		//No sync intentionally
+		if(getCurrentState().canSendData()) {
+			sendPacketImpl(packet);
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	protected abstract boolean sendPacketImpl(Packet packet);
+	
+	@Internal
+	protected PacketContext getContext() {
+		return packetContext;
+	}
+	
+	/**
+	 * Can simulate a received packet on this connection. The packet will go through the
+	 * network managers handler chain and can not be distinguished from a packet that was actually received
+	 * on the connection.
+	 * @param packet The packet that should be handled as received by this connection
+	 */
+	public void receivePacket(Packet packet) {
+		networkManager.receivePacketOnConnectionThread(packet, packetContext);
+	}
+	
+	/**
+	 * {@link NetworkConnection}s are always client-to-server connection. This flag indicates which side of
+	 * the connection is represented by this object
+	 * @return {@code true} if this is the server side of the connection, {@code false} if it is the client side
+	 */
+	public boolean isServerSide() {
+		return isServerSide;
+	}
+	
+	//The context
+	private class Context implements PacketContext {
+
+		private final Object customData;
+		
+		private Context(Object customData) {
+			this.customData = customData;
+		}
+		
+		@Override
+		public NetworkID getLocalID() {
+			return localID;
+		}
+
+		@Override
+		public NetworkID getRemoteID() {
+			return remoteID;
+		}
+
+		@Override
+		public boolean isServer() {
+			return isServerSide;
+		}
+
+		@Override
+		public boolean replyPacket(Packet packet) {
+			return sendPacket(packet);
+		}
+		
+		@Override
+		public Object getCustomData() {
+			return customData;
+		}
+		
+		@Override
+		@SuppressWarnings("unchecked")
+		public <T> T getCustomData(Class<T> dataType) {
+			return (T) customData;
+		}
 	}
 }

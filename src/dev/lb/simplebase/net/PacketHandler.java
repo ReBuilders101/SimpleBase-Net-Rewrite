@@ -2,6 +2,7 @@ package dev.lb.simplebase.net;
 
 import dev.lb.simplebase.net.log.LogLevel;
 import dev.lb.simplebase.net.packet.Packet;
+import dev.lb.simplebase.net.packet.PacketContext;
 
 /**
  * A method that handles incoming packets from all connections of a Network Manager
