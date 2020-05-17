@@ -41,6 +41,49 @@ public class EventDispatcher {
 		handler.post(event);
 	}
 	
+
+	/**
+	 * Post the event to the handler using this dispatcher.
+	 * The exact way the handlers are executed depends on the dispatcher implementation
+	 * <p>
+	 * the method is synchronized to ensure that the
+	 * @param <E> The type of event
+	 * @param handler The event handler(s)
+	 * @param event The event to post
+	 * @param taskIfCancelled The task to run if the event is canecelled
+	 * @param taskIfNot The task to run if the event is not canecelled
+	 */
+	public synchronized <E extends Event> void postAndRun(EventAccessor<E> handler, E event, Runnable taskIfCancelled, Runnable taskIfNot) {
+		post(handler, event);
+		if(event.isCancelled()) {
+			taskIfCancelled.run();
+		} else {
+			taskIfNot.run();
+		}
+	}
+	
+	/**
+	 * Post the event to the handler using this dispatcher.
+	 * The exact way the handlers are executed depends on the dispatcher implementation
+	 * <p>
+	 * the method is synchronized to ensure that the
+	 * @param <E> The type of event
+	 * @param <R> The return type
+	 * @param handler The event handler(s)
+	 * @param event The event to post
+	 * @param valueIfCancelled The value to return if the event is canecelled
+	 * @param valueIfNot The value to return if the event is not canecelled
+	 * @return The value depending on the cancel flag
+	 */
+	public synchronized <E extends Event, R> R postAndReturn(EventAccessor<E> handler, E event, R valueIfCancelled, R valueIfNot) {
+		post(handler, event);
+		if(event.isCancelled()) {
+			return valueIfCancelled;
+		} else {
+			return valueIfNot;
+		}
+	}
+	
 	/**
 	 * Creates an event handler that accepts an event instance and passes it to the
 	 * specified accessor using this dispatchers {@link #post(EventAccessor, Event)} method.

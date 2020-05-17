@@ -106,7 +106,7 @@ public abstract class NetworkManagerCommon {
 		dispatcher = new EventDispatcher(this);
 		singleThreadHandler = new AtomicReference<>(new EmptyPacketHandler());
 		if(config.getUseManagedThread()) {
-			multiThreadHandler = new PacketThreadReceiver(singleThreadHandler, dispatcher.postTask(PacketReceiveRejected));
+			multiThreadHandler = new PacketThreadReceiver(singleThreadHandler, dispatcher, PacketReceiveRejected);
 			managedThread = Optional.of(multiThreadHandler.getOutputThread());
 		} else {
 			multiThreadHandler = null;

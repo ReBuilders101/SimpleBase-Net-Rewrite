@@ -7,7 +7,7 @@ package dev.lb.simplebase.net;
  * <li>After creation, the connection will have the {@link #INITIALIZED} state. No data receiver thread will be active with this state</li>
  * <li>By calling {@link NetworkConnection#openConnection()}, the connection will switch into the {@link #OPENING} state.
  * 	   In this phase, the data receiver thread will be activated and will run during the following phases. If completing the
- *     connection fails, the state will change to {@link #CLOSING} instead.<br>
+ *     connection fails, the state will change to {@link #CLOSING} or {@link #CLOSED} instead.<br>
  *     A connection can also start in the {@link #OPENING} state if it was created by a server socket accepting a connection</li>
  * <li>After the connection is established, the state will be set to {@link #OPEN}. Some connection implementations can
  * 	   skip step 2 and transition directly from {@link #INITIALIZED} to {@link #OPEN}</li>

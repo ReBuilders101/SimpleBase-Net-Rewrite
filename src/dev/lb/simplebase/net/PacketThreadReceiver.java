@@ -3,12 +3,12 @@ package dev.lb.simplebase.net;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
+import dev.lb.simplebase.net.event.EventAccessor;
 import dev.lb.simplebase.net.event.EventDispatcher;
 import dev.lb.simplebase.net.events.PacketRejectedEvent;
+import dev.lb.simplebase.net.log.LogLevel;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
 
@@ -22,7 +22,8 @@ public class PacketThreadReceiver implements PacketHandler {
 
 	private volatile AtomicReference<PacketHandler> delegate;
 	private final LinkedBlockingQueue<Runnable> threadTasks; //this implementation is threadsafe
-	private final Consumer<PacketRejectedEvent> rejectHandler;
+	private final EventDispatcher rejectDispatcher;
+	private final EventAccessor<PacketRejectedEvent> rejectHandler;
 	private final int maxSize;
 	private final DelegateThread thread;
 	
@@ -32,8 +33,9 @@ public class PacketThreadReceiver implements PacketHandler {
 	 * @param delegate A reference to the {@link PacketHandler} that should receive all packets on one thread. May be updated at any time.
 	 * @param rejectHandler The handler created by {@link EventDispatcher#postTask(EventAccessor)} that handles rejected packets
 	 */
-	public PacketThreadReceiver(AtomicReference<PacketHandler> delegate, Consumer<PacketRejectedEvent> rejectHandler) {
-		this(delegate, rejectHandler, Integer.MAX_VALUE);	
+	public PacketThreadReceiver(AtomicReference<PacketHandler> delegate, EventDispatcher rejectDispatcher,
+			EventAccessor<PacketRejectedEvent> rejectHandler) {
+		this(delegate, rejectDispatcher, rejectHandler, Integer.MAX_VALUE);	
 	}
 	
 	/**
@@ -43,8 +45,10 @@ public class PacketThreadReceiver implements PacketHandler {
 	 * @param rejectHandler The handler created by {@link EventDispatcher#postTask(EventAccessor)} that handles rejected packets
 	 * @param maxQueueSize The maximum size for the queue that holds unprocessed packets
 	 */
-	public PacketThreadReceiver(AtomicReference<PacketHandler> delegate, Consumer<PacketRejectedEvent> rejectHandler, int maxQueueSize) {
+	public PacketThreadReceiver(AtomicReference<PacketHandler> delegate, EventDispatcher rejectDispatcher,
+			EventAccessor<PacketRejectedEvent> rejectHandler, int maxQueueSize) {
 		this.rejectHandler = rejectHandler;
+		this.rejectDispatcher = rejectDispatcher;
 		this.delegate = delegate;
 		this.threadTasks = new LinkedBlockingQueue<>(maxQueueSize);
 		this.maxSize = maxQueueSize;
@@ -96,13 +100,10 @@ public class PacketThreadReceiver implements PacketHandler {
 		boolean success = threadTasks.offer(postTask);
 		if(!success) {
 			//This seems like some overhead for the connection thread, but the queue is full anyways, so we take our time
-			final PacketRejectedEvent event = new PacketRejectedEvent(context.getRemoteID(), packet.getClass());
-			rejectHandler.accept(event);
-			if(!event.isCancelled()) {
-				NetworkManager.NET_LOG.warning("Incoming Packet rejected: Queue full");
-			} else {
-				NetworkManager.NET_LOG.debug("Incoming Packet rejected: Queue full");
-			}
+			
+			final LogLevel level = rejectDispatcher.postAndReturn(rejectHandler,
+					new PacketRejectedEvent(context.getRemoteID(), packet.getClass()), LogLevel.DEBUG, LogLevel.WARNING);
+			NetworkManager.NET_LOG.log(level, "Incoming Packet rejected: Queue full");
 		}
 	}
 	

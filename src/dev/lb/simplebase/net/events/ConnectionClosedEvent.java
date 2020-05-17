@@ -4,7 +4,7 @@ import dev.lb.simplebase.net.event.Event;
 
 public class ConnectionClosedEvent extends Event {
 
-	protected ConnectionClosedEvent() {
+	public ConnectionClosedEvent(ConnectionCloseReason reason, Exception exception) {
 		super(false, false);
 	}
 	

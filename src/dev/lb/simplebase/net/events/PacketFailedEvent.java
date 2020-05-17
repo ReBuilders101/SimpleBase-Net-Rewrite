@@ -8,5 +8,4 @@ public class PacketFailedEvent extends Event {
 	protected PacketFailedEvent() {
 		super(true, false);
 	}
-
 }

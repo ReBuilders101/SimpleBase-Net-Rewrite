@@ -69,7 +69,8 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	 * <p>
 	 * The opening process is not guaranteed to be completed when this method returns: The state after this method returns
 	 * can be {@link NetworkConnectionState#OPENING} if opening was not completed, but is still ongoing, {@link NetworkConnectionState#OPEN}
-	 * if opening was completed, and {@link NetworkConnectionState#CLOSING} when opening the connection failed.
+	 * if opening was completed, and {@link NetworkConnectionState#CLOSING} or 
+	 * {@link NetworkConnectionState#CLOSED} when opening the connection failed.
 	 * <p>
 	 * When checking state before/after calling this method, make sure to do this in an {@link #action(Consumer)} block to
 	 * ensure thread safety.
@@ -148,6 +149,7 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 		synchronized (lockCurrentState) {
 			if(currentState == NetworkConnectionState.OPEN) {
 				synchronized (lockPing) { //We edit the ping here
+					currentState = NetworkConnectionState.CHECKING;
 					int uuid = GLOBAL_CHECK_UUID.getAndIncrement();
 					if(pingCurrentUUID != -1 || pingStartTime != -1) NetworkManager.NET_LOG.info("Initialized check request while previous was unsanswered");
 					pingCurrentUUID = uuid;
@@ -298,7 +300,7 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 		}
 	}
 	
-	protected abstract boolean sendPacketImpl(Packet packet);
+	protected abstract void sendPacketImpl(Packet packet);
 	
 	@Internal
 	protected PacketContext getContext() {
@@ -342,6 +344,7 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 			}
 			pingCurrentUUID = -1;
 			pingStartTime = -1;
+			currentState = NetworkConnectionState.OPEN;
 		}
 	}
 	
@@ -349,7 +352,18 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 		return converter;
 	}
 	
-	protected abstract void receiveUDPLogin();
+	protected void updateCheckTimeout() {
+		synchronized (lockPing) {
+			if(pingStartTime == -1) return;
+			final long currentTimeout = System.currentTimeMillis() - pingStartTime;
+			if(currentTimeout > checkTimeoutMS) {
+				closeTimeoutImpl();
+			}
+		}
+	}
+	
+	protected abstract void closeTimeoutImpl();
+	
 	protected abstract void receiveUDPLogout();
 	
 	/**
