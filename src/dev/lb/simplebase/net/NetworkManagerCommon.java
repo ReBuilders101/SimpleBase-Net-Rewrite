@@ -68,9 +68,13 @@ public abstract class NetworkManagerCommon {
 	@Threadsafe public final EventAccessor<ConnectionCheckEvent> ConnectionCheckSuccess;
 	
 	/**
-	 * 
+	 * The {@link UnknownConnectionlessPacketEvent} will be posted when a packet over a UDP connection
+	 * or a similar protocol that doesn't maintain a stable connection was received from a source
+	 * that didn't register with a login packet before
 	 */
 	@Threadsafe public final EventAccessor<UnknownConnectionlessPacketEvent> UnknownConnectionlessPacket;
+	
+	
 	
 	private final NetworkID local;
 	private final CommonConfig config;

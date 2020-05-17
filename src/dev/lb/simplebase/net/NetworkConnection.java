@@ -294,6 +294,18 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 		networkManager.receivePacketOnConnectionThread(packet, packetContext);
 	}
 	
+	protected void receiveConnectionCheck(int uuid) {
+		
+	}
+	
+	protected void receiveConnectionCheckReply(int uuid) {
+		
+	}
+	
+	
+	protected abstract void receiveUDPLogin();
+	protected abstract void receiveUDPLogout();
+	
 	/**
 	 * {@link NetworkConnection}s are always client-to-server connection. This flag indicates which side of
 	 * the connection is represented by this object
