@@ -1,6 +1,7 @@
 package dev.lb.simplebase.net;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -21,11 +22,19 @@ import dev.lb.simplebase.net.packet.PacketContext;
 @Threadsafe
 public abstract class NetworkConnection implements ThreadsafeAction<NetworkConnection> {
 
+	public static final AtomicInteger GLOBAL_CHECK_UUID = new AtomicInteger(0);
+	
 	protected NetworkConnectionState currentState;
 	protected final Object lockCurrentState;
 	
+	private long pingStartTime;
+	private int pingLastValue;
+	private int pingCurrentUUID;
+	private final Object lockPing;
+	
 	private final Context packetContext;
 	private final NetworkManagerCommon networkManager;
+	private final PacketConverter converter;
 	private final NetworkID localID;
 	private final NetworkID remoteID;
 	private final int checkTimeoutMS;
@@ -46,6 +55,12 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 		this.isServerSide = serverSide;
 		this.currentState = initialState;
 		this.lockCurrentState = new Object();
+		this.converter = new PacketConverter(networkManager, this);
+		
+		this.pingLastValue = -1;
+		this.pingStartTime = -1;
+		this.pingCurrentUUID = -1;
+		this.lockPing = new Object();
 	}
 	
 	/**
@@ -132,7 +147,13 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	public boolean checkConnection() {
 		synchronized (lockCurrentState) {
 			if(currentState == NetworkConnectionState.OPEN) {
-				checkConnectionImpl();
+				synchronized (lockPing) { //We edit the ping here
+					int uuid = GLOBAL_CHECK_UUID.getAndIncrement();
+					if(pingCurrentUUID != -1 || pingStartTime != -1) NetworkManager.NET_LOG.info("Initialized check request while previous was unsanswered");
+					pingCurrentUUID = uuid;
+					pingStartTime = System.currentTimeMillis();
+					checkConnectionImpl(uuid);
+				}
 				return true;
 			} else {
 				return false;
@@ -143,7 +164,7 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	/**
 	 * Will be called when checking. State is already checked and synced.
 	 */
-	protected abstract void checkConnectionImpl();
+	protected abstract void checkConnectionImpl(int uuid);
 
 	/**
 	 * The time (in ms) after which no response from the remote side
@@ -294,14 +315,39 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 		networkManager.receivePacketOnConnectionThread(packet, packetContext);
 	}
 	
-	protected void receiveConnectionCheck(int uuid) {
-		
+	/**
+	 * The last recorded delay between sending data and receiving the response in milliseconds.
+	 * This corresponds to the network ping plus the time to encode and decode the packets.<br>
+	 * Will be updated when calling {@link #checkConnection()} and receiving the matching response
+	 * <p>
+	 * This value is the time for request and response, so approximately <b>twice</b> the time
+	 * to send a packet to the remote side without awaiting a reply.
+	 * @return The last recorded send/receive delay, or {@code -1} if no delay has been recorded yet
+	 */
+	public int getLastConnectionDelay() {
+		return pingLastValue;
 	}
+	
+	protected abstract void receiveConnectionCheck(int uuid);
 	
 	protected void receiveConnectionCheckReply(int uuid) {
-		
+		synchronized (lockPing) { //Dealing with the ping
+			if(pingCurrentUUID != uuid) {
+				NetworkManager.NET_LOG.info("Ping uuid mismatch. Ping response ignored, UUID reset");
+			} else if(pingLastValue == -1) {
+				NetworkManager.NET_LOG.info("No recorded ping start time. Ping response ignored");
+			} else {
+				final long time = System.currentTimeMillis();
+				pingLastValue = (int) (time - pingStartTime); //calc the total time
+			}
+			pingCurrentUUID = -1;
+			pingStartTime = -1;
+		}
 	}
 	
+	protected PacketConverter getConverter() {
+		return converter;
+	}
 	
 	protected abstract void receiveUDPLogin();
 	protected abstract void receiveUDPLogout();
