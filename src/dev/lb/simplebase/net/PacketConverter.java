@@ -168,7 +168,7 @@ class PacketConverter {
 	}
 	
 	private void makeUDPLogin() {
-		connection.receiveUDPLogin();
+		throw new UnsupportedOperationException("Login can't be sent to an established connection");
 	}
 	
 	private void makeUDPLogout() {
