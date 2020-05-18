@@ -19,7 +19,7 @@ public final class NetworkIDFunction<E> {
 	 * Its parameter is the description string of the NetworkID, as this is the only information
 	 * stored by a local ID.
 	 */
-	public static final NetworkIDFunction<String> LOCAL = new NetworkIDFunction<>("LOCAL");
+	public static final NetworkIDFunction<String> INTERNAL = new NetworkIDFunction<>("INTERNAL");
 	
 	/**
 	 * The NetworkID contains any kind networking data. This NetworkIDFunction is usually combined with either

@@ -152,7 +152,7 @@ public abstract class NetworkID implements Cloneable {
 	
 	
 	/**
-	 * Creates a {@link NetworkID} that implements the {@link NetworkIDFunction#LOCAL} functionality only.
+	 * Creates a {@link NetworkID} that implements the {@link NetworkIDFunction#INTERNAL} functionality only.
 	 * Can be used to identify the local side of a connection, to to connect to internal servers
 	 * @param description The text description of the NetworkID
 	 * @return A new NetworkID instance

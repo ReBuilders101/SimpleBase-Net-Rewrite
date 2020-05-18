@@ -1,5 +1,6 @@
 package dev.lb.simplebase.net.id;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Objects;
@@ -43,7 +44,7 @@ class BindNetworkID extends NetworkID {
 	}
 
 	protected SocketAddress getBindAddress() {
-		return new InetSocketAddress(port);
+		return new InetSocketAddress((InetAddress) null, port);
 	}
 	
 	@Override

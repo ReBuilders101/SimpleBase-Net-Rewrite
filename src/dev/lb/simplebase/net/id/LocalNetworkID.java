@@ -23,13 +23,13 @@ class LocalNetworkID extends NetworkID {
 	@Override
 	public boolean hasFunction(NetworkIDFunction<?> function) {
 		//Only return true if the function is LOCAL.
-		return function == NetworkIDFunction.LOCAL;
+		return function == NetworkIDFunction.INTERNAL;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public <E> E getFunction(NetworkIDFunction<E> function) {
-		if(function == NetworkIDFunction.LOCAL) {
+		if(function == NetworkIDFunction.INTERNAL) {
 			return (E) description;
 		} else {
 			throw new UnsupportedOperationException("Unsupported NetworkID function: " + function);
