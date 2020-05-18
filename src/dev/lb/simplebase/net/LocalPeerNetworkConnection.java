@@ -1,28 +1,24 @@
 package dev.lb.simplebase.net;
 
-import java.util.concurrent.atomic.AtomicReference;
-
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.events.ConnectionClosedEvent;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.packet.Packet;
-import dev.lb.simplebase.net.packet.PacketContext;
 
 @Internal
-class LocalPeerNetworkConnection extends NetworkConnection implements PacketHandler {
+class LocalPeerNetworkConnection extends NetworkConnection{
 
 	private LocalPeerNetworkConnection peerConnection;
-	private PacketThreadReceiver receiverThread;
-	
-	private final AtomicReference<PacketHandler> handler;
+	private PacketReceiverThread receiverThread;
 	
 	protected LocalPeerNetworkConnection(NetworkID localID, NetworkID remoteID, NetworkManagerCommon networkManager,
 			int checkTimeoutMS, boolean serverSide, Object customObject) {
 		super(localID, remoteID, networkManager, NetworkConnectionState.INITIALIZED, checkTimeoutMS, serverSide, customObject);
 		this.peerConnection = null;
 		this.receiverThread = null;
-		this.handler = new AtomicReference<>(this);
 	}
 	
 	protected LocalPeerNetworkConnection(NetworkID localID, NetworkID remoteID, NetworkManagerCommon networkManager,
@@ -30,13 +26,13 @@ class LocalPeerNetworkConnection extends NetworkConnection implements PacketHand
 		super(localID, remoteID, networkManager, NetworkConnectionState.OPENING, checkTimeoutMS, serverSide, customObject);
 		//If we have a peer, start as opening
 		this.peerConnection = peerConnection;
-		this.handler = new AtomicReference<>(this);
 		startReceiverThread();
 		currentState = NetworkConnectionState.OPEN;
 	}
 
 	private void startReceiverThread() {
-		this.receiverThread = new PacketThreadReceiver(handler, getNetworkManager().getEventDispatcher(), getNetworkManager().PacketReceiveRejected);
+		this.receiverThread = new PacketReceiverThread();
+		this.receiverThread.start();
 	}
 	
 	@Override
@@ -62,7 +58,7 @@ class LocalPeerNetworkConnection extends NetworkConnection implements PacketHand
 	 * @param packet The packet
 	 */
 	protected void receiveInternalOnThread(Packet packet) {
-		receiverThread.handlePacket(packet, null);//Don't need that yet
+		receiverThread.handlePacket(packet);//Don't need that yet
 	}
 	
 	@Override
@@ -107,14 +103,9 @@ class LocalPeerNetworkConnection extends NetworkConnection implements PacketHand
 				new ConnectionClosedEvent(reason, exception));
 		getNetworkManager().removeConnectionWhileClosing(this);
 		peerConnection = null;
-		receiverThread.getOutputThread().interrupt();
+		receiverThread.interrupt();
 		receiverThread = null;
 		currentState = NetworkConnectionState.CLOSED;	
-	}
-	
-	@Override
-	public void handlePacket(Packet packet, PacketContext context) {
-		receivePacket(packet);
 	}
 
 	@Override
@@ -123,6 +114,34 @@ class LocalPeerNetworkConnection extends NetworkConnection implements PacketHand
 			currentState = NetworkConnectionState.CLOSING;
 			postCloseEvent(ConnectionCloseReason.TIMEOUT, null);
 		}
+	}
+	
+	private class PacketReceiverThread extends Thread {
+		
+		private final BlockingQueue<Packet> packetList;
+		
+		private PacketReceiverThread() {
+			packetList = new LinkedBlockingQueue<>();
+		}
+		
+		private boolean handlePacket(Packet packet) {
+			return packetList.offer(packet);
+		}
+
+		@Override
+		public void run() {
+			while(!Thread.interrupted()) {
+				try {
+					final Packet current = packetList.take();
+					LocalPeerNetworkConnection.this.receivePacket(current);
+				} catch (InterruptedException e) {
+					//Restore flag and exit
+					Thread.currentThread().interrupt();
+					return;
+				}
+			}
+		}
+		
 	}
 	
 }
