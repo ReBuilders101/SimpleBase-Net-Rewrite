@@ -22,9 +22,9 @@ public abstract class CommonConfig implements Cloneable {
 	 */
 	public static int DISABLE_CONNECTION_TIMEOUT = -1;
 	
-	private static final int BUFFER_INITIAL_DEFAULT = 128;
-	private static final int CONNECTION_CHECK_DEFAULT = 1000;
-	private static final boolean USE_MANAGED_DEFAULT = true;
+	protected static final int BUFFER_INITIAL_DEFAULT = 128;
+	protected static final int CONNECTION_CHECK_DEFAULT = 1000;
+	protected static final boolean USE_MANAGED_DEFAULT = true;
 	
 	//Only this one needs to be up-to-date everywhere immediately
 	private volatile boolean locked;
