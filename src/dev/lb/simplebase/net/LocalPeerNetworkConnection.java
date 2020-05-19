@@ -31,6 +31,7 @@ class LocalPeerNetworkConnection extends NetworkConnection{
 	}
 
 	private void startReceiverThread() {
+		NetworkManager.NET_LOG.info("Starting packet receiver thread for connection from %s to %s", getLocalID(), getRemoteID());
 		this.receiverThread = new PacketReceiverThread();
 		this.receiverThread.start();
 	}
@@ -39,7 +40,7 @@ class LocalPeerNetworkConnection extends NetworkConnection{
 	protected void openConnectionImpl() {
 		//We are already locked and checked for state now, but one more check can't hurt
 		if(peerConnection != null) throw new IllegalStateException("Connection to open already has a peer");
-		final LocalPeerNetworkConnection peer = LocalServerManager.createServerPeer(getRemoteID());
+		final LocalPeerNetworkConnection peer = InternalServerManager.createServerPeer(this);
 		if(peer == null) {
 			NetworkManager.NET_LOG.warning("Could not find local server peer for " + getRemoteID().toString(true));
 			currentState = NetworkConnectionState.CLOSED;
@@ -57,8 +58,8 @@ class LocalPeerNetworkConnection extends NetworkConnection{
 	 * Receives a packet from the peer.
 	 * @param packet The packet
 	 */
-	protected void receiveInternalOnThread(Packet packet) {
-		receiverThread.handlePacket(packet);//Don't need that yet
+	protected boolean receiveInternalOnThread(Packet packet) {
+		return receiverThread.handlePacket(packet);//Don't need that yet
 	}
 	
 	@Override
@@ -75,7 +76,11 @@ class LocalPeerNetworkConnection extends NetworkConnection{
 
 	@Override
 	protected void sendPacketImpl(Packet packet) {
-		peerConnection.receiveInternalOnThread(packet);
+		if(!peerConnection.receiveInternalOnThread(packet)) {
+			//If it couldn't be sent:
+			//No regular way to process this, as it is not usual to get this info on normal net connections
+			NetworkManager.NET_LOG.warning("Could not transmit internal packet: handler thread queue full");
+		}
 	}
 
 	@Override
@@ -98,6 +103,11 @@ class LocalPeerNetworkConnection extends NetworkConnection{
 		}
 	}
 
+	/**
+	 * Handles all closing for different reasons, must be synced externally
+	 * @param reason
+	 * @param exception
+	 */
 	private void postCloseEvent(ConnectionCloseReason reason, Exception exception) {
 		getNetworkManager().getEventDispatcher().post(getNetworkManager().ConnectionClosed,
 				new ConnectionClosedEvent(reason, exception));
@@ -137,9 +147,9 @@ class LocalPeerNetworkConnection extends NetworkConnection{
 				} catch (InterruptedException e) {
 					//Restore flag and exit
 					Thread.currentThread().interrupt();
-					return;
 				}
 			}
+			NetworkManager.NET_LOG.info("Packet receiver thread for connection form %s to &s terminated", getLocalID(), getRemoteID());
 		}
 		
 	}

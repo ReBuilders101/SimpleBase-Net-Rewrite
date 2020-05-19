@@ -81,6 +81,7 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	public boolean openConnection() {
 		synchronized (lockCurrentState) {
 			if(currentState.canOpenConnection()) {
+				NetworkManager.NET_LOG.info("Attempting to open connection from %s to %s (At state %s)", localID, remoteID, currentState);
 				openConnectionImpl();
 				return true;
 			} else {
@@ -116,6 +117,7 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 			if(currentState.hasBeenClosed()) {
 				return false;
 			} else {
+				NetworkManager.NET_LOG.info("Attempting to close connection from %s to %s (At state %s)", localID, remoteID, currentState);
 				closeConnectionImpl();
 				return true;
 			}
@@ -154,6 +156,7 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 					if(pingCurrentUUID != -1 || pingStartTime != -1) NetworkManager.NET_LOG.info("Initialized check request while previous was unsanswered");
 					pingCurrentUUID = uuid;
 					pingStartTime = System.currentTimeMillis();
+					NetworkManager.NET_LOG.info("Attempting to check connection from %s to %s (At state %s)", localID, remoteID, currentState);
 					checkConnectionImpl(uuid);
 				}
 				return true;
@@ -327,24 +330,28 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	 * @return The last recorded send/receive delay, or {@code -1} if no delay has been recorded yet
 	 */
 	public int getLastConnectionDelay() {
-		return pingLastValue;
+		synchronized (lockPing) {
+			return pingLastValue;
+		}
 	}
 	
 	protected abstract void receiveConnectionCheck(int uuid);
 	
 	protected void receiveConnectionCheckReply(int uuid) {
-		synchronized (lockPing) { //Dealing with the ping
-			if(pingCurrentUUID != uuid) {
-				NetworkManager.NET_LOG.info("Ping uuid mismatch. Ping response ignored, UUID reset");
-			} else if(pingLastValue == -1) {
-				NetworkManager.NET_LOG.info("No recorded ping start time. Ping response ignored");
-			} else {
-				final long time = System.currentTimeMillis();
-				pingLastValue = (int) (time - pingStartTime); //calc the total time
+		synchronized (lockCurrentState) {
+			synchronized (lockPing) { //Dealing with the ping
+				if(pingCurrentUUID != uuid) {
+					NetworkManager.NET_LOG.info("Ping uuid mismatch. Ping response ignored, UUID reset");
+				} else if(pingLastValue == -1) {
+					NetworkManager.NET_LOG.info("No recorded ping start time. Ping response ignored");
+				} else {
+					final long time = System.currentTimeMillis();
+					pingLastValue = (int) (time - pingStartTime); //calc the total time
+				}
+				pingCurrentUUID = -1;
+				pingStartTime = -1;
+				currentState = NetworkConnectionState.OPEN;
 			}
-			pingCurrentUUID = -1;
-			pingStartTime = -1;
-			currentState = NetworkConnectionState.OPEN;
 		}
 	}
 	
@@ -353,15 +360,22 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	}
 	
 	protected void updateCheckTimeout() {
-		synchronized (lockPing) {
-			if(pingStartTime == -1) return;
-			final long currentTimeout = System.currentTimeMillis() - pingStartTime;
-			if(currentTimeout > checkTimeoutMS) {
-				closeTimeoutImpl();
+		synchronized (lockCurrentState) {
+			if(currentState == NetworkConnectionState.CHECKING) {
+				synchronized (lockPing) {
+					if(pingStartTime == -1) return;
+					final long currentTimeout = System.currentTimeMillis() - pingStartTime;
+					if(currentTimeout > checkTimeoutMS) {
+						closeTimeoutImpl();
+					}
+				}
 			}
 		}
 	}
 	
+	/**
+	 * Handles a connection closing because the check timeout expired
+	 */
 	protected abstract void closeTimeoutImpl();
 	
 	protected abstract void receiveUDPLogout();

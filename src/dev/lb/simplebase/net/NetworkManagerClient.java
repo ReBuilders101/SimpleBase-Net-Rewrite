@@ -2,8 +2,10 @@ package dev.lb.simplebase.net;
 
 import java.util.Objects;
 
+import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.config.ClientConfig;
 import dev.lb.simplebase.net.config.ConnectionType;
+import dev.lb.simplebase.net.event.EventAccessor;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.packet.PacketContext;
 
@@ -14,6 +16,7 @@ import dev.lb.simplebase.net.packet.PacketContext;
  * <p>
  * Can be created with {@link NetworkManager#createClient(NetworkID, NetworkID, ClientConfig)}.
  */
+@Threadsafe
 public final class NetworkManagerClient extends NetworkManagerCommon {
 
 	private final NetworkID remoteID;
@@ -78,6 +81,20 @@ public final class NetworkManagerClient extends NetworkManagerCommon {
 		default:
 			throw new IllegalArgumentException("Invalid connection type: " + type);
 		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public EventAccessor<?>[] getEvents() {
+		return new EventAccessor<?>[] {
+			ConnectionClosed,
+			ConnectionCheckSuccess,
+			PacketSendingFailed,
+			PacketReceiveRejected,
+			UnknownConnectionlessPacket
+		};
 	}
 	
 }

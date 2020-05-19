@@ -184,6 +184,7 @@ public abstract class NetworkManagerCommon {
 	
 	/**
 	 * Removes a connection that is already in CLOSING state. || NOT used to disconnect a client
+	 * Will not post an event!
 	 */
 	@Internal
 	protected abstract void removeConnectionWhileClosing(NetworkConnection connection);
@@ -204,4 +205,14 @@ public abstract class NetworkManagerCommon {
 	public CommonConfig getConfig() {
 		return config;
 	}
+	
+	/**
+	 * An array of all events that this network manager implementation can post.<br>
+	 * Useful combined with {@link EventAccessor#addAllHandlers(Class, EventAccessor...)} to
+	 * register handlers for all events on this manager.
+	 * <p>
+	 * The returned array <b>must not be modified</b>.
+	 * @return
+	 */
+	public abstract EventAccessor<?>[] getEvents();
 }
