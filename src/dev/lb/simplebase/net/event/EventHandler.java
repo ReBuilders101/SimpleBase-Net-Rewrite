@@ -1,44 +1,36 @@
 package dev.lb.simplebase.net.event;
 
-import java.util.function.Consumer;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import dev.lb.simplebase.net.annotation.Immutable;
-import dev.lb.simplebase.net.annotation.Internal;
-import dev.lb.simplebase.net.annotation.ValueType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-@Internal
-@ValueType
-@Immutable
-class EventHandler<E extends Event> implements Comparable<EventHandler<?>> { //Comparable to any other handler
-
-	private final Consumer<E> handler;
-	private final EventHandlerPriority priority;
-	private final boolean handleCancelled;
+/**
+ * Marks a method as an event handler method that can be detected by {@link EventAccessor#addAllHandlers(Class, EventAccessor...)}.
+ * <p>
+ * The following conditions have to apply to make a method an event handler:
+ * <ul>
+ * <li>It must be {@code public}</li>
+ * <li>It must be {@code static}</li>
+ * <li>It must not have a Varargs parameter</li>
+ * <li>It must have exactly one parameter</li>
+ * <li>It must not throw any checked exceptions</li>
+ * <li>It must not have any type parameters</li>
+ * <li>The single parameter must be a subtype of {@link Event}</li>
+ * <li>The method must have this annotation</li>
+ * </ul>
+ */
+@Retention(RUNTIME)
+@Target(METHOD)
+public @interface EventHandler {
+	/**
+	 * The {@link EventHandlerPriority} that the handler represented by this method should have
+	 */
+	public EventHandlerPriority priority() default EventHandlerPriority.NORMAL;
 	
 	/**
-	 * No null values allowed!
+	 * If {@code true}, the handler for this method will receive cancelled events
 	 */
-	protected EventHandler(Consumer<E> handler, EventHandlerPriority priority, boolean handleCancelled) {
-		this.handler = handler;
-		this.priority = priority;
-		this.handleCancelled = handleCancelled;
-	}
-
-	public Consumer<E> getHandler() {
-		return handler;
-	}
-
-	public EventHandlerPriority getPriority() {
-		return priority;
-	}
-
-	public boolean canHandleCancelled() {
-		return handleCancelled;
-	}
-
-	@Override
-	public int compareTo(EventHandler<? extends Event> o) {
-		return priority.compareTo(o.priority);
-	}
-	
+	public boolean receiveCancelled() default false;
 }

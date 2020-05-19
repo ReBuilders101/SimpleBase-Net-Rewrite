@@ -5,6 +5,6 @@ package dev.lb.simplebase.net.event;
  */
 public enum EventHandlerPriority {
 	
-	LOEWST, LOW, NORMAL, HIGH, HIGHEST;
+	LOWEST, LOW, NORMAL, HIGH, HIGHEST;
 	
 }
