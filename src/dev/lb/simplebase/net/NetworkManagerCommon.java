@@ -19,6 +19,9 @@ import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
 import dev.lb.simplebase.net.packet.PacketIDMapping;
 import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
+import dev.lb.simplebase.net.packet.handler.EmptyPacketHandler;
+import dev.lb.simplebase.net.packet.handler.PacketHandler;
+import dev.lb.simplebase.net.packet.handler.PacketThreadReceiver;
 
 /**
  * The base class for both server and client managers.
@@ -127,7 +130,7 @@ public abstract class NetworkManagerCommon {
 	 * In some implementations handling might be faster if only a single handler is added.
 	 */
 	public void addPacketHandler(PacketHandler handler) {
-		singleThreadHandler.getAndUpdate((old) -> PacketHandler.addHandler(old, handler));
+		singleThreadHandler.getAndUpdate((old) -> PacketHandler.combineHandlers(old, handler));
 	}
 	
 	/**

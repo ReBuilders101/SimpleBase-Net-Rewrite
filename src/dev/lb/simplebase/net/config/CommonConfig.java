@@ -1,9 +1,9 @@
 package dev.lb.simplebase.net.config;
 
 import dev.lb.simplebase.net.NetworkManagerCommon;
-import dev.lb.simplebase.net.PacketHandler;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
+import dev.lb.simplebase.net.packet.handler.PacketHandler;
 
 /**
  * Sets config values for {@link NetworkManagerCommon} on creation.<p>

@@ -16,6 +16,7 @@ import dev.lb.simplebase.net.log.LogLevel;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketIDMapping;
 import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
+import dev.lb.simplebase.net.util.ThreadsafeIterable;
 
 @Threadsafe
 @Internal
@@ -28,14 +29,14 @@ class PacketIDMappingContainerImpl implements PacketIDMappingProvider {
 	}
 
 	@Override
-	public void iterate(Consumer<? super PacketIDMapping> itemAction) {
+	public void forEach(Consumer<? super PacketIDMapping> itemAction) {
 		synchronized (mappings) { //Iterate backing set while holding the monitor
 			mappings.forEach(itemAction);
 		}
 	}
 
 	@Override
-	public Iterator<PacketIDMapping> threadsafeIterator() {
+	public Iterator<PacketIDMapping> iterator() {
 		if(Thread.holdsLock(mappings)) { //If it is held by this thread then it is held somewhere up the stack -> 
 			return mappings.iterator(); //so we can return an instance to the caller (relatively) safely
 		} else {
@@ -44,7 +45,7 @@ class PacketIDMappingContainerImpl implements PacketIDMappingProvider {
 	}
 
 	@Override
-	public Spliterator<PacketIDMapping> threadsafeSpliterator() {
+	public Spliterator<PacketIDMapping> spliterator() {
 		if(Thread.holdsLock(mappings)) { //If it is held by this thread then it is held somewhere up the stack -> 
 			return mappings.spliterator(); //so we can return an instance to the caller (relatively) safely
 		} else {
@@ -126,7 +127,7 @@ class PacketIDMappingContainerImpl implements PacketIDMappingProvider {
 				@SuppressWarnings("unchecked") //Hopefully this is ok, I don't really like generic wildcards
 				ThreadsafeIterable<? extends ThreadsafeIterable<?, PacketIDMapping>, PacketIDMapping> newMappings
 				= (ThreadsafeIterable<? extends ThreadsafeIterable<?, PacketIDMapping>, PacketIDMapping>) otherContainer;
-				newMappings.iterate(this::addMapping); // Do this while holding the lock on the iterable
+				newMappings.forEach(this::addMapping); // Do this while holding the lock on the iterable
 			} else {
 				//Do a normal itertaion
 				for(PacketIDMapping newMapping : otherContainer) {

@@ -1,8 +1,9 @@
 package dev.lb.simplebase.net.packet;
 
 import java.util.concurrent.locks.Lock;
-import dev.lb.simplebase.net.ThreadsafeIterable;
+
 import dev.lb.simplebase.net.annotation.Threadsafe;
+import dev.lb.simplebase.net.util.ThreadsafeIterable;
 
 /**
  * Stores a set of {@link PacketIDMapping}s and provides methods for adding / iterating elements.

@@ -15,6 +15,7 @@ import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.packet.PacketContext;
+import dev.lb.simplebase.net.util.ThreadsafeAction;
 
 @Threadsafe
 public abstract class NetworkManagerServer extends NetworkManagerCommon implements ThreadsafeAction<NetworkManagerServer>{

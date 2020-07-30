@@ -1,4 +1,4 @@
-package dev.lb.simplebase.net;
+package dev.lb.simplebase.net.packet.handler;
 
 import dev.lb.simplebase.net.log.LogLevel;
 import dev.lb.simplebase.net.packet.Packet;
@@ -30,23 +30,37 @@ public interface PacketHandler {
 	/**
 	 * Creates a new {@link PacketHandler} that calls both handlers in the parameters, with
 	 * the goal to avoid nested handler chains by checking special implementation.
-	 * @param existing The existing {@link PacketHandler}
-	 * @param toAdd The {@link PacketHandler} to add to that other handler
+	 * @param first The existing {@link PacketHandler}
+	 * @param second The {@link PacketHandler} to add to that other handler
 	 * @return The composed handler that calls both of them
 	 */
-	public static PacketHandler addHandler(PacketHandler existing, PacketHandler toAdd) {
-		if(existing instanceof EmptyPacketHandler) {
-			//The empty handler can be discarded since it doesn't do anything
-			return toAdd;
-		} else if(existing instanceof MultiPacketHandler) {
-			//Add it to the list
-			((MultiPacketHandler) existing).addHandler(toAdd);
-			return existing;
+	public static PacketHandler combineHandlers(final PacketHandler first, final PacketHandler second) {
+		//The empty handler can be discarded since it doesn't do anything
+		if(first instanceof EmptyPacketHandler) {
+			return second;
+		} else if(second instanceof EmptyPacketHandler) {
+			return first;
+		//If one is already a list
+		} else if(first instanceof MultiPacketHandler) {
+			//If the second one is a list asd well, add the items to first
+			final MultiPacketHandler first0 = (MultiPacketHandler) first;
+			if(second instanceof MultiPacketHandler) {
+				final MultiPacketHandler second0 = (MultiPacketHandler) second;
+				second0.readOnlyThreadsafe().forEach(first0::addHandler);
+			} else { //otherwise, just add the handler
+				first0.addHandler(second);
+			}
+			return first;
+		//Second, but not first   is a list
+		} else if(second instanceof MultiPacketHandler) {
+			final MultiPacketHandler second0 = (MultiPacketHandler) second;
+			second0.addHandler(first);
+			return second;
 		} else { 
 			//Both have to be kept, make a new multi handler
 			MultiPacketHandler newHandler = new MultiPacketHandler();
-			newHandler.addHandler(existing);
-			newHandler.addHandler(toAdd);
+			newHandler.addHandler(first);
+			newHandler.addHandler(second);
 			return newHandler;
 		}
 	}

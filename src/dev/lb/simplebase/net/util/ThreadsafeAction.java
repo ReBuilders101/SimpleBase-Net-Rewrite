@@ -1,4 +1,4 @@
-package dev.lb.simplebase.net;
+package dev.lb.simplebase.net.util;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -10,7 +10,7 @@ import dev.lb.simplebase.net.annotation.Threadsafe;
  * concurrent modification while the action is running.
  * @param <T>
  */
-public interface ThreadsafeAction<T extends ThreadsafeAction<T>> {
+public interface ThreadsafeAction<T> {
 	
 	/**
 	 * Executes an action for this object while holding a lock/monitor that pervents

@@ -15,6 +15,7 @@ import dev.lb.simplebase.net.events.PacketFailedEvent;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
+import dev.lb.simplebase.net.util.ThreadsafeAction;
 
 /**
  * A {@link NetworkConnection} object exists for every client-to-server connection.
