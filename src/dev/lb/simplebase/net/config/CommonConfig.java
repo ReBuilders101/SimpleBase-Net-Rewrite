@@ -25,6 +25,7 @@ public abstract class CommonConfig implements Cloneable {
 	protected static final int BUFFER_INITIAL_DEFAULT = 128;
 	protected static final int CONNECTION_CHECK_DEFAULT = 1000;
 	protected static final boolean USE_MANAGED_DEFAULT = true;
+	protected static final boolean GLOBAL_CHECK_DEFAULT = false;
 	
 	//Only this one needs to be up-to-date everywhere immediately
 	private volatile boolean locked;
@@ -32,6 +33,7 @@ public abstract class CommonConfig implements Cloneable {
 	private boolean useManagedThread;
 	private int encodeBufferInitialSize;
 	private int connectionCheckTimeout;
+	private boolean globalConnectionCheck;
 	
 	/**
 	 * Creates a new CommonConfig instance. Instance will not be locked
@@ -42,6 +44,7 @@ public abstract class CommonConfig implements Cloneable {
 	 * <tr><td>{@link #getUseManagedThread()}</td><td>{@value #USE_MANAGED_DEFAULT}<td></tr>
 	 * <tr><td>{@link #getEncodeBufferInitialSize()}</td><td>{@value #BUFFER_INITIAL_DEFAULT}</td></tr>
 	 * <tr><td>{@link #getConnectionCheckTimeout()}</td><td>{@value #CONNECTION_CHECK_DEFAULT}</td></tr>
+	 * <tr><td>{@link #getGlobalConnectionCheck()}</td><td>{@value #GLOBAL_CHECK_DEFAULT}</td></tr>
 	 * </table>
 	 */
 	protected CommonConfig() {
@@ -113,6 +116,23 @@ public abstract class CommonConfig implements Cloneable {
 	 */
 	public synchronized int getEncodeBufferInitialSize() {
 		return encodeBufferInitialSize;
+	}
+	
+	/**
+	 * If {@code true}, a global daemon worker thread will periodically check all connections on this manager for a timeout
+	 * @return
+	 */
+	public boolean getGlobalConnectionCheck() {
+		return globalConnectionCheck;
+	}
+	
+	/**
+	 * If {@code true}, a global daemon worker thread will periodically check all connections on this manager for a timeout
+	 * @param value The new value for the setting
+	 */
+	public void setGlobalConnectionCheck(boolean value) {
+		checkLocked();
+		this.globalConnectionCheck = value;
 	}
 	
 	/**

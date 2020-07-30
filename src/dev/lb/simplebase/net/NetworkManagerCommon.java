@@ -112,6 +112,9 @@ public abstract class NetworkManagerCommon {
 			multiThreadHandler = null;
 			managedThread = Optional.empty();
 		}
+		if(config.getGlobalConnectionCheck()) {
+			GlobalConnectionCheck.subscribe(this);
+		}
 	}
 	
 	/**
@@ -215,4 +218,15 @@ public abstract class NetworkManagerCommon {
 	 * @return
 	 */
 	public abstract EventAccessor<?>[] getEvents();
+	
+	/**
+	 * Cleans up all resources and connections held by this manager. Should be called manually before
+	 * the manager is left to garbage collection.
+	 */
+	public void cleanUp() {
+		GlobalConnectionCheck.unsubscribe(this);
+	}
+	
+	@Internal
+	protected abstract void updateCheckTimeout();
 }

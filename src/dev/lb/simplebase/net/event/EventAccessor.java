@@ -145,7 +145,12 @@ public class EventAccessor<E extends Event> { //NOT Iterable on purpose!!
 	}
 	
 	
-	
+	/**
+	 * Adds all methods in the container type that fulfill the conditions listed in {@link EventHandler}
+	 * to the respective event accessor.
+	 * @param containerType The class that contains the methods
+	 * @param eventAccessors All events that should be considered when finding handlers
+	 */
 	public static void addAllHandlers(Class<?> containerType, EventAccessor<?>...eventAccessors) {
 		final Map<Class<?>, EventAccessor<?>> eventAccessorMap = 
 				Arrays.stream(eventAccessors).collect(Collectors.toMap(EventAccessor::getEventClass, Function.identity(),

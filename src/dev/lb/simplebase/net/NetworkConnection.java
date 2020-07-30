@@ -9,6 +9,7 @@ import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.config.CommonConfig;
 import dev.lb.simplebase.net.events.ConnectionCheckEvent;
+import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.events.ConnectionClosedEvent;
 import dev.lb.simplebase.net.events.PacketFailedEvent;
 import dev.lb.simplebase.net.id.NetworkID;
@@ -113,12 +114,20 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	 * The returned value does not contain any information about the success of an attempt to close the connection.
 	 */
 	public boolean closeConnection() {
+		return closeConnection(ConnectionCloseReason.EXPECTED);
+	}
+	
+	/**
+	 * Used during server stopping to set a different state than EXPECTED
+	 */
+	@Internal
+	protected boolean closeConnection(ConnectionCloseReason reason) {
 		synchronized (lockCurrentState) {
 			if(currentState.hasBeenClosed()) {
 				return false;
 			} else {
 				NetworkManager.NET_LOG.info("Attempting to close connection from %s to %s (At state %s)", localID, remoteID, currentState);
-				closeConnectionImpl();
+				closeConnectionImpl(reason);
 				return true;
 			}
 		}
@@ -127,7 +136,7 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	/**
 	 * Will be called when closing. State is already checked and synced.
 	 */
-	protected abstract void closeConnectionImpl();
+	protected abstract void closeConnectionImpl(ConnectionCloseReason reason);
 	
 	/**
 	 * Checks whether the connection is still alive by sending a ping signal through the connection.
@@ -387,6 +396,12 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	 */
 	public boolean isServerSide() {
 		return isServerSide;
+	}
+	
+	protected void postEventAndRemoveConnection(ConnectionCloseReason reason, Exception exception) {
+		getNetworkManager().getEventDispatcher().post(getNetworkManager().ConnectionClosed,
+				new ConnectionClosedEvent(reason, exception));
+		getNetworkManager().removeConnectionWhileClosing(this);
 	}
 	
 	//The context

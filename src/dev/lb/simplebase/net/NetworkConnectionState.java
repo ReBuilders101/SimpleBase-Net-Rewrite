@@ -1,5 +1,8 @@
 package dev.lb.simplebase.net;
 
+import java.net.Socket;
+import java.util.Objects;
+
 /**
  * Stores the current state of a {@link NetworkConnection} in its lifecycle.
  * The lifecycle of a connection has this basic structure:
@@ -83,6 +86,36 @@ public enum NetworkConnectionState {
 	 */
 	public boolean hasBeenClosed() {
 		return closed;
+	}
+	
+	/**
+	 * Finds the {@link NetworkConnectionState} that best represents the
+	 * state of a {@link Socket}.
+	 * @param socket The socket. Must not be {@code null}.
+	 * @return The matching network connection state
+	 * @throws NullPointerException If socket is {@code null}
+	 */
+	public static NetworkConnectionState fromSocket(Socket socket) {
+		Objects.requireNonNull(socket, "'socket' parameter must not be null");
+		if(!socket.isConnected()) return INITIALIZED;
+		if(!socket.isClosed()) return OPEN;
+		return CLOSED;
+	}
+	
+	/**
+	 * Checks that the socket is open and returns the {@link #OPEN} state.
+	 * @param socket The socket. Must not be {@code null}.
+	 * @return The matching network connection state
+	 * @throws IllegalStateException If the socket is closed or not connected
+	 * @throws NullPointerException If socket is {@code null}
+	 */
+	public static NetworkConnectionState assertOpen(Socket socket) {
+		Objects.requireNonNull(socket, "'socket' parameter must not be null");
+		if(socket.isConnected() && !socket.isClosed()) {
+			return OPEN;
+		} else {
+			throw new IllegalStateException("Socket must be connected and not closed");
+		}
 	}
 	
 }

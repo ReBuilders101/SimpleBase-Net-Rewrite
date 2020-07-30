@@ -4,7 +4,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
-import dev.lb.simplebase.net.events.ConnectionClosedEvent;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.packet.Packet;
 
@@ -38,6 +37,7 @@ class LocalPeerNetworkConnection extends NetworkConnection{
 	
 	@Override
 	protected void openConnectionImpl() {
+		currentState = NetworkConnectionState.OPENING;
 		//We are already locked and checked for state now, but one more check can't hurt
 		if(peerConnection != null) throw new IllegalStateException("Connection to open already has a peer");
 		final LocalPeerNetworkConnection peer = InternalServerManager.createServerPeer(this);
@@ -46,7 +46,6 @@ class LocalPeerNetworkConnection extends NetworkConnection{
 			currentState = NetworkConnectionState.CLOSED;
 		} else {
 			peerConnection = peer;
-			currentState = NetworkConnectionState.OPENING;
 			//Start the receiver thread
 			startReceiverThread();
 			currentState = NetworkConnectionState.OPEN;
@@ -62,11 +61,19 @@ class LocalPeerNetworkConnection extends NetworkConnection{
 		return receiverThread.handlePacket(packet);//Don't need that yet
 	}
 	
+	
 	@Override
-	protected void closeConnectionImpl() {
+	protected void closeConnectionImpl(ConnectionCloseReason reason) {
+		closeConnectionImpl(reason, null, true);
+	}
+	
+	protected void closeConnectionImpl(ConnectionCloseReason reason, Exception exception, boolean notifyPeer) {
 		currentState = NetworkConnectionState.CLOSING;
-		peerConnection.receivePeerCloseRequest(); //Close the other side too
-		postCloseEvent(ConnectionCloseReason.EXPECTED, null);
+		NetworkManager.NET_LOG.info("Closing connection: %s; Reason: %s", getClass().getCanonicalName(), reason);
+		if(notifyPeer) peerConnection.receivePeerCloseRequest(); //Close the other side too, if requested
+		postEventAndRemoveConnection(reason, exception);
+		receiverThread.interrupt();
+		currentState = NetworkConnectionState.CLOSED;	
 	}
 
 	@Override
@@ -90,39 +97,22 @@ class LocalPeerNetworkConnection extends NetworkConnection{
 	
 	protected void receivePeerCloseRequest() {
 		synchronized (lockCurrentState) {
-			currentState = NetworkConnectionState.CLOSING;
-			postCloseEvent(ConnectionCloseReason.REMOTE, null);
+			closeConnectionImpl(ConnectionCloseReason.REMOTE, null, false);
 		}
 	}
 
 	@Override
 	protected void receiveUDPLogout() {
 		synchronized (lockCurrentState) {
-			currentState = NetworkConnectionState.CLOSING;
-			postCloseEvent(ConnectionCloseReason.REMOTE, null);
+			NetworkManager.NET_LOG.warning("Local Peer connections should never receive UDP logout requests");
+			closeConnectionImpl(ConnectionCloseReason.REMOTE);
 		}
 	}
-
-	/**
-	 * Handles all closing for different reasons, must be synced externally
-	 * @param reason
-	 * @param exception
-	 */
-	private void postCloseEvent(ConnectionCloseReason reason, Exception exception) {
-		getNetworkManager().getEventDispatcher().post(getNetworkManager().ConnectionClosed,
-				new ConnectionClosedEvent(reason, exception));
-		getNetworkManager().removeConnectionWhileClosing(this);
-		peerConnection = null;
-		receiverThread.interrupt();
-		receiverThread = null;
-		currentState = NetworkConnectionState.CLOSED;	
-	}
-
+	
 	@Override
 	protected void closeTimeoutImpl() {
 		synchronized (lockCurrentState) {
-			currentState = NetworkConnectionState.CLOSING;
-			postCloseEvent(ConnectionCloseReason.TIMEOUT, null);
+			closeConnectionImpl(ConnectionCloseReason.TIMEOUT);
 		}
 	}
 	

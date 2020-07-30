@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import dev.lb.simplebase.net.annotation.Internal;
+import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
 import dev.lb.simplebase.net.id.NetworkID;
 
 /**
@@ -20,6 +21,7 @@ class InternalServerManager {
 		//TODO post events
 		final LocalPeerNetworkConnection peer = new LocalPeerNetworkConnection(server.getLocalID(), source.getLocalID(),
 				server, server.getConfig().getConnectionCheckTimeout(), true, null, source); //TODO custom object -> ConnectEvent
+		server.getEventDispatcher().post(server.ConfigureNewConnection, new ConfigureConnectionEvent());
 		server.addInitializedConnection(peer);
 		NetworkManager.NET_LOG.info("Created local peer connection between %s and %s", source.getLocalID(), source.getRemoteID());
 		return peer;
@@ -32,6 +34,7 @@ class InternalServerManager {
 			return false;
 		} else {
 			serverList.put(serverId, server);
+			NetworkManager.NET_LOG.info("Registered internal server for local ID %s", serverId);
 			return true;
 		}
 	}
@@ -40,6 +43,7 @@ class InternalServerManager {
 		final NetworkID serverId = server.getLocalID();
 		if(serverList.containsKey(serverId)) {
 			serverList.remove(serverId);
+			NetworkManager.NET_LOG.info("Unregistered internal server for loacl ID %s", serverId);
 			return true;
 		} else {
 			NetworkManager.NET_LOG.warning("Cannot unregister an internal server that is not in the local server list");

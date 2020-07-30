@@ -96,5 +96,16 @@ public final class NetworkManagerClient extends NetworkManagerCommon {
 			UnknownConnectionlessPacket
 		};
 	}
+
+	@Override
+	protected void updateCheckTimeout() {
+		connection.updateCheckTimeout();
+	}
+
+	@Override
+	public void cleanUp() {
+		super.cleanUp();
+		connection.closeConnection();
+	}
 	
 }

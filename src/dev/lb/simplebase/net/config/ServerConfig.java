@@ -2,13 +2,18 @@ package dev.lb.simplebase.net.config;
 
 public class ServerConfig extends CommonConfig {
 
+	private static final boolean REGISTER_INTERNAL_DEFAULT = true;
+	private static final boolean ALLOW_DETECTION_DEFAULT = true;
+	private static final ServerType SERVER_TYPE_DEFAULT = ServerType.DEFAULT;
+	
 	private boolean registerInternalServer;
-	private boolean globalConnectionCheck;
+	private boolean allowDetection;
+	private ServerType serverType;
 	
 	public ServerConfig() {
-		super();
-		this.registerInternalServer = true;
-		this.registerInternalServer = true;
+		this.registerInternalServer = REGISTER_INTERNAL_DEFAULT;
+		this.allowDetection = ALLOW_DETECTION_DEFAULT;
+		this.serverType = SERVER_TYPE_DEFAULT;
 	}
 	
 	public boolean getRegisterInternalServer() {
@@ -20,12 +25,21 @@ public class ServerConfig extends CommonConfig {
 		this.registerInternalServer = value;
 	}
 	
-	public boolean getGlobalConnectionCheck() {
-		return globalConnectionCheck;
+	public boolean getAllowDetection() {
+		return allowDetection;
 	}
 	
-	public void setGlobalConnectionCheck(boolean value) {
+	public void setAllowDetection(boolean value) {
 		checkLocked();
-		this.globalConnectionCheck = value;
+		this.allowDetection = value;
+	}
+	
+	public ServerType getServerType() {
+		return serverType;
+	}
+	
+	public void setServerType(ServerType value) {
+		checkLocked();
+		this.serverType = value;
 	}
 }

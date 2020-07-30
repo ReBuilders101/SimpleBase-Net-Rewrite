@@ -72,10 +72,10 @@ public enum ConnectionType {
 		if(type == DEFAULT) {
 			if(id.hasFunction(NetworkIDFunction.INTERNAL)) return INTERNAL;
 			if(id.hasFunction(NetworkIDFunction.NETWORK)) return NET_DEFAULT;
-			throw new IllegalArgumentException("Server NetworkID must either implement LOCAL or NETWORK function");
+			throw new IllegalArgumentException("Server NetworkID must either implement INTERNAL or NETWORK function");
 		} else if(type == INTERNAL) {
 			if(!id.hasFunction(NetworkIDFunction.INTERNAL))
-				throw new IllegalArgumentException("Server NetworkID must implement LOCAL if that connection type is used");
+				throw new IllegalArgumentException("Server NetworkID must implement INTERNAL if that connection type is used");
 		} else { //Any network
 			if(!id.hasFunction(NetworkIDFunction.NETWORK))
 				throw new IllegalArgumentException("Server NetworkID must implement NETWORK if any network connection type is used");

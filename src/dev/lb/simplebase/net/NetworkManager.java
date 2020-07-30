@@ -4,6 +4,8 @@ import java.util.Objects;
 
 import dev.lb.simplebase.net.annotation.StaticType;
 import dev.lb.simplebase.net.config.ClientConfig;
+import dev.lb.simplebase.net.config.ServerConfig;
+import dev.lb.simplebase.net.config.ServerType;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.log.Formatter;
@@ -26,6 +28,10 @@ public final class NetworkManager {
 					Formatter.getThreadName(),
 					Formatter.getDefault()));
 	
+	public static NetworkManagerClient createClient(NetworkID clientLocal, NetworkID serverRemote) {
+		return createClient(clientLocal, serverRemote, new ClientConfig());
+	}
+	
 	public static NetworkManagerClient createClient(NetworkID clientLocal, NetworkID serverRemote, ClientConfig config) {
 		Objects.requireNonNull(clientLocal, "'clientLocal' parameter must not be null");
 		Objects.requireNonNull(serverRemote, "'serverRemote' parameter must not be null");
@@ -34,9 +40,16 @@ public final class NetworkManager {
 		return new NetworkManagerClient(clientLocal, serverRemote, config);
 	}
 	
-	public static NetworkManagerClient createClient(NetworkID clientLocal, NetworkID serverRemote) {
-		return createClient(clientLocal, serverRemote, new ClientConfig());
+	public static NetworkManagerServer createServer(NetworkID serverLocal, ServerConfig config) {
+		Objects.requireNonNull(serverLocal, "'serverLocal' parameter must not be null");
+		Objects.requireNonNull(config, "'config' parameter must not be null");
+		
+		final ServerType actualType = ServerType.resolve(config.getServerType(), serverLocal);
+		switch (actualType) {
+		case INTERNAL:
+			
+		default:
+			throw new IllegalArgumentException("Invalid server type: " + actualType);
+		}
 	}
-	
-	
 }

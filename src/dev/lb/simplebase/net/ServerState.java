@@ -2,6 +2,6 @@ package dev.lb.simplebase.net;
 
 public enum ServerState {
 
-	INITIALIZED, STARTING, RUNNING, CLOSING, CLOSED;
+	INITIALIZED, STARTING, RUNNING, STOPPING, STOPPED;
 	
 }

@@ -2,14 +2,17 @@ package dev.lb.simplebase.net;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.config.ServerConfig;
+import dev.lb.simplebase.net.event.EventAccessor;
+import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
+import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.packet.PacketContext;
 
@@ -22,6 +25,12 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon implemen
 	private ServerState currentState;
 	private final Object lockCurrentState;
 	
+	/**
+	 * The {@link ConfigureConnectionEvent} will be posted when a new connection has been accepted by the server.<br>
+	 * Can be used to set the connection's custom object
+	 */
+	public final EventAccessor<ConfigureConnectionEvent> ConfigureNewConnection = new EventAccessor<>(ConfigureConnectionEvent.class);
+	
 	protected NetworkManagerServer(NetworkID local, ServerConfig config) {
 		super(local, config);
 		this.connections = new HashMap<>();
@@ -33,13 +42,75 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon implemen
 
 	
 	public boolean startServer() {
-		
+		synchronized (lockCurrentState) {
+			if(currentState != ServerState.INITIALIZED) {
+				return false;
+			} else {
+				currentState = ServerState.STARTING;
+				NetworkManager.NET_LOG.info("Attempting to start server with ID %s", getLocalID());
+				
+				if(startServerImpl()) {
+					registerInternal();
+				}
+				return true;
+			}
+		}
+	}
+	
+	/**
+	 * Will be synced on state, state is STARTING.
+	 * Has to set the resulting state and do the log itself
+	 * @return whether it was successful at starting
+	 */
+	@Internal
+	protected abstract boolean startServerImpl();
+	
+	/**
+	 * registers this on the internal server manager
+	 */
+	@Internal
+	private void registerInternal() {
+		if(getConfig().getRegisterInternalServer()) {
+			InternalServerManager.register(this);
+		}
 	}
 	
 	public boolean stopServer() {
-		
+		synchronized (lockCurrentState) {
+			if(currentState != ServerState.RUNNING) {
+				return false;
+			} else {
+				currentState = ServerState.STOPPING;
+				NetworkManager.NET_LOG.info("Attempting to stop server with ID %s", getLocalID());
+				
+				if(getConfig().getRegisterInternalServer()) {
+					InternalServerManager.unregister(this);
+				}
+				
+				stopServerImpl();
+				
+				try {
+					lockConnections.writeLock().lock();
+					NetworkManager.NET_LOG.info("Closing %d connections for server shutdown", connections.size());
+					for(NetworkConnection con : connections.values()) {
+						con.closeConnection(ConnectionCloseReason.SERVER);
+					}
+				} finally {
+					lockConnections.writeLock().unlock();
+				}
+				currentState = ServerState.STOPPED;
+				NetworkManager.NET_LOG.info("Server stopped. (ID %s)", getLocalID());
+				return true;
+			}
+		}
 	}
 	
+	/**
+	 * Will be synced on state, state is STOPPING.
+	 * Clients will be disconnected afterwards.
+	 * Will always go to state STOPPED.
+	 */
+	protected abstract void stopServerImpl();
 	
 	/**
 	 * {@inheritDoc}
@@ -144,8 +215,8 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon implemen
 		}
 	}
 
-	@Internal
-	protected void updateCheckTimeoutAll() {
+	@Override
+	protected void updateCheckTimeout() {
 		try {
 			lockConnections.readLock().lock();
 			for(NetworkConnection con : connections.values()) {
@@ -153,6 +224,41 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon implemen
 			}
 		} finally {
 			lockConnections.readLock().unlock();
+		}
+	}
+
+
+	@Override
+	public EventAccessor<?>[] getEvents() {
+		return new EventAccessor<?>[] {
+			ConnectionClosed,
+			ConnectionCheckSuccess,
+			PacketSendingFailed,
+			PacketReceiveRejected,
+			UnknownConnectionlessPacket,
+			ConfigureNewConnection
+		};
+	}
+
+
+	@Override
+	public void action(Consumer<NetworkManagerServer> action) {
+		try {
+			lockConnections.writeLock().lock();
+			action.accept(this);
+		} finally {
+			lockConnections.writeLock().unlock();
+		}
+	}
+
+
+	@Override
+	public <R> R actionReturn(Function<NetworkManagerServer, R> action) {
+		try {
+			lockConnections.writeLock().lock();
+			return action.apply(this);
+		} finally {
+			lockConnections.writeLock().unlock();
 		}
 	}
 	
