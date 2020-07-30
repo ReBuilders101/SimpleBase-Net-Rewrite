@@ -1,6 +1,7 @@
-package lb.simplebase.net.io;
+package lb.simplebase.net.io.write;
 
 import dev.lb.simplebase.net.annotation.Internal;
+import lb.simplebase.net.io.WritableByteData;
 
 /**
  * Implementation of {@link WritableByteData}, internally used to serialize packets

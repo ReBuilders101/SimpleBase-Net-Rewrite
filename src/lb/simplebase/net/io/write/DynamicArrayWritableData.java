@@ -1,4 +1,4 @@
-package lb.simplebase.net.io;
+package lb.simplebase.net.io.write;
 
 public class DynamicArrayWritableData implements WritableArrayData {
 

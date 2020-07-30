@@ -6,14 +6,14 @@ import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketIDMapping;
 import dev.lb.simplebase.net.packet.PacketIDMappingContainer;
 import lb.simplebase.net.io.ByteDataHelper;
-import lb.simplebase.net.io.DynamicArrayWritableData;
-import lb.simplebase.net.io.DynamicNIOWritableData;
-import lb.simplebase.net.io.FixedArrayWriteableData;
-import lb.simplebase.net.io.FixedNIOWritableData;
-import lb.simplebase.net.io.NIOReadableData;
 import lb.simplebase.net.io.ReadableByteData;
-import lb.simplebase.net.io.WritableArrayData;
-import lb.simplebase.net.io.WritableNIOData;
+import lb.simplebase.net.io.read.NIOReadableData;
+import lb.simplebase.net.io.write.DynamicArrayWritableData;
+import lb.simplebase.net.io.write.DynamicNIOWritableData;
+import lb.simplebase.net.io.write.FixedArrayWriteableData;
+import lb.simplebase.net.io.write.FixedNIOWritableData;
+import lb.simplebase.net.io.write.WritableArrayData;
+import lb.simplebase.net.io.write.WritableNIOData;
 
 /**
  * Converts between packets and bytes
