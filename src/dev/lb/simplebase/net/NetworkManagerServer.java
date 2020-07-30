@@ -218,7 +218,7 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon implemen
 	}
 
 	@Override
-	protected void updateCheckTimeout() {
+	protected void onCheckConnectionStatus() {
 		try {
 			lockConnections.readLock().lock();
 			for(NetworkConnection con : connections.values()) {

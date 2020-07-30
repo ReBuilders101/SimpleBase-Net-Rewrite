@@ -99,7 +99,7 @@ public final class NetworkManagerClient extends NetworkManagerCommon {
 	}
 
 	@Override
-	protected void updateCheckTimeout() {
+	protected void onCheckConnectionStatus() {
 		connection.updateCheckTimeout();
 	}
 

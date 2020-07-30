@@ -1,7 +1,9 @@
 package dev.lb.simplebase.net;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -39,6 +41,7 @@ public final class NetworkManager {
 					Formatter.getCurrentTime(),
 					Formatter.getThreadName()),
 			Formatter.getDefault());
+	static final AbstractLogger LOGGER = getModuleLogger("net-core");
 	
 	private static final Map<String, AbstractLogger> existingDelegateLoggers = new HashMap<>();
 	
@@ -71,6 +74,36 @@ public final class NetworkManager {
 	 */
 	public static void setPrintStream(PrintStream stream) {
 		NET_LOG.setPrintStream(stream);
+	}
+	
+	//CLEANUP #################################################################################
+	private static final List<Runnable> cleanUpTasks = new ArrayList<>();
+	
+	static {
+		Runtime.getRuntime().addShutdownHook(new Thread("Net-Simplebase-Cleanup") {
+			@Override
+			public void run() {
+				synchronized (cleanUpTasks) {
+					if(cleanUpTasks.size() > 0) {
+						LOGGER.warning("Cleanup tasks hav not been run. Please call NetworkManager.cleanUp() before exiting the program");
+						cleanUp();
+					}
+				}
+			}
+		});
+	}
+	
+	public static void addCleanUpTask(Runnable task) {
+		synchronized (cleanUpTasks) {
+			cleanUpTasks.add(task);
+		}
+	}
+	
+	public static void cleanUp() {
+		synchronized (cleanUpTasks) {
+			cleanUpTasks.forEach(Runnable::run);
+			cleanUpTasks.clear();
+		}
 	}
 	
 	//UTILITIES ################################################################################
