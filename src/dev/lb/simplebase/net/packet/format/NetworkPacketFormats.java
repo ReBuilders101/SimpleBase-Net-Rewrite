@@ -5,12 +5,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 import dev.lb.simplebase.net.io.ByteDataHelper;
+import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
 import dev.lb.simplebase.net.packet.converter.ConnectionAdapter;
 import dev.lb.simplebase.net.util.Lazy;
 
 public final class NetworkPacketFormats {
-
+	public static final int PACKET_BUFFER_SIZE = 128;
+	
 	private NetworkPacketFormats() {}
 
 	/**
@@ -20,7 +22,7 @@ public final class NetworkPacketFormats {
 	 * n bytes data
 	 */
 	private static final int PACKET_UUID = ByteDataHelper.cInt(new byte[] {'P', 'A', 'C', 'K'});
-	public static final NetworkPacketFormat<ConnectionAdapter, PacketIDMappingProvider, ?> PACKET = 
+	public static final NetworkPacketFormat<ConnectionAdapter, PacketIDMappingProvider, Packet> PACKET = 
 			new NetworkPacketFormat1Packet<>(PACKET_UUID, ConnectionAdapter::receivePacket);
 	
 	
@@ -29,7 +31,7 @@ public final class NetworkPacketFormats {
 	 * 4 bytes uuid
 	 */
 	private static final int CHECK_UUID = ByteDataHelper.cInt(new byte[] {'C', 'H', 'C', 'K'});
-	public static final NetworkPacketFormat<ConnectionAdapter, PacketIDMappingProvider, ?> CHECK =
+	public static final NetworkPacketFormat<ConnectionAdapter, Object, Integer> CHECK =
 			new NetworkPacketFormat4Bytes<>(CHECK_UUID, ConnectionAdapter::receiveCheck);
 
 	
@@ -38,25 +40,25 @@ public final class NetworkPacketFormats {
 	 * 4 bytes uuid
 	 */
 	private static final int CHECKREPLY_UUID = ByteDataHelper.cInt(new byte[] {'C', 'H', 'R', 'P'});
-	public static final NetworkPacketFormat<ConnectionAdapter, PacketIDMappingProvider, ?> CHECKREPLY = 
+	public static final NetworkPacketFormat<ConnectionAdapter, Object, Integer> CHECKREPLY = 
 			new NetworkPacketFormat4Bytes<>(CHECKREPLY_UUID, ConnectionAdapter::receiveCheckReply);
 
 	
 	
 	private static final int LOGIN_UUID = ByteDataHelper.cInt(new byte[] {'H', 'E', 'L', 'O'});
-	public static final NetworkPacketFormat<ConnectionAdapter, PacketIDMappingProvider, ?> LOGIN =
+	public static final NetworkPacketFormat<ConnectionAdapter, Object, Object> LOGIN =
 			new NetworkPacketFormatEmpty<>(LOGIN_UUID, ConnectionAdapter::receiveUdpLogin);
 
 	
 	private static final int LOGOUT_UUID = ByteDataHelper.cInt(new byte[] {'B', 'Y', 'E', 'X'});
-	public static final NetworkPacketFormat<ConnectionAdapter, PacketIDMappingProvider, ?> LOGOUT =
+	public static final NetworkPacketFormat<ConnectionAdapter, Object, Object> LOGOUT =
 			new NetworkPacketFormatEmpty<>(LOGOUT_UUID, ConnectionAdapter::receiveUdpLogout);
 	
 	
 	
-	private static final Lazy<Set<NetworkPacketFormat<ConnectionAdapter, PacketIDMappingProvider , ?>>> ALL_FORMATS =
+	private static final Lazy<Set<NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider , ?>>> ALL_FORMATS =
 			new Lazy<>(() -> {
-				final Set<NetworkPacketFormat<ConnectionAdapter, PacketIDMappingProvider , ?>> set = new HashSet<>();
+				final Set<NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider , ?>> set = new HashSet<>();
 				set.add(PACKET);
 				set.add(CHECK);
 				set.add(CHECKREPLY);
@@ -64,12 +66,12 @@ public final class NetworkPacketFormats {
 				set.add(LOGOUT);
 				return Collections.unmodifiableSet(set);
 			});
-	public static Set<NetworkPacketFormat<ConnectionAdapter, PacketIDMappingProvider , ?>> allFormats() {
+	public static Set<NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider , ?>> allFormats() {
 		return ALL_FORMATS.get();
 	}
 	
-	public static NetworkPacketFormat<ConnectionAdapter, PacketIDMappingProvider, ?> findFormat(int formatId) {
-		for(NetworkPacketFormat<ConnectionAdapter, PacketIDMappingProvider, ?> format : allFormats()) {
+	public static NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider, ?> findFormat(int formatId) {
+		for(NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider, ?> format : allFormats()) {
 			if(format.getUniqueIdentifier() == formatId) return format;
 		}
 		return null;

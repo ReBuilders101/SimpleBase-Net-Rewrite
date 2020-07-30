@@ -7,6 +7,9 @@ import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.io.ByteDataHelper;
 import dev.lb.simplebase.net.io.ReadableByteData;
 import dev.lb.simplebase.net.io.read.NIOReadableData;
+import dev.lb.simplebase.net.io.write.DynamicNIOWritableData;
+import dev.lb.simplebase.net.io.write.FixedNIOWritableData;
+import dev.lb.simplebase.net.io.write.WritableNIOData;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketIDMapping;
 import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
@@ -60,5 +63,32 @@ class NetworkPacketFormat1Packet<Connection> extends NetworkPacketFormat<Connect
 
 		//return the packet
 		return packet;
+	}
+
+	@Override
+	public ByteBuffer encode(PacketIDMappingProvider context, Packet data) {
+		final PacketIDMapping mapping = context.findMapping(data.getClass());
+		if(mapping == null) return null;
+		final int packetId = mapping.getPacketID();
+		final int expectedSize = data.getByteSize();
+		final WritableNIOData writableData;
+		
+		if(expectedSize < 0) {
+			writableData = new DynamicNIOWritableData(NetworkPacketFormats.PACKET_BUFFER_SIZE);
+		} else {
+			writableData = new FixedNIOWritableData(expectedSize);
+		}
+		
+		data.writeData(writableData);
+		final ByteBuffer buffer = writableData.getBuffer(); //Buffer is ready for read
+		final int packetDataLength = buffer.remaining();
+		
+		final ByteBuffer completeData = ByteBuffer.allocate(packetDataLength + 8);
+		ByteDataHelper.cInt(packetId, completeData);
+		ByteDataHelper.cInt(packetDataLength, completeData);
+		completeData.put(buffer);
+		
+		completeData.flip(); //prepare for read
+		return completeData;
 	}
 }

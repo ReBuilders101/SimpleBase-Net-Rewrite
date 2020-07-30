@@ -37,7 +37,7 @@ public class DynamicNIOWritableData implements WritableNIOData {
 	
 	@Override
 	public ByteBuffer getBuffer() {
-		data.rewind();
+		data.flip();
 		return data;
 	}
 	

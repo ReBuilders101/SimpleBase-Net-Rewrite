@@ -4,10 +4,9 @@ import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 
 import dev.lb.simplebase.net.annotation.Internal;
-import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
 
 @Internal
-class NetworkPacketFormatEmpty<Connection> extends NetworkPacketFormat<Connection, PacketIDMappingProvider, Object> {
+class NetworkPacketFormatEmpty<Connection> extends NetworkPacketFormat<Connection, Object, Object> {
 
 	protected NetworkPacketFormatEmpty(int uuid, Consumer<Connection> consumer) {
 		super(uuid);
@@ -22,13 +21,18 @@ class NetworkPacketFormatEmpty<Connection> extends NetworkPacketFormat<Connectio
 	}
 
 	@Override
-	protected Object decode(PacketIDMappingProvider context, ByteBuffer allBytes) {
+	protected Object decode(Object context, ByteBuffer allBytes) {
 		return new Object(); //Can't be null because that discards the packet
 	}
 
 	@Override
 	public void publish(Connection connection, Object data) {
 		consumer.accept(connection);
+	}
+
+	@Override
+	public ByteBuffer encode(Object context, Object data) {
+		return ByteBuffer.allocate(0);
 	}
 	
 }

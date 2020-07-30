@@ -12,13 +12,11 @@ import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
  * <br><b>Not Threadsafe!</b><br>
  * Call {@code accept...} methods from only one thread.
  */
-public class ByteToPacketConverter {
-	private static int PACKET_BUFFER_SIZE = 128;
-
+public final class ByteToPacketConverter {
 	private final PacketIDMappingProvider provider;
 	private final ConnectionAdapter receiver;
 
-	private NetworkPacketFormat<ConnectionAdapter, PacketIDMappingProvider, ?> currentFormat;
+	private NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider, ?> currentFormat;
 	private ByteBuffer buffer; //Will be ready for put() operations
 	private int requiredBytes;
 
@@ -26,7 +24,7 @@ public class ByteToPacketConverter {
 		this.receiver = connection;
 		this.provider = provider;
 		this.currentFormat = null;
-		this.buffer = ByteBuffer.allocate(PACKET_BUFFER_SIZE);
+		this.buffer = ByteBuffer.allocate(NetworkPacketFormats.PACKET_BUFFER_SIZE);
 		this.requiredBytes = 4; //Prepare for format id reading
 	}
 	
@@ -38,7 +36,7 @@ public class ByteToPacketConverter {
 			//Here we try to figure out what our next format should be
 			if(requiredBytes == 0) { //Should have 4 bytes now
 				final int formatId = ByteDataHelper.cInt((ByteBuffer) buffer.asReadOnlyBuffer().flip());
-				final NetworkPacketFormat<ConnectionAdapter, PacketIDMappingProvider, ?> format = NetworkPacketFormats.findFormat(formatId);
+				final NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider, ?> format = NetworkPacketFormats.findFormat(formatId);
 				if(format == null) {
 					//No format found
 					requiredBytes = 1;
@@ -130,9 +128,10 @@ public class ByteToPacketConverter {
 
 	private void ensureCapacity(int required) {
 		if(buffer == null) {
-			buffer = ByteBuffer.allocate(Math.max(PACKET_BUFFER_SIZE, required));
+			buffer = ByteBuffer.allocate(Math.max(NetworkPacketFormats.PACKET_BUFFER_SIZE, required));
 		} else if(buffer.remaining() < required){
-			final int newCapacity = buffer.capacity() + PACKET_BUFFER_SIZE * ((int) Math.floorDiv(required, PACKET_BUFFER_SIZE));
+			final int newCapacity = buffer.capacity() + NetworkPacketFormats.PACKET_BUFFER_SIZE * 
+					((int) Math.floorDiv(required, NetworkPacketFormats.PACKET_BUFFER_SIZE));
 			final ByteBuffer newBuffer = ByteBuffer.allocate(newCapacity); //ready for put() by default
 			buffer.flip(); //prepare for get() to copy into the new buffer
 			newBuffer.put(buffer);

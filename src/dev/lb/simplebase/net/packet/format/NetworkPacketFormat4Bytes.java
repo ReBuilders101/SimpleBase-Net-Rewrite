@@ -5,10 +5,9 @@ import java.util.function.ObjIntConsumer;
 
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.io.ByteDataHelper;
-import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
 
 @Internal
-class NetworkPacketFormat4Bytes<Connection> extends NetworkPacketFormat<Connection, PacketIDMappingProvider, Integer>{
+class NetworkPacketFormat4Bytes<Connection> extends NetworkPacketFormat<Connection, Object, Integer>{
 
 	private final ObjIntConsumer<Connection> consumer;
 	
@@ -23,7 +22,7 @@ class NetworkPacketFormat4Bytes<Connection> extends NetworkPacketFormat<Connecti
 	}
 
 	@Override
-	public Integer decode(PacketIDMappingProvider context, ByteBuffer allBytes) {
+	public Integer decode(Object context, ByteBuffer allBytes) {
 		final int checkId = ByteDataHelper.cInt(allBytes);
 		return Integer.valueOf(checkId);
 	}
@@ -31,5 +30,13 @@ class NetworkPacketFormat4Bytes<Connection> extends NetworkPacketFormat<Connecti
 	@Override
 	public void publish(Connection connection, Integer data) {
 		consumer.accept(connection, data.intValue());
+	}
+
+	@Override
+	public ByteBuffer encode(Object context, Integer data) {
+		final ByteBuffer buffer = ByteBuffer.allocate(4);
+		ByteDataHelper.cInt(data.intValue(), buffer);
+		buffer.flip();
+		return buffer;
 	}
 }

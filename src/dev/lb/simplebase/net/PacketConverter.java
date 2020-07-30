@@ -19,6 +19,7 @@ import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
  * Converts between packets and bytes
  */
 @Internal
+@Deprecated
 class PacketConverter {
 
 	private final PacketIDMappingProvider mappings;

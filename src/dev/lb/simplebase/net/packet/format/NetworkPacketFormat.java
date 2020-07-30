@@ -64,7 +64,7 @@ public abstract class NetworkPacketFormat<Connection, DecodeContext, Data> {
 	/**
 	 * Decode a byte sequence into a complete packet
 	 * @param allBytes The complete byte buffer that contains all packet data
-	 * @param connection The next stage, to provide some necessary context for decoding
+	 * @param context The context that can contain additional data for decoding
 	 * @return The completed packet, or {@code null} for invalid packets
 	 */
 	protected abstract Data decode(DecodeContext context, ByteBuffer allBytes);
@@ -85,4 +85,13 @@ public abstract class NetworkPacketFormat<Connection, DecodeContext, Data> {
 		final Data data = decode(context, allBytes);
 		if(data != null) publish(connection, data);
 	}
+	
+	/**
+	 * Creates a byte buffer with data for the packet. <br>
+	 * The returned buffer will be ready for relative read operations
+	 * @param context The context that can contain additional data for encoding
+	 * @param data The packet to encode
+	 * @return The filled {@link ByteBuffer}, or {@code null} if the packet is invalid
+	 */
+	public abstract ByteBuffer encode(DecodeContext context, Data data);
 }
