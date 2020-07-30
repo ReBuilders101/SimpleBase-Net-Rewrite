@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.StaticType;
 import dev.lb.simplebase.net.config.CommonConfig;
+import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 
 /**
  * Handles the global connection state check.<p>

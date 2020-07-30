@@ -1,11 +1,11 @@
 package dev.lb.simplebase.net.events;
 
-import dev.lb.simplebase.net.NetworkManagerCommon;
 import dev.lb.simplebase.net.annotation.Immutable;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.event.Event;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.LogLevel;
+import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.Packet;
 
 /**
@@ -17,7 +17,7 @@ import dev.lb.simplebase.net.packet.Packet;
  * @see NetworkManagerCommon#PacketReceiveRejected
  */
 @Immutable
-public class PacketRejectedEvent extends Event {
+public class PacketReceiveRejectedEvent extends Event {
 
 	private final NetworkID source;
 	private final Class<? extends Packet> packetType;
@@ -27,7 +27,7 @@ public class PacketRejectedEvent extends Event {
 	 * Params can't be null!!
 	 */
 	@Internal
-	public PacketRejectedEvent(NetworkID source, Class<? extends Packet> packetType) {
+	public PacketReceiveRejectedEvent(NetworkID source, Class<? extends Packet> packetType) {
 		super(true, false);
 		this.source = source;
 		this.packetType = packetType;

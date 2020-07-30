@@ -8,11 +8,12 @@ import java.util.function.Function;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.config.CommonConfig;
-import dev.lb.simplebase.net.events.ConnectionCheckEvent;
+import dev.lb.simplebase.net.events.ConnectionCheckSuccessEvent;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.events.ConnectionClosedEvent;
-import dev.lb.simplebase.net.events.PacketFailedEvent;
+import dev.lb.simplebase.net.events.PacketSendingFailedEvent;
 import dev.lb.simplebase.net.id.NetworkID;
+import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
 import dev.lb.simplebase.net.util.ThreadsafeAction;
@@ -151,7 +152,7 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	 * The checking process is not guaranteed to be completed when this method returns: The state after this
 	 * method returns can be {@link NetworkConnectionState#CHECKING}, {@link NetworkConnectionState#OPEN}
 	 * and {@link NetworkConnectionState#CLOSING}. If the remote peer does not respond, the connection will
-	 * begin its closing routine as described in {@link #closeConnection()}. If the check succeeds, a {@link ConnectionCheckEvent}
+	 * begin its closing routine as described in {@link #closeConnection()}. If the check succeeds, a {@link ConnectionCheckSuccessEvent}
 	 * will be posted to this connections manager.
 	 * @return  {@code true} if checking the connection was <b>attempted</b>, {@code false} if it was not attempted
 	 * because the connection was in a state where this is not possible.
@@ -296,12 +297,12 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	 * <p>
 	 * To increase performance, this method does not acquire the exclusive monitor of the state.
 	 * The sending process may fail even if this method returned {@code true} initially.
-	 * If sending the packet was not possible, a {@link PacketFailedEvent} will be posted to this
+	 * If sending the packet was not possible, a {@link PacketSendingFailedEvent} will be posted to this
 	 * connection's manager
 	 * @param packet The packet to send
 	 * @return {@code true} if it was attempted to send the packet, {@code false} if it failed
 	 * because the connection was in the wrong state. <b>If this method returns {@code false},
-	 * no {@link PacketFailedEvent} will be posted</b>
+	 * no {@link PacketSendingFailedEvent} will be posted</b>
 	 */
 	public boolean sendPacket(Packet packet) {
 		//No sync intentionally

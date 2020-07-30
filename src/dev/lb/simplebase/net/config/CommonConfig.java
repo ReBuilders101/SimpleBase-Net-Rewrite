@@ -1,8 +1,8 @@
 package dev.lb.simplebase.net.config;
 
-import dev.lb.simplebase.net.NetworkManagerCommon;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
+import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.handler.PacketHandler;
 
 /**

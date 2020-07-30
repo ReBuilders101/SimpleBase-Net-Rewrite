@@ -23,7 +23,7 @@ import dev.lb.simplebase.net.util.ThreadsafeIterable;
 @Threadsafe
 public class PacketIDMappingProvider {
 
-	protected PacketIDMappingProvider() {
+	public PacketIDMappingProvider() {
 		mappings = new HashSet<>(); //Will be manually synchronized
 		threadsafe = new Threadsafe();
 	}

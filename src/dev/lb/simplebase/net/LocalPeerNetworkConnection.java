@@ -5,6 +5,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
+import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.Packet;
 
 @Internal

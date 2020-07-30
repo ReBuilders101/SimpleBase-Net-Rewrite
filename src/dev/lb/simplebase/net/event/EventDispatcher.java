@@ -4,9 +4,9 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 import dev.lb.simplebase.net.NetworkManager;
-import dev.lb.simplebase.net.NetworkManagerCommon;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 
 /**
  * An {@link EventDispatcher} posts events to their handlers (stored as {@link EventAccessor}s).

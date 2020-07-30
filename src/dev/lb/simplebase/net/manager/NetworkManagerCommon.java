@@ -1,19 +1,21 @@
-package dev.lb.simplebase.net;
+package dev.lb.simplebase.net.manager;
 
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+import dev.lb.simplebase.net.GlobalConnectionCheck;
+import dev.lb.simplebase.net.NetworkConnection;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.config.CommonConfig;
 import dev.lb.simplebase.net.event.EventAccessor;
 import dev.lb.simplebase.net.event.EventDispatchChain;
 import dev.lb.simplebase.net.event.EventDispatcher;
-import dev.lb.simplebase.net.events.ConnectionCheckEvent;
+import dev.lb.simplebase.net.events.ConnectionCheckSuccessEvent;
 import dev.lb.simplebase.net.events.ConnectionClosedEvent;
-import dev.lb.simplebase.net.events.PacketFailedEvent;
-import dev.lb.simplebase.net.events.PacketRejectedEvent;
+import dev.lb.simplebase.net.events.PacketSendingFailedEvent;
+import dev.lb.simplebase.net.events.PacketReceiveRejectedEvent;
 import dev.lb.simplebase.net.events.UnknownConnectionlessPacketEvent;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.packet.Packet;
@@ -29,26 +31,21 @@ import dev.lb.simplebase.net.packet.handler.ThreadPacketHandler;
  */
 @Threadsafe
 public abstract class NetworkManagerCommon {
-
-	/**
-	 * The container for {@link PacketIDMapping}s that are used to convert the packets sent form this manager to bytes.
-	 */
-	@Threadsafe	public final PacketIDMappingProvider MappingContainer;
 	
 	/**
 	 * The {@link ConnectionClosedEvent} will be posted to this accessor when a connection handled by this manager is
 	 * closed.
 	 */
-	@Threadsafe	public final EventAccessor<ConnectionClosedEvent> ConnectionClosed;
+	public final EventAccessor<ConnectionClosedEvent> ConnectionClosed;
 	
 	/**
-	 * The {@link PacketFailedEvent} will be posted to this accessor when a packet could not
+	 * The {@link PacketSendingFailedEvent} will be posted to this accessor when a packet could not
 	 * be sent through a connection.
 	 */
-	@Threadsafe public final EventAccessor<PacketFailedEvent> PacketSendingFailed;
+	public final EventAccessor<PacketSendingFailedEvent> PacketSendingFailed;
 	
 	/**
-	 * The {@link PacketRejectedEvent} will be posted to this accessor when a packet couldn't be
+	 * The {@link PacketReceiveRejectedEvent} will be posted to this accessor when a packet couldn't be
 	 * received because the queue for the receiver thread was full.<br>
 	 * <b>Event handlers for this event should be very fast to avoid building a packet backlog!</b>
 	 * Packet receiving for the network connection that received the rejected
@@ -62,27 +59,27 @@ public abstract class NetworkManagerCommon {
 	 * so that the queue of unhandled packets overflowed</li>
 	 * </ul>
 	 */
-	@Threadsafe public final EventAccessor<PacketRejectedEvent> PacketReceiveRejected;
+	public final EventAccessor<PacketReceiveRejectedEvent> PacketReceiveRejected;
 	
 	/**
-	 * The {@link ConnectionCheckEvent} will be posted when a {@link NetworkConnection} remote
+	 * The {@link ConnectionCheckSuccessEvent} will be posted when a {@link NetworkConnection} remote
 	 * partner confirms that the connection is still alive. If the connection was closed from this
 	 * side before the reply from the remote side was received, the event will be pre-cancelled.
 	 */
-	@Threadsafe public final EventAccessor<ConnectionCheckEvent> ConnectionCheckSuccess;
+	public final EventAccessor<ConnectionCheckSuccessEvent> ConnectionCheckSuccess;
 	
 	/**
 	 * The {@link UnknownConnectionlessPacketEvent} will be posted when a packet over a UDP connection
 	 * or a similar protocol that doesn't maintain a stable connection was received from a source
 	 * that didn't register with a login packet before
 	 */
-	@Threadsafe public final EventAccessor<UnknownConnectionlessPacketEvent> UnknownConnectionlessPacket;
+	public final EventAccessor<UnknownConnectionlessPacketEvent> UnknownConnectionlessPacket;
 	
 	
 	
 	private final NetworkID local;
 	private final CommonConfig config;
-	
+	private final PacketIDMappingProvider provider;
 	private final AtomicReference<PacketHandler> singleThreadHandler;
 	private final ThreadPacketHandler multiThreadHandler;
 	private final EventDispatcher dispatcher;
@@ -100,11 +97,13 @@ public abstract class NetworkManagerCommon {
 		
 		this.local = local;
 		this.config = config; //It is now locked and can't be changed, so it can be stored
-		MappingContainer = new PacketIDMappingProviderImpl();
+		this.provider = new PacketIDMappingProvider();
+		
+		//EVENTS
 		ConnectionClosed = new EventAccessor<>(ConnectionClosedEvent.class);
-		PacketSendingFailed = new EventAccessor<>(PacketFailedEvent.class);
-		PacketReceiveRejected = new EventAccessor<>(PacketRejectedEvent.class);
-		ConnectionCheckSuccess = new EventAccessor<>(ConnectionCheckEvent.class);
+		PacketSendingFailed = new EventAccessor<>(PacketSendingFailedEvent.class);
+		PacketReceiveRejected = new EventAccessor<>(PacketReceiveRejectedEvent.class);
+		ConnectionCheckSuccess = new EventAccessor<>(ConnectionCheckSuccessEvent.class);
 		UnknownConnectionlessPacket = new EventAccessor<>(UnknownConnectionlessPacketEvent.class);
 		
 		dispatcher = new EventDispatcher(this);
@@ -112,7 +111,7 @@ public abstract class NetworkManagerCommon {
 		if(config.getUseManagedThread()) {
 			multiThreadHandler = new ThreadPacketHandler(singleThreadHandler, 
 					EventDispatchChain.P2(dispatcher, PacketReceiveRejected, 
-					(packet, context) -> new PacketRejectedEvent(context.getRemoteID(), packet.getClass())));
+					(packet, context) -> new PacketReceiveRejectedEvent(context.getRemoteID(), packet.getClass())));
 			managedThread = Optional.of(multiThreadHandler.getOutputThread());
 		} else {
 			multiThreadHandler = null;
@@ -122,6 +121,14 @@ public abstract class NetworkManagerCommon {
 			GlobalConnectionCheck.subscribe(this);
 		}
 	}
+	
+	/**
+	 * The container for {@link PacketIDMapping}s that are used to convert the packets sent form this manager to bytes.
+	 */
+	public final PacketIDMappingProvider getMappingContainer() {
+		return provider;
+	}
+	
 	
 	/**
 	 * Add a {@link PacketHandler} that receives incoming packets from all connections.<br>

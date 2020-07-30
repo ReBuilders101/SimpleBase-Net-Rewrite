@@ -14,6 +14,7 @@ import dev.lb.simplebase.net.event.EventAccessor;
 import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
+import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.PacketContext;
 import dev.lb.simplebase.net.util.ThreadsafeAction;
 

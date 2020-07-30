@@ -7,6 +7,7 @@ import dev.lb.simplebase.net.config.ClientConfig;
 import dev.lb.simplebase.net.config.ConnectionType;
 import dev.lb.simplebase.net.event.EventAccessor;
 import dev.lb.simplebase.net.id.NetworkID;
+import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.PacketContext;
 
 /**
