@@ -75,7 +75,7 @@ public interface Formatter {
 	 * @param elements The formatters that provide the elements
 	 * @return The complex composed formatter
 	 */
-	public static Formatter getComplex(Formatter...elements) {
+	public static BasicFormatter getPrefix(BasicFormatter...elements) {
 		Objects.requireNonNull(elements, "'elements' parameter must not be null");
 		if(elements.length == 0) {
 			throw new IllegalArgumentException("'elements' parameter must contain at least one element");
@@ -84,7 +84,15 @@ public interface Formatter {
 		for(Formatter f : elements) {
 			if(f == null) throw new NullPointerException("'elements' parameter must not contain any null elements");
 		}
-		return new ComplexFormatter(elements);
+		return new CombinedFormatter(elements);
+	}
+	
+	/**
+	 * Creates a {@link Formatter} that does nothing
+	 * @return The empty formatter
+	 */
+	public static BasicFormatter getEmpty() {
+		return (level) -> "";
 	}
 	
 	/**
@@ -93,12 +101,8 @@ public interface Formatter {
 	 * <p>Designed to be used with {@link #getComplex(Formatter...)}.
 	 * @return The described Formatter.
 	 */
-	public static Formatter getThreadName() {
-		return new BasicFormatter() {
-			@Override protected CharSequence format(AbstractLogLevel level) {
-				return "[" + Thread.currentThread().getName() + "]";
-			}
-		};
+	public static BasicFormatter getThreadName() {
+		return (level) -> "[" + Thread.currentThread().getName() + "]";
 	}
 	
 	/**
@@ -108,12 +112,8 @@ public interface Formatter {
 	 * <p>Designed to be used with {@link #getComplex(Formatter...)}.
 	 * @return The described Formatter
 	 */
-	public static Formatter getCurrentTime() {
-		return new BasicFormatter() {
-			@Override protected CharSequence format(AbstractLogLevel level) {
-				return "[" + ComposedFormatter.DATE_TO_TIME.format(new Date()) + "]";
-			}
-		};
+	public static BasicFormatter getCurrentTime() {
+		return (level) -> "[" + ComposedFormatter.DATE_TO_TIME.format(new Date()) + "]";
 	}
 	
 	/**
@@ -122,14 +122,12 @@ public interface Formatter {
 	 * <p>Designed to be used with {@link #getComplex(Formatter...)}.
 	 * @return The described Formatter
 	 */
-	public static Formatter getLogLevel() {
-		return new BasicFormatter() {
-			@Override protected CharSequence format(AbstractLogLevel level) {
-				if(level instanceof Enum) { //Use the enum constant name
-					return "[" + level.toString() + "]";
-				} else {
-					return "[CustomPriority:" + level.getPriority() + "]";
-				}
+	public static BasicFormatter getLogLevel() {
+		return (level) -> {
+			if(level instanceof Enum) { //Use the enum constant name
+				return "[" + level.toString() + "]";
+			} else {
+				return "[CustomPriority:" + level.getPriority() + "]";
 			}
 		};
 	}
@@ -141,12 +139,8 @@ public interface Formatter {
 	 * @param text The string to print
 	 * @return The described Formatter
 	 */
-	public static Formatter getStaticText(String text) {
-		return new BasicFormatter() {
-			@Override protected CharSequence format(AbstractLogLevel level) {
-				return "[" + text + "]";
-			}
-		};
+	public static BasicFormatter getStaticText(String text) {
+		return (level) -> "[" + text + "]";
 	}
 	
 	/**

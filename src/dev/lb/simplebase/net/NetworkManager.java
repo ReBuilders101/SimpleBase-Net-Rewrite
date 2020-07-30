@@ -1,33 +1,58 @@
 package dev.lb.simplebase.net;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.StaticType;
 import dev.lb.simplebase.net.config.ClientConfig;
 import dev.lb.simplebase.net.config.ServerConfig;
 import dev.lb.simplebase.net.config.ServerType;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.log.DelegateFormattableLogger;
+import dev.lb.simplebase.net.log.FormattableLogger;
 import dev.lb.simplebase.net.log.Formatter;
 import dev.lb.simplebase.net.log.LogLevel;
 import dev.lb.simplebase.net.log.Loggers;
+import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 
 @StaticType
 public final class NetworkManager {
 	
 	private NetworkManager() {/*No instantiation possible, contains only static utility methods*/}
 	
+	//LOGGERS ###############################################################################
+	
 	/**
 	 * The {@link AbstractLogger} used by the API to give information to the user.<br>
 	 * Call {@link AbstractLogger#setLogLevel(AbstractLogLevel)} to set detail level.
 	 */
-	private static final AbstractLogger NET_LOG = Loggers.printSysOut(LogLevel.METHOD, Formatter.getComplex(
+	private static final FormattableLogger NET_LOG = Loggers.printSysOut(LogLevel.METHOD,
+			Formatter.getPrefix(
 					Formatter.getStaticText("Net-Simplebase"),
 					Formatter.getLogLevel(),
 					Formatter.getCurrentTime(),
-					Formatter.getThreadName(),
-					Formatter.getDefault()));
+					Formatter.getThreadName()),
+			Formatter.getDefault());
+	
+	private static final Map<String, AbstractLogger> existingDelegateLoggers = new HashMap<>();
+	
+	public static AbstractLogger getModuleLogger(String moduleName) {
+		return existingDelegateLoggers.computeIfAbsent(moduleName, 
+				(name) -> new DelegateFormattableLogger(NET_LOG, Formatter.getStaticText(name)));
+	}
+	
+	//UTILITIES ################################################################################
+	
+	
+	public static Stream<NetworkID> getInternalServers() {
+		return null;
+	}
+	
+	//MANAGER FACTORIES #######################################################################
 	
 	public static NetworkManagerClient createClient(NetworkID clientLocal, NetworkID serverRemote) {
 		return createClient(clientLocal, serverRemote, new ClientConfig());
@@ -57,12 +82,19 @@ public final class NetworkManager {
 			throw new IllegalArgumentException("Invalid server type: " + actualType);
 		}
 	}
-	
-	public static Stream<NetworkID> getInternalServers() {
-		return null;
-	}
-	
-	public static AbstractLogger getModuleLogger(String moduleName) {
-		return NET_LOG;
+
+	@Internal
+	public static class InternalAccess {
+		public static final InternalAccess INSTANCE = new InternalAccess();
+		private InternalAccess() {}
+		
+		public void registerManagerForConnectionStatusCheck(NetworkManagerCommon manager) {
+			GlobalConnectionCheck.subscribe(manager);
+		}
+		
+		public void unregisterManagerForConnectionStatusCheck(NetworkManagerCommon manager) {
+			GlobalConnectionCheck.unsubscribe(manager);
+		}
+		
 	}
 }

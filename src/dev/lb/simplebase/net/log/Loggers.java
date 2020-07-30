@@ -28,8 +28,8 @@ public class Loggers {
 	 * @param minimumLevel The minimal logging level that a message needs to be logged
 	 * @return The logger for this print stream
 	 */
-	public static AbstractLogger printStream(PrintStream stream, AbstractLogLevel minimumLevel) {
-		return printStream(stream, minimumLevel, Formatter.getDefault());
+	public static FormattableLogger printStream(PrintStream stream, AbstractLogLevel minimumLevel) {
+		return printStream(stream, minimumLevel, Formatter.getEmpty(), Formatter.getDefault());
 	}
 	
 	/**
@@ -39,11 +39,11 @@ public class Loggers {
 	 * @param formatter The {@link Formatter} used to generate the log output
 	 * @return The logger for this print stream
 	 */
-	public static AbstractLogger printStream(PrintStream stream, AbstractLogLevel minimumLevel, Formatter formatter) {
+	public static FormattableLogger printStream(PrintStream stream, AbstractLogLevel minimumLevel, BasicFormatter prefix, Formatter formatter) {
 		Objects.requireNonNull(stream, "'stream' parameter must not be null");
 		Objects.requireNonNull(minimumLevel, "'minimumLevel' parameter must not be null");
 		Objects.requireNonNull(formatter, "'formatter' parameter must not be null");
-		return new PrintStreamLogger(minimumLevel, true, formatter, stream);
+		return new PrintStreamLogger(minimumLevel, true, prefix, formatter, stream);
 	}
 	
 	/**
@@ -51,8 +51,8 @@ public class Loggers {
 	 * @param minimumLevel The minimal logging level that a message needs to be logged
 	 * @return The logger for this print stream
 	 */
-	public static AbstractLogger printSysOut(AbstractLogLevel minimumLevel) {
-		return printSysOut(minimumLevel, Formatter.getDefault());
+	public static FormattableLogger printSysOut(AbstractLogLevel minimumLevel) {
+		return printSysOut(minimumLevel, Formatter.getEmpty(), Formatter.getDefault());
 	}
 	
 	/**
@@ -61,10 +61,10 @@ public class Loggers {
 	 * @param formatter The {@link Formatter} used to generate the log output
 	 * @return The logger for this print stream
 	 */
-	public static AbstractLogger printSysOut(AbstractLogLevel minimumLevel, Formatter formatter) {
+	public static FormattableLogger printSysOut(AbstractLogLevel minimumLevel, BasicFormatter prefix, Formatter formatter) {
 		Objects.requireNonNull(minimumLevel, "'minimumLevel' parameter must not be null");
 		Objects.requireNonNull(formatter, "'formatter' parameter must not be null");
-		return new PrintStreamLogger(minimumLevel, true, formatter, System.out);
+		return new PrintStreamLogger(minimumLevel, true, prefix, formatter, System.out);
 	}
 	
 	/**

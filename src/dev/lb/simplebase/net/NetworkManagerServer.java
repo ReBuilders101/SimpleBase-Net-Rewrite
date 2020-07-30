@@ -206,7 +206,7 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon implemen
 
 
 	@Override
-	protected void removeConnectionWhileClosing(NetworkConnection connection) {
+	protected void removeConnectionSilently(NetworkConnection connection) {
 		try {
 			lockConnections.writeLock().lock();
 			final NetworkID id = connection.getRemoteID();

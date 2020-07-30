@@ -63,66 +63,66 @@ public abstract class LevelBasedLogger implements AbstractLogger {
 	
 	@Override
 	public void enterMethod(String comment) {
-		if(LogLevel.METHOD.isAbove(cutoff)) methodImpl(LogLevel.METHOD, comment, true, 3); //this and impl
+		if(LogLevel.METHOD.isAbove(getLogLevel())) methodImpl(LogLevel.METHOD, comment, true, 3); //this and impl
 	}
 
 	@Override
 	public void exitMethod(String comment) {
-		if(LogLevel.METHOD.isAbove(cutoff)) methodImpl(LogLevel.METHOD, comment, false, 3); //this and impl
+		if(LogLevel.METHOD.isAbove(getLogLevel())) methodImpl(LogLevel.METHOD, comment, false, 3); //this and impl
 	}
 
 	@Override
 	public void log(AbstractLogLevel level, String message) {
 		Objects.requireNonNull(level, "'level' parameter must not be null");
-		if(level.isAbove(cutoff)) logImpl(level, message);
+		if(level.isAbove(getLogLevel())) logImpl(level, message);
 	}
 
 	@Override
 	public void log(AbstractLogLevel level, Supplier<String> message) {
 		Objects.requireNonNull(level, "'level' parameter must not be null");
-		if(level.isAbove(cutoff)) logImpl(level, message.get()); //Only get when required
+		if(level.isAbove(getLogLevel())) logImpl(level, message.get()); //Only get when required
 	}
 
 	@Override
 	public void log(AbstractLogLevel level, String formatString, Object... objects) {
 		Objects.requireNonNull(level, "'level' parameter must not be null");
-		if(level.isAbove(cutoff)) logImpl(level, String.format(formatString, objects)); //Only format when required
+		if(level.isAbove(getLogLevel())) logImpl(level, String.format(formatString, objects)); //Only format when required
 	}
 
 	@Override
 	public void log(AbstractLogLevel level, Exception messageAndStacktrace) {
 		Objects.requireNonNull(level, "'level' parameter must not be null");
-		if(level.isAbove(cutoff)) logImpl(level, messageAndStacktrace);
+		if(level.isAbove(getLogLevel())) logImpl(level, messageAndStacktrace);
 	}
 	
 	@Override
 	public void log(AbstractLogLevel level, String message, Exception stacktrace) {
 		Objects.requireNonNull(level, "'level' parameter must not be null");
-		if(level.isAbove(cutoff)) logImpl(level, message, stacktrace);
+		if(level.isAbove(getLogLevel())) logImpl(level, message, stacktrace);
 	}
 
 	@Override
 	public void stack(AbstractLogLevel level) {
 		Objects.requireNonNull(level, "'level' parameter must not be null");
-		if(level.isAbove(cutoff)) stackImpl(level, null, 3); //pop this method and stackImpl
+		if(level.isAbove(getLogLevel())) stackImpl(level, null, 3); //pop this method and stackImpl
 	}
 
 	@Override
 	public void stack(AbstractLogLevel level, int popEntries) {
 		Objects.requireNonNull(level, "'level' parameter must not be null");
-		if(level.isAbove(cutoff)) stackImpl(level, null, popEntries + 3); //pop this method and stackImpl
+		if(level.isAbove(getLogLevel())) stackImpl(level, null, popEntries + 3); //pop this method and stackImpl
 	}
 
 	@Override
 	public void stack(AbstractLogLevel level, String comment) {
 		Objects.requireNonNull(level, "'level' parameter must not be null");
-		if(level.isAbove(cutoff)) stackImpl(level, comment, 3); //pop this method and stackImpl
+		if(level.isAbove(getLogLevel())) stackImpl(level, comment, 3); //pop this method and stackImpl
 	}
 
 	@Override
 	public void stack(AbstractLogLevel level, int popEntries, String comment) {
 		Objects.requireNonNull(level, "'level' parameter must not be null");
-		if(level.isAbove(cutoff)) stackImpl(level, comment, popEntries + 3); //pop this method and stackImpl
+		if(level.isAbove(getLogLevel())) stackImpl(level, comment, popEntries + 3); //pop this method and stackImpl
 	}
 
 	@Override

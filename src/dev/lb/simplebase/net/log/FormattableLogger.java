@@ -1,7 +1,5 @@
 package dev.lb.simplebase.net.log;
 
-import java.util.Objects;
-
 /**
  * An abstract base class for loggers that use a {@link Formatter} to generate log outputs.
  * Includes all features of a {@link LevelBasedLogger}.
@@ -11,20 +9,29 @@ import java.util.Objects;
  */
 public abstract class FormattableLogger extends LevelBasedLogger {
 	
-	private final Formatter formatter;
+	private final BasicFormatter prefixFormatter;
+	private final Formatter messageFormatter;
 	
-	protected FormattableLogger(AbstractLogLevel cutoff, boolean supportsLevelChange, Formatter formatter) {
+	protected FormattableLogger(AbstractLogLevel cutoff, boolean supportsLevelChange, BasicFormatter prefixFormatter, Formatter messageFormatter) {
 		super(cutoff, supportsLevelChange);
-		Objects.requireNonNull(formatter, "'formatter' parameter must not be null");
-		this.formatter = formatter;
+		this.messageFormatter = messageFormatter;
+		this.prefixFormatter = prefixFormatter;
 	}
 
 	/**
 	 * Post a finished log message
 	 * @param message The message
 	 */
-	protected abstract void postLogMessage(CharSequence message);
+	protected abstract void postLogMessage(CharSequence prefix, CharSequence message);
 
+	protected BasicFormatter getPrefixFormatter() {
+		return prefixFormatter;
+	}
+	
+	protected Formatter getMessageFormatter() {
+		return messageFormatter;
+	}
+	
 	@Override
 	protected void methodImpl(AbstractLogLevel level, String comment, boolean enter, int stackPop) {
 		//get the entire stack
@@ -34,22 +41,22 @@ public abstract class FormattableLogger extends LevelBasedLogger {
 			throw new IllegalArgumentException("Cannot get stack element " + stackPop + " for logging");
 		}
 		final StackTraceElement callingMethodElement = currentStack[stackPop];
-		postLogMessage(formatter.formatMethod(level, comment, enter, callingMethodElement));
+		postLogMessage(getPrefixFormatter().format(level), getMessageFormatter().formatMethod(level, comment, enter, callingMethodElement));
 	}
 
 	@Override
 	protected void logImpl(AbstractLogLevel level, String message) {
-		postLogMessage(formatter.formatPlaintext(level, message));
+		postLogMessage(getPrefixFormatter().format(level), getMessageFormatter().formatPlaintext(level, message));
 	}
 
 	@Override
 	protected void logImpl(AbstractLogLevel level, Exception messageAndStacktrace) {
-		postLogMessage(formatter.formatException(level, null, messageAndStacktrace));
+		postLogMessage(getPrefixFormatter().format(level), getMessageFormatter().formatException(level, null, messageAndStacktrace));
 	}
 
 	@Override
 	protected void logImpl(AbstractLogLevel level, String message, Exception stacktrace) {
-		postLogMessage(formatter.formatException(level, message, stacktrace));
+		postLogMessage(getPrefixFormatter().format(level), getMessageFormatter().formatException(level, message, stacktrace));
 	}
 	
 	@Override
@@ -60,7 +67,7 @@ public abstract class FormattableLogger extends LevelBasedLogger {
 		}
 		final StackTraceElement[] partialStack = new StackTraceElement[currentStack.length - stackPop];
 		System.arraycopy(currentStack, stackPop, partialStack, 0, currentStack.length - stackPop);
-		postLogMessage(formatter.formatStacktrace(level, comment, partialStack));
+		postLogMessage(getPrefixFormatter().format(level), getMessageFormatter().formatStacktrace(level, comment, partialStack));
 	}
 	
 }

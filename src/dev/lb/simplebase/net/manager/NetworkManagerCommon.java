@@ -4,8 +4,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-import dev.lb.simplebase.net.GlobalConnectionCheck;
 import dev.lb.simplebase.net.NetworkConnection;
+import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.config.CommonConfig;
@@ -118,7 +118,7 @@ public abstract class NetworkManagerCommon {
 			managedThread = Optional.empty();
 		}
 		if(config.getGlobalConnectionCheck()) {
-			GlobalConnectionCheck.subscribe(this);
+			NetworkManager.InternalAccess.INSTANCE.registerManagerForConnectionStatusCheck(this);
 		}
 	}
 	
@@ -199,11 +199,11 @@ public abstract class NetworkManagerCommon {
 	protected abstract PacketContext getConnectionlessPacketContext(NetworkID source);
 	
 	/**
-	 * Removes a connection that is already in CLOSING state. || NOT used to disconnect a client
-	 * Will not post an event!
+	 * Removes the connection with the proper synchronization, without causing any other
+	 * side effects like closing the connection or posting an event to the dispatcher
 	 */
 	@Internal
-	protected abstract void removeConnectionWhileClosing(NetworkConnection connection);
+	protected abstract void removeConnectionSilently(NetworkConnection connection);
 	
 	/**
 	 * The event dispatcher. Only API-internal code may post events
@@ -237,7 +237,7 @@ public abstract class NetworkManagerCommon {
 	 * the manager is left to garbage collection.
 	 */
 	public void cleanUp() {
-		GlobalConnectionCheck.unsubscribe(this);
+		NetworkManager.InternalAccess.INSTANCE.unregisterManagerForConnectionStatusCheck(this);
 	}
 	
 	@Internal

@@ -13,15 +13,15 @@ public class PrintStreamLogger extends FormattableLogger {
 
 	private final PrintStream stream;
 	
-	protected PrintStreamLogger(AbstractLogLevel cutoff, boolean supportsLevelChange, Formatter formatter, PrintStream stream) {
-		super(cutoff, supportsLevelChange, formatter);
+	protected PrintStreamLogger(AbstractLogLevel cutoff, boolean supportsLevelChange, BasicFormatter prefix, Formatter formatter, PrintStream stream) {
+		super(cutoff, supportsLevelChange, prefix, formatter);
 		Objects.requireNonNull(stream, "'stream' parameter must not be null");
 		this.stream = stream;
 	}
 
 	@Override
-	protected void postLogMessage(CharSequence message) {
-		stream.println(message.toString());
+	protected void postLogMessage(CharSequence prefix, CharSequence message) {
+		stream.println(prefix.toString() + " " + message.toString());
 	}
 
 }

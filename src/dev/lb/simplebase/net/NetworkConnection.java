@@ -403,7 +403,7 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	protected void postEventAndRemoveConnection(ConnectionCloseReason reason, Exception exception) {
 		getNetworkManager().getEventDispatcher().post(getNetworkManager().ConnectionClosed,
 				new ConnectionClosedEvent(reason, exception));
-		getNetworkManager().removeConnectionWhileClosing(this);
+		getNetworkManager().removeConnectionSilently(this);
 	}
 	
 	//The context

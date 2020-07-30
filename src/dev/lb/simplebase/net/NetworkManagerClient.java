@@ -64,7 +64,7 @@ public final class NetworkManagerClient extends NetworkManagerCommon {
 	}
 
 	@Override
-	protected void removeConnectionWhileClosing(NetworkConnection connection) {
+	protected void removeConnectionSilently(NetworkConnection connection) {
 		//Client does not remove its connection
 		NetworkManager.NET_LOG.debug("Client Manager: Remove connection called");
 	}
