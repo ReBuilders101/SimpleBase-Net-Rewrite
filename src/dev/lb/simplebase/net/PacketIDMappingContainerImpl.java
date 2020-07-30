@@ -15,11 +15,11 @@ import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.log.LogLevel;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketIDMapping;
-import dev.lb.simplebase.net.packet.PacketIDMappingContainer;
+import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
 
 @Threadsafe
 @Internal
-class PacketIDMappingContainerImpl implements PacketIDMappingContainer {
+class PacketIDMappingContainerImpl implements PacketIDMappingProvider {
 
 	private final Set<PacketIDMapping> mappings;
 	
@@ -62,14 +62,14 @@ class PacketIDMappingContainerImpl implements PacketIDMappingContainer {
 	}
 
 	@Override
-	public void action(Consumer<PacketIDMappingContainer> action) {
+	public void action(Consumer<PacketIDMappingProvider> action) {
 		synchronized (mappings) { //Run the action while holding monitor
 			action.accept(this);
 		}
 	}
 
 	@Override
-	public <R> R actionReturn(Function<PacketIDMappingContainer, R> action) {
+	public <R> R actionReturn(Function<PacketIDMappingProvider, R> action) {
 		synchronized (mappings) { //Run the action while holding monitor
 			return action.apply(this); //Return here, will release monitor on its own
 		}

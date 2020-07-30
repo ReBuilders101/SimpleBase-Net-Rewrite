@@ -12,7 +12,7 @@ import dev.lb.simplebase.net.annotation.Threadsafe;
  * All add/find operations are threadsafe. 
  */
 @Threadsafe
-public interface PacketIDMappingContainer extends ThreadsafeIterable<PacketIDMappingContainer, PacketIDMapping> {
+public interface PacketIDMappingProvider extends ThreadsafeIterable<PacketIDMappingProvider, PacketIDMapping> {
 	
 	/**
 	 * Adds a {@link PacketIDMapping} to the collection.

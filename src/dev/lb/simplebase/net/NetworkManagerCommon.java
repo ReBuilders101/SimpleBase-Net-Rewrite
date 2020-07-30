@@ -18,7 +18,7 @@ import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
 import dev.lb.simplebase.net.packet.PacketIDMapping;
-import dev.lb.simplebase.net.packet.PacketIDMappingContainer;
+import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
 
 /**
  * The base class for both server and client managers.
@@ -29,7 +29,7 @@ public abstract class NetworkManagerCommon {
 	/**
 	 * The container for {@link PacketIDMapping}s that are used to convert the packets sent form this manager to bytes.
 	 */
-	@Threadsafe	public final PacketIDMappingContainer MappingContainer;
+	@Threadsafe	public final PacketIDMappingProvider MappingContainer;
 	
 	/**
 	 * The {@link ConnectionClosedEvent} will be posted to this accessor when a connection handled by this manager is

@@ -12,6 +12,8 @@ import dev.lb.simplebase.net.annotation.ValueType;
  * A {@link PacketIDMapping} connects a packet class to a numerical ID that is used to
  * identify the type of a packet when it is sent over the network. It also provides a method to create
  * new, uninitialized instances of a packet type.
+ * <p>
+ * This interface can be implemented by an enum type to collect all mappings of your program in a central place
  */
 @ValueType
 @Immutable
@@ -30,14 +32,14 @@ public interface PacketIDMapping {
 	
 	/**
 	 * The type of the {@link Packet} described by this mapping, as a {@link Class} object.
-	 * The class should be unique for all mappings in the same {@link PacketIDMappingContainer}.
+	 * The class should be unique for all mappings in the same {@link PacketIDMappingProvider}.
 	 * @return The class of the packet represented by this mapping
 	 */
 	public Class<? extends Packet> getPacketClass();
 	
 	/**
 	 * The numerical ID of the {@link Packet} described by this packet. The ID should be unique for all
-	 * mappings in the same {@link PacketIDMappingContainer}.
+	 * mappings in the same {@link PacketIDMappingProvider}.
 	 * @return The ID of the packet represented by this mapping 
 	 */
 	public int getPacketID();
@@ -49,7 +51,7 @@ public interface PacketIDMapping {
 	 * to count as the same (and the other way too).<br>This ensures that for any ID or any class there only exists a single valid mapping.
 	 * <p>
 	 * This method is not always threadsafe, the iterable can be cuncurrently modified. If the iterable is a
-	 * {@link PacketIDMappingContainer}, see {@link PacketIDMappingContainer#hasAnyMapping(PacketIDMapping)}.
+	 * {@link PacketIDMappingProvider}, see {@link PacketIDMappingProvider#hasAnyMapping(PacketIDMapping)}.
 	 * @param mappingContainer The list/collection/array that contains the other mappings
 	 * @param toInsert The new mapping that should be checked before inserting it.
 	 * @return Whether the mapping is unique, that means that no equal mapping exists in the list already.

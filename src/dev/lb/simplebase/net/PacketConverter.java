@@ -13,7 +13,7 @@ import dev.lb.simplebase.net.io.write.WritableArrayData;
 import dev.lb.simplebase.net.io.write.WritableNIOData;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketIDMapping;
-import dev.lb.simplebase.net.packet.PacketIDMappingContainer;
+import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
 
 /**
  * Converts between packets and bytes
@@ -21,7 +21,7 @@ import dev.lb.simplebase.net.packet.PacketIDMappingContainer;
 @Internal
 class PacketConverter {
 
-	private final PacketIDMappingContainer mappings;
+	private final PacketIDMappingProvider mappings;
 	private final NetworkConnection connection;
 	private final int encodeBufferInitialSize;
 	
