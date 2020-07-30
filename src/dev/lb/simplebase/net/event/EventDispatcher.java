@@ -32,13 +32,15 @@ public class EventDispatcher {
 	 * @param <E> The type of event
 	 * @param handler The event handler(s)
 	 * @param event The event to post
+	 * @return Whether the event was cancelled 
 	 */
-	public synchronized <E extends Event> void post(EventAccessor<E> handler, E event) {
+	public synchronized <E extends Event> boolean post(EventAccessor<E> handler, E event) {
 		Objects.requireNonNull(handler, "'handler' parameter must not be null");
 		Objects.requireNonNull(event, "'event' parameter must not be null");
 		NetworkManager.NET_LOG.debug("Posted event (" + handler.getEventClass() + ") to " +
 				handler.getHandlerCount() + " handlers for " + manager.getLocalID().getDescription());
 		handler.post(event);
+		return event.isCancelled();
 	}
 	
 
