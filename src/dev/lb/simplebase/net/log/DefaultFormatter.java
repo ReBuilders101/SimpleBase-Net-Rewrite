@@ -18,7 +18,7 @@ class DefaultFormatter implements Formatter {
 			return NULL_STR;
 		} else {
 			final StringBuilder builder = new StringBuilder();
-			if(message != null)	builder.append("\n").append(message);
+			if(message != null)	builder.append(message);
 			builder.append("\nException: ");
 			builder.append(rawMessage.getClass().getCanonicalName());
 			builder.append("\nMessage: ");

@@ -15,7 +15,6 @@ import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.AbstractLogLevel;
 import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.log.DelegateFormattableLogger;
-import dev.lb.simplebase.net.log.FormattableLogger;
 import dev.lb.simplebase.net.log.Formatter;
 import dev.lb.simplebase.net.log.LogLevel;
 import dev.lb.simplebase.net.log.Loggers;
