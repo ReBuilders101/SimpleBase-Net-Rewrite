@@ -2,7 +2,9 @@ package dev.lb.simplebase.net.packet.converter;
 
 import java.nio.ByteBuffer;
 
+import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.io.ByteDataHelper;
+import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormat;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
@@ -13,6 +15,8 @@ import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
  * Call {@code accept...} methods from only one thread.
  */
 public final class ByteToPacketConverter {
+	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("packet-decode");
+	
 	private final PacketIDMappingProvider provider;
 	private final ConnectionAdapter receiver;
 
@@ -38,6 +42,7 @@ public final class ByteToPacketConverter {
 				final int formatId = ByteDataHelper.cInt((ByteBuffer) buffer.asReadOnlyBuffer().flip());
 				final NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider, ?> format = NetworkPacketFormats.findFormat(formatId);
 				if(format == null) {
+					LOGGER.debug("Unexpected bytes: No format found in %x", formatId);
 					//No format found
 					requiredBytes = 1;
 					//Buffer is in put() mode
@@ -59,6 +64,7 @@ public final class ByteToPacketConverter {
 				int required = currentFormat.receiveMore((ByteBuffer) buffer.asReadOnlyBuffer().flip());
 				if(required < 0) { //Invalid packet
 					//reset state
+					LOGGER.debug("Unexpeceted bytes: Data is invalid for format (%s)", currentFormat.getName());
 					resetToFindFormat();
 				} else if(required > 0) {
 					//We need more bytes

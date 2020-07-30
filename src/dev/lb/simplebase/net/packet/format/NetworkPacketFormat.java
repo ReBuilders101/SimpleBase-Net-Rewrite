@@ -2,6 +2,9 @@ package dev.lb.simplebase.net.packet.format;
 
 import java.nio.ByteBuffer;
 
+import dev.lb.simplebase.net.NetworkManager;
+import dev.lb.simplebase.net.log.AbstractLogger;
+
 /**
  * A pattern to decode bytes into packet-representing objects
  *
@@ -9,6 +12,7 @@ import java.nio.ByteBuffer;
  * @param <Data> The object produced by decoding
  */
 public abstract class NetworkPacketFormat<Connection, DecodeContext, Data> {	
+	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("packet-decode");
 	
 	private final int uuid;
 	private final String name;
@@ -94,7 +98,11 @@ public abstract class NetworkPacketFormat<Connection, DecodeContext, Data> {
 	 */
 	public void decodeAndPublish(Connection connection, DecodeContext context, ByteBuffer allBytes) {
 		final Data data = decode(context, allBytes);
-		if(data != null) publish(connection, data);
+		if(data != null) {
+			publish(connection, data);
+		} else {
+			LOGGER.debug("Format (%s) produced an invalid packet for byte data %s", getName(), allBytes);
+		}
 	}
 	
 	/**

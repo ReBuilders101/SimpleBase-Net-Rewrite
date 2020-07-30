@@ -2,7 +2,10 @@ package dev.lb.simplebase.net.packet.converter;
 
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
+
+import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.io.ByteDataHelper;
+import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.packet.PacketIDMapping;
 import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormat;
@@ -11,7 +14,8 @@ import dev.lb.simplebase.net.packet.format.NetworkPacketFormat;
  * Converts packets to bytes
  */
 public final class PacketToByteConverter {
-
+	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("packet-encode");
+	
 	private final PacketIDMappingProvider provider;
 	private final Consumer<ByteBuffer> destination;
 	
@@ -38,6 +42,8 @@ public final class PacketToByteConverter {
 			ByteDataHelper.cInt(format.getUniqueIdentifier(), toSend);
 			toSend.put(buffer);
 			destination.accept(buffer);
+		} else {
+			LOGGER.debug("Format (%s) produced an invalid packet for data %s", format.getName(), data);
 		}
 	}
 	

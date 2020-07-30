@@ -9,7 +9,7 @@ import dev.lb.simplebase.net.packet.PacketContext;
  */
 @FunctionalInterface
 public interface PacketHandler {
-
+	
 	/**
 	 * The functional method of this interface. Process a received packet
 	 * @param packet The packet instance, filled with the received data

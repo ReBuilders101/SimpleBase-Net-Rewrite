@@ -3,7 +3,6 @@ package dev.lb.simplebase.net.packet.handler;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.event.EventAccessor;
@@ -102,7 +101,7 @@ public class ThreadPacketHandler implements PacketHandler {
 			
 			final boolean cancelled = rejectedDispatcher.post(packet, context);
 			final LogLevel level = cancelled ? LogLevel.DEBUG : LogLevel.WARNING;
-			NetworkManager.NET_LOG.log(level, "Incoming Packet rejected: Queue full");
+			EmptyPacketHandler.LOGGER.log(level, "Incoming Packet rejected: Queue full");
 		}
 	}
 	
@@ -125,7 +124,7 @@ public class ThreadPacketHandler implements PacketHandler {
 					break;
 				}
 			}
-			NetworkManager.NET_LOG.info("Thread '" + getName() + "' was interrupted and is closing");
+			EmptyPacketHandler.LOGGER.info("Thread '" + getName() + "' was interrupted and is closing");
 			//Thread dies here, on purpose
 		}
 		
