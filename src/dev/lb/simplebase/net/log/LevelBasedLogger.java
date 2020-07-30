@@ -45,6 +45,14 @@ public abstract class LevelBasedLogger implements AbstractLogger {
 	protected abstract void logImpl(AbstractLogLevel level, Exception messageAndStacktrace);
 	
 	/**
+	 * Called when a log call with the correct logging level was performed
+	 * @param level The log level of the message
+	 * @param message The message that should be logged
+	 * @param stacktrace The stacktrace for the exception message
+	 */
+	protected abstract void logImpl(AbstractLogLevel level, String message, Exception stacktrace);
+	
+	/**
 	 * Called when a call to {@link #stack(AbstractLogLevel)} (or any other overload)
 	 * was performed with the correct logging level
 	 * @param level The log level of the message
@@ -86,6 +94,12 @@ public abstract class LevelBasedLogger implements AbstractLogger {
 		Objects.requireNonNull(level, "'level' parameter must not be null");
 		if(level.isAbove(cutoff)) logImpl(level, messageAndStacktrace);
 	}
+	
+	@Override
+	public void log(AbstractLogLevel level, String message, Exception stacktrace) {
+		Objects.requireNonNull(level, "'level' parameter must not be null");
+		if(level.isAbove(cutoff)) logImpl(level, message, stacktrace);
+	}
 
 	@Override
 	public void stack(AbstractLogLevel level) {
@@ -122,6 +136,4 @@ public abstract class LevelBasedLogger implements AbstractLogger {
 		if(!supportsLevelChange) throw new UnsupportedOperationException("This AbstractLogger implementation does not allow changing the Log Level");
 		cutoff = logLevel;
 	}
-	
-
 }

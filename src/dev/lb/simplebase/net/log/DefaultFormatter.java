@@ -13,11 +13,12 @@ class DefaultFormatter implements Formatter {
 	}
 
 	@Override
-	public CharSequence formatException(AbstractLogLevel level, Exception rawMessage) {
+	public CharSequence formatException(AbstractLogLevel level, String message, Exception rawMessage) {
 		if(rawMessage == null) {
 			return NULL_STR;
 		} else {
 			final StringBuilder builder = new StringBuilder();
+			if(message != null)	builder.append("\n").append(message);
 			builder.append("\nException: ");
 			builder.append(rawMessage.getClass().getCanonicalName());
 			builder.append("\nMessage: ");

@@ -97,6 +97,11 @@ public class JavaLogger implements AbstractLogger {
 	public void log(AbstractLogLevel level, Exception messageAndStacktrace) {
 		javaLogger.log(toJava(level), messageAndStacktrace.getMessage(), messageAndStacktrace);
 	}
+	
+	@Override
+	public void log(AbstractLogLevel level, String message, Exception stacktrace) {
+		javaLogger.log(toJava(level), message, stacktrace);
+	}
 
 	@Override
 	public void stack(AbstractLogLevel level) {
@@ -147,5 +152,4 @@ public class JavaLogger implements AbstractLogger {
 		}
 		
 	}
-
 }

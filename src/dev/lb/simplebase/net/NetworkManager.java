@@ -1,6 +1,7 @@
 package dev.lb.simplebase.net;
 
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import dev.lb.simplebase.net.annotation.StaticType;
 import dev.lb.simplebase.net.config.ClientConfig;
@@ -21,7 +22,7 @@ public final class NetworkManager {
 	 * The {@link AbstractLogger} used by the API to give information to the user.<br>
 	 * Call {@link AbstractLogger#setLogLevel(AbstractLogLevel)} to set detail level.
 	 */
-	public static final AbstractLogger NET_LOG = Loggers.printSysOut(LogLevel.METHOD, Formatter.getComplex(
+	private static final AbstractLogger NET_LOG = Loggers.printSysOut(LogLevel.METHOD, Formatter.getComplex(
 					Formatter.getStaticText("Net-Simplebase"),
 					Formatter.getLogLevel(),
 					Formatter.getCurrentTime(),
@@ -40,6 +41,10 @@ public final class NetworkManager {
 		return new NetworkManagerClient(clientLocal, serverRemote, config);
 	}
 	
+	public static NetworkManagerServer createServer(NetworkID serverLocal) {
+		return createServer(serverLocal, new ServerConfig());
+	}
+	
 	public static NetworkManagerServer createServer(NetworkID serverLocal, ServerConfig config) {
 		Objects.requireNonNull(serverLocal, "'serverLocal' parameter must not be null");
 		Objects.requireNonNull(config, "'config' parameter must not be null");
@@ -51,5 +56,13 @@ public final class NetworkManager {
 		default:
 			throw new IllegalArgumentException("Invalid server type: " + actualType);
 		}
+	}
+	
+	public static Stream<NetworkID> getInternalServers() {
+		return null;
+	}
+	
+	public static AbstractLogger getModuleLogger(String moduleName) {
+		return NET_LOG;
 	}
 }

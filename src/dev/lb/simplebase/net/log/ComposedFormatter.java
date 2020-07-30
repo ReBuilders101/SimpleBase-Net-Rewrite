@@ -28,8 +28,8 @@ class ComposedFormatter implements Formatter{
 	}
 
 	@Override
-	public CharSequence formatException(AbstractLogLevel level, Exception rawMessage) {
-		return patch.apply(base.formatException(level, rawMessage).toString());
+	public CharSequence formatException(AbstractLogLevel level, String message, Exception rawMessage) {
+		return patch.apply(base.formatException(level, message, rawMessage).toString());
 	}
 
 	@Override

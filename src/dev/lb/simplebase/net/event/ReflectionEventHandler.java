@@ -3,8 +3,6 @@ package dev.lb.simplebase.net.event;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import dev.lb.simplebase.net.NetworkManager;
-
 public class ReflectionEventHandler<E extends Event> extends AbstractEventHandler<E> {
 	
 	private final Method methodHandler;
@@ -19,8 +17,7 @@ public class ReflectionEventHandler<E extends Event> extends AbstractEventHandle
 		try {
 			methodHandler.invoke(null, event);
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			NetworkManager.NET_LOG.error("Exception while calling reflection event handler:");
-			NetworkManager.NET_LOG.error(e);
+			EventDispatcher.LOGGER.error("Exception while calling reflection event handler:", e);
 		}
 	}
 

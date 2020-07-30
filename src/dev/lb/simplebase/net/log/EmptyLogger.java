@@ -25,6 +25,8 @@ class EmptyLogger implements AbstractLogger {
 	public void log(AbstractLogLevel level, String formatString, Object... objects) {}
 	@Override
 	public void log(AbstractLogLevel level, Exception messageAndStacktrace) {}
+	@Override
+	public void log(AbstractLogLevel level, String message, Exception stacktrace) {}
 
 	@Override
 	public void stack(AbstractLogLevel level) {}

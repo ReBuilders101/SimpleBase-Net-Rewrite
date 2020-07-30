@@ -44,9 +44,14 @@ public abstract class FormattableLogger extends LevelBasedLogger {
 
 	@Override
 	protected void logImpl(AbstractLogLevel level, Exception messageAndStacktrace) {
-		postLogMessage(formatter.formatException(level, messageAndStacktrace));
+		postLogMessage(formatter.formatException(level, null, messageAndStacktrace));
 	}
 
+	@Override
+	protected void logImpl(AbstractLogLevel level, String message, Exception stacktrace) {
+		postLogMessage(formatter.formatException(level, message, stacktrace));
+	}
+	
 	@Override
 	protected void stackImpl(AbstractLogLevel level, String comment, int stackPop) {
 		final StackTraceElement[] currentStack = Thread.currentThread().getStackTrace();

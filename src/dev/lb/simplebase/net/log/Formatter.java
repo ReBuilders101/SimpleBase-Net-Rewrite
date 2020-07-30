@@ -23,10 +23,11 @@ public interface Formatter {
 	/**
 	 * Creates the {@link CharSequence} that should be logged from an exception
 	 * @param level The log level of the message; will not be {@code null}
+	 * @param message A description message for the error; can be {@code null}
 	 * @param rawMessage The exception for which a message should be generated; can be {@code null}
 	 * @return The complete message; {@code null} is not allowed
 	 */
-	public CharSequence formatException(AbstractLogLevel level, Exception rawMessage);
+	public CharSequence formatException(AbstractLogLevel level, String message, Exception rawMessage);
 	
 	/**
 	 * Creates the {@link CharSequence} that should be logged for a

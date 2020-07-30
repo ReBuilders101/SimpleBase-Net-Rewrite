@@ -29,10 +29,10 @@ class ComplexFormatter implements Formatter {
 	}
 
 	@Override
-	public CharSequence formatException(AbstractLogLevel level, Exception rawMessage) {
+	public CharSequence formatException(AbstractLogLevel level, String message, Exception rawMessage) {
 		CharSequence[] partStrings = new CharSequence[parts.length];
 		for(int i = 0; i < parts.length; i++) {
-			partStrings[i] = parts[i].formatException(level, rawMessage);
+			partStrings[i] = parts[i].formatException(level, message, rawMessage);
 		}
 		return String.join(" ", partStrings);
 	}

@@ -55,6 +55,10 @@ public interface AbstractLogger {
 		log(LogLevel.WARNING, messageAndStacktrace);
 	}
 	
+	public default void warning(String message, Exception stacktrace) {
+		log(LogLevel.WARNING, message, stacktrace);
+	}
+	
 	
 	public default void error(String message) {
 		log(LogLevel.ERROR, message);
@@ -70,6 +74,10 @@ public interface AbstractLogger {
 	
 	public default void error(Exception messageAndStacktrace) {
 		log(LogLevel.ERROR, messageAndStacktrace);
+	}
+	
+	public default void error(String message, Exception stacktrace) {
+		log(LogLevel.ERROR, message, stacktrace);
 	}
 	
 	
@@ -89,6 +97,9 @@ public interface AbstractLogger {
 		log(LogLevel.FATAL, messageAndStacktrace);
 	}
 	
+	public default void fatal(String message, Exception stacktrace) {
+		log(LogLevel.FATAL, message, stacktrace);
+	}
 	
 	public void log(AbstractLogLevel level, String message);
 	
@@ -98,6 +109,7 @@ public interface AbstractLogger {
 
 	public void log(AbstractLogLevel level, Exception messageAndStacktrace);
 	
+	public void log(AbstractLogLevel level, String message, Exception stacktrace);
 	
 	//Don't default/chain these as stack depth is important
 	public void stack(AbstractLogLevel level);

@@ -13,7 +13,7 @@ abstract class BasicFormatter implements Formatter {
 	}
 
 	@Override
-	public CharSequence formatException(AbstractLogLevel level, Exception rawMessage) {
+	public CharSequence formatException(AbstractLogLevel level, String message, Exception rawMessage) {
 		return format(level);
 	}
 
