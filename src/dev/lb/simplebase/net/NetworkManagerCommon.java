@@ -22,7 +22,7 @@ import dev.lb.simplebase.net.packet.PacketIDMapping;
 import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
 import dev.lb.simplebase.net.packet.handler.EmptyPacketHandler;
 import dev.lb.simplebase.net.packet.handler.PacketHandler;
-import dev.lb.simplebase.net.packet.handler.PacketThreadReceiver;
+import dev.lb.simplebase.net.packet.handler.ThreadPacketHandler;
 
 /**
  * The base class for both server and client managers.
@@ -84,7 +84,7 @@ public abstract class NetworkManagerCommon {
 	private final CommonConfig config;
 	
 	private final AtomicReference<PacketHandler> singleThreadHandler;
-	private final PacketThreadReceiver multiThreadHandler;
+	private final ThreadPacketHandler multiThreadHandler;
 	private final EventDispatcher dispatcher;
 	private final Optional<Thread> managedThread;
 	
@@ -110,7 +110,7 @@ public abstract class NetworkManagerCommon {
 		dispatcher = new EventDispatcher(this);
 		singleThreadHandler = new AtomicReference<>(new EmptyPacketHandler());
 		if(config.getUseManagedThread()) {
-			multiThreadHandler = new PacketThreadReceiver(singleThreadHandler, 
+			multiThreadHandler = new ThreadPacketHandler(singleThreadHandler, 
 					EventDispatchChain.P2(dispatcher, PacketReceiveRejected, 
 					(packet, context) -> new PacketRejectedEvent(context.getRemoteID(), packet.getClass())));
 			managedThread = Optional.of(multiThreadHandler.getOutputThread());

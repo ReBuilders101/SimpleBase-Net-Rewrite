@@ -19,7 +19,7 @@ import dev.lb.simplebase.net.packet.PacketContext;
  * the delegate on a single thread available through {@link #getOutputThread()}. 
  */
 @Threadsafe
-public class PacketThreadReceiver implements PacketHandler {
+public class ThreadPacketHandler implements PacketHandler {
 
 	private volatile AtomicReference<PacketHandler> delegate;
 	private final LinkedBlockingQueue<Runnable> threadTasks; //this implementation is threadsafe
@@ -28,23 +28,23 @@ public class PacketThreadReceiver implements PacketHandler {
 	private final DelegateThread thread;
 	
 	/**
-	 * Creates a new {@link PacketThreadReceiver} instance. The maximum queue size will be {@link Integer#MAX_VALUE}.<br>
+	 * Creates a new {@link ThreadPacketHandler} instance. The maximum queue size will be {@link Integer#MAX_VALUE}.<br>
 	 * Creating this instance will cause a new daemon {@link Thread} to start.
 	 * @param delegate A reference to the {@link PacketHandler} that should receive all packets on one thread. May be updated at any time.
 	 * @param rejectHandler The handler created by {@link EventDispatcher#postTask(EventAccessor)} that handles rejected packets
 	 */
-	public PacketThreadReceiver(AtomicReference<PacketHandler> delegate, EventDispatchChain.P2<Packet, PacketContext, ?> dispatcher) {
+	public ThreadPacketHandler(AtomicReference<PacketHandler> delegate, EventDispatchChain.P2<Packet, PacketContext, ?> dispatcher) {
 		this(delegate, dispatcher, Integer.MAX_VALUE);
 	}
 	
 	/**
-	 * Creates a new {@link PacketThreadReceiver} instance.<br>
+	 * Creates a new {@link ThreadPacketHandler} instance.<br>
 	 * Creating this instance will cause a new daemon {@link Thread} to start.
 	 * @param delegate A reference to the {@link PacketHandler} that should receive all packets on one thread. May be updated at any time.
 	 * @param rejectHandler The handler created by {@link EventDispatcher#postTask(EventAccessor)} that handles rejected packets
 	 * @param maxQueueSize The maximum size for the queue that holds unprocessed packets
 	 */
-	public PacketThreadReceiver(AtomicReference<PacketHandler> delegate,
+	public ThreadPacketHandler(AtomicReference<PacketHandler> delegate,
 			EventDispatchChain.P2<Packet, PacketContext, ?> dispatcher, int maxQueueSize) {
 		this.rejectedDispatcher = dispatcher;
 		this.delegate = delegate;
