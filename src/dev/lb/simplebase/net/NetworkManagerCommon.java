@@ -8,6 +8,7 @@ import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.config.CommonConfig;
 import dev.lb.simplebase.net.event.EventAccessor;
+import dev.lb.simplebase.net.event.EventDispatchChain;
 import dev.lb.simplebase.net.event.EventDispatcher;
 import dev.lb.simplebase.net.events.ConnectionCheckEvent;
 import dev.lb.simplebase.net.events.ConnectionClosedEvent;
@@ -99,7 +100,7 @@ public abstract class NetworkManagerCommon {
 		
 		this.local = local;
 		this.config = config; //It is now locked and can't be changed, so it can be stored
-		MappingContainer = new PacketIDMappingContainerImpl();
+		MappingContainer = new PacketIDMappingProviderImpl();
 		ConnectionClosed = new EventAccessor<>(ConnectionClosedEvent.class);
 		PacketSendingFailed = new EventAccessor<>(PacketFailedEvent.class);
 		PacketReceiveRejected = new EventAccessor<>(PacketRejectedEvent.class);
@@ -109,7 +110,9 @@ public abstract class NetworkManagerCommon {
 		dispatcher = new EventDispatcher(this);
 		singleThreadHandler = new AtomicReference<>(new EmptyPacketHandler());
 		if(config.getUseManagedThread()) {
-			multiThreadHandler = new PacketThreadReceiver(singleThreadHandler, dispatcher, PacketReceiveRejected);
+			multiThreadHandler = new PacketThreadReceiver(singleThreadHandler, 
+					EventDispatchChain.P2(dispatcher, PacketReceiveRejected, 
+					(packet, context) -> new PacketRejectedEvent(context.getRemoteID(), packet.getClass())));
 			managedThread = Optional.of(multiThreadHandler.getOutputThread());
 		} else {
 			multiThreadHandler = null;

@@ -13,7 +13,13 @@ import dev.lb.simplebase.net.util.ThreadsafeIterable;
  * All add/find operations are threadsafe. 
  */
 @Threadsafe
-public interface PacketIDMappingProvider extends ThreadsafeIterable<PacketIDMappingProvider, PacketIDMapping> {
+public interface PacketIDMappingProvider {
+	
+	/**
+	 * Creates an object that allows threadsafe access to the mapping list.
+	 * @return A {@link ThreadsafeIterable} for this provider
+	 */
+	public ThreadsafeIterable<PacketIDMappingProvider, PacketIDMapping> threadsafe();
 	
 	/**
 	 * Adds a {@link PacketIDMapping} to the collection.
@@ -43,18 +49,6 @@ public interface PacketIDMappingProvider extends ThreadsafeIterable<PacketIDMapp
 	 * @throws IllegalArgumentException If a mapping with the same ID or Class as one those to add already exists in this set and the implementation does not allow duplicate elements
 	 */
 	public void addMappings(Iterable<PacketIDMapping> otherContainer); 
-	
-	/**
-	 * Adds several {@link PacketIDMapping} to the collection while ensuring thread safety of the source.<br>
-	 * If the method exits with an exception, some of the mappings may have been inserted while others have not.<br>
-	 * Iteration over the {@link Iterable} will only take place while the lock is held by this thread.
-	 * Thread safety of this object is guaranteed.
-	 * @param otherContainer The mappings to add
-	 * @param containerLock An external {@link Lock} to synchronize on the source iterable
-	 * @throws NullPointerException If one of the mappings is null and the implementation does not allow null elements
-	 * @throws IllegalArgumentException If a mapping with the same ID or Class as one those to add already exists in this set and the implementation does not allow duplicate elements
-	 */
-	public void addMappings(Iterable<PacketIDMapping> otherContainer, Lock containerLock); 
 	
 	/**
 	 * Adds all mappings that are defined as enum constants in that class.<br>
