@@ -11,7 +11,7 @@ import java.util.Objects;
  */
 public class PrintStreamLogger extends FormattableLogger {
 
-	private final PrintStream stream;
+	private volatile PrintStream stream;
 	
 	protected PrintStreamLogger(AbstractLogLevel cutoff, boolean supportsLevelChange, BasicFormatter prefix, Formatter formatter, PrintStream stream) {
 		super(cutoff, supportsLevelChange, prefix, formatter);
@@ -22,6 +22,10 @@ public class PrintStreamLogger extends FormattableLogger {
 	@Override
 	protected void postLogMessage(CharSequence prefix, CharSequence message) {
 		stream.println(prefix.toString() + " " + message.toString());
+	}
+	
+	public synchronized void setPrintStream(PrintStream stream) {
+		this.stream = stream;
 	}
 
 }

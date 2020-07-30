@@ -13,7 +13,7 @@ import dev.lb.simplebase.net.id.NetworkID;
 @Internal
 class InternalServerManager {
 
-	private static final Map<NetworkID, NetworkManagerServer> serverList = new HashMap<>();
+	protected static final Map<NetworkID, NetworkManagerServer> serverList = new HashMap<>();
 	
 	protected static synchronized LocalPeerNetworkConnection createServerPeer(LocalPeerNetworkConnection source) {
 		final NetworkManagerServer server = serverList.get(source.getRemoteID());

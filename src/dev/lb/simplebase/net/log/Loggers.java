@@ -28,7 +28,7 @@ public class Loggers {
 	 * @param minimumLevel The minimal logging level that a message needs to be logged
 	 * @return The logger for this print stream
 	 */
-	public static FormattableLogger printStream(PrintStream stream, AbstractLogLevel minimumLevel) {
+	public static PrintStreamLogger printStream(PrintStream stream, AbstractLogLevel minimumLevel) {
 		return printStream(stream, minimumLevel, Formatter.getEmpty(), Formatter.getDefault());
 	}
 	
@@ -39,7 +39,7 @@ public class Loggers {
 	 * @param formatter The {@link Formatter} used to generate the log output
 	 * @return The logger for this print stream
 	 */
-	public static FormattableLogger printStream(PrintStream stream, AbstractLogLevel minimumLevel, BasicFormatter prefix, Formatter formatter) {
+	public static PrintStreamLogger printStream(PrintStream stream, AbstractLogLevel minimumLevel, BasicFormatter prefix, Formatter formatter) {
 		Objects.requireNonNull(stream, "'stream' parameter must not be null");
 		Objects.requireNonNull(minimumLevel, "'minimumLevel' parameter must not be null");
 		Objects.requireNonNull(formatter, "'formatter' parameter must not be null");
@@ -51,7 +51,7 @@ public class Loggers {
 	 * @param minimumLevel The minimal logging level that a message needs to be logged
 	 * @return The logger for this print stream
 	 */
-	public static FormattableLogger printSysOut(AbstractLogLevel minimumLevel) {
+	public static PrintStreamLogger printSysOut(AbstractLogLevel minimumLevel) {
 		return printSysOut(minimumLevel, Formatter.getEmpty(), Formatter.getDefault());
 	}
 	
@@ -61,7 +61,7 @@ public class Loggers {
 	 * @param formatter The {@link Formatter} used to generate the log output
 	 * @return The logger for this print stream
 	 */
-	public static FormattableLogger printSysOut(AbstractLogLevel minimumLevel, BasicFormatter prefix, Formatter formatter) {
+	public static PrintStreamLogger printSysOut(AbstractLogLevel minimumLevel, BasicFormatter prefix, Formatter formatter) {
 		Objects.requireNonNull(minimumLevel, "'minimumLevel' parameter must not be null");
 		Objects.requireNonNull(formatter, "'formatter' parameter must not be null");
 		return new PrintStreamLogger(minimumLevel, true, prefix, formatter, System.out);
