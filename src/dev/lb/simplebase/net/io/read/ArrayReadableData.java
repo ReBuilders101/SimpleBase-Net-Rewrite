@@ -1,7 +1,7 @@
-package lb.simplebase.net.io.read;
+package dev.lb.simplebase.net.io.read;
 
 import dev.lb.simplebase.net.annotation.Internal;
-import lb.simplebase.net.io.ReadableByteData;
+import dev.lb.simplebase.net.io.ReadableByteData;
 
 /**
  * Implementation of {@link ReadableByteData}, internally used to deserialize packets

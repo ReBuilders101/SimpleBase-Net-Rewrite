@@ -1,4 +1,4 @@
-package lb.simplebase.net.io;
+package dev.lb.simplebase.net.io;
 
 import java.io.IOException;
 import java.io.InputStream;

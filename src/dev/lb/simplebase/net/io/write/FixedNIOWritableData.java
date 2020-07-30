@@ -1,9 +1,9 @@
-package lb.simplebase.net.io.write;
+package dev.lb.simplebase.net.io.write;
 
 import java.nio.ByteBuffer;
 
 import dev.lb.simplebase.net.annotation.Internal;
-import lb.simplebase.net.io.WritableByteData;
+import dev.lb.simplebase.net.io.WritableByteData;
 
 /**
  * Implementation of {@link WritableByteData}, internally used to serialize packets
