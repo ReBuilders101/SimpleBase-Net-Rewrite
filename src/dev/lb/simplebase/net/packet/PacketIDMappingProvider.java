@@ -25,9 +25,11 @@ public class PacketIDMappingProvider {
 
 	protected PacketIDMappingProvider() {
 		mappings = new HashSet<>(); //Will be manually synchronized
+		threadsafe = new Threadsafe();
 	}
 	
 	private final Set<PacketIDMapping> mappings;
+	private final Threadsafe threadsafe;
 	private class Threadsafe implements ThreadsafeIterable<PacketIDMappingProvider, PacketIDMapping> {
 
 		@Override
@@ -87,7 +89,7 @@ public class PacketIDMappingProvider {
 	 * @return A {@link ThreadsafeIterable} for this provider
 	 */
 	public ThreadsafeIterable<PacketIDMappingProvider, PacketIDMapping> threadsafe() {
-		return new Threadsafe();
+		return threadsafe;
 	}
 	
 	/**
