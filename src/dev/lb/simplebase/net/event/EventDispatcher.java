@@ -2,11 +2,11 @@ package dev.lb.simplebase.net.event;
 
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.log.AbstractLogger;
-import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 
 /**
  * An {@link EventDispatcher} posts events to their handlers (stored as {@link EventAccessor}s).
@@ -16,14 +16,14 @@ import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 public class EventDispatcher {
 	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("event-system");
 	
-	private final NetworkManagerCommon manager;
+	private final Supplier<String> sourceDescription;
 	
 	/**
 	 * Creates a new {@link EventDispatcher}.
-	 * @param manager The network manager that generates the posted events
+	 * @param sourceDescription The network manager that generates the posted events
 	 */
-	public EventDispatcher(NetworkManagerCommon manager) {
-		this.manager = manager;
+	public EventDispatcher(Supplier<String> sourceDescription) {
+		this.sourceDescription = sourceDescription;
 	}
 	
 	/**
@@ -40,7 +40,7 @@ public class EventDispatcher {
 		Objects.requireNonNull(handler, "'handler' parameter must not be null");
 		Objects.requireNonNull(event, "'event' parameter must not be null");
 		LOGGER.debug("Posted event (" + handler.getEventClass() + ") to " +
-				handler.getHandlerCount() + " handlers for " + manager.getLocalID().getDescription());
+				handler.getHandlerCount() + " handlers for " + sourceDescription.get());
 		handler.post(event);
 		return event.isCancelled();
 	}

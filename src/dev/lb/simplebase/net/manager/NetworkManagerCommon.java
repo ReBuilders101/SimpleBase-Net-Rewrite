@@ -106,7 +106,7 @@ public abstract class NetworkManagerCommon {
 		ConnectionCheckSuccess = new EventAccessor<>(ConnectionCheckSuccessEvent.class);
 		UnknownConnectionlessPacket = new EventAccessor<>(UnknownConnectionlessPacketEvent.class);
 		
-		dispatcher = new EventDispatcher(this);
+		dispatcher = new EventDispatcher(() -> getLocalID().getDescription());
 		singleThreadHandler = new AtomicReference<>(new EmptyPacketHandler());
 		if(config.getUseManagedThread()) {
 			multiThreadHandler = new ThreadPacketHandler(singleThreadHandler, 
