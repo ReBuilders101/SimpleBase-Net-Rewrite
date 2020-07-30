@@ -1,5 +1,8 @@
 package dev.lb.simplebase.net.io.write;
 
+import dev.lb.simplebase.net.annotation.Internal;
+
+@Internal
 public class DynamicArrayWritableData implements WritableArrayData {
 
 	private byte[] data;
