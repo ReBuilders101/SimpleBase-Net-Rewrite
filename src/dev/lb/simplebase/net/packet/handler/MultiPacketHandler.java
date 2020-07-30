@@ -27,10 +27,15 @@ public final class MultiPacketHandler implements PacketHandler {
 	private final ReadWriteLock lockHandlers;
 	private final List<PacketHandler> handlers;	
 	
+	private final Threadsafe readThreadsafe;
+	private final Threadsafe writeThreadsafe;
+	
 	public MultiPacketHandler() {
 		//List dynamically expands, only used operations are add and iterate, so LinkedList is good
 		handlers = new LinkedList<>();
 		lockHandlers = new ReentrantReadWriteLock();
+		readThreadsafe  = new Threadsafe(lockHandlers.readLock());
+		writeThreadsafe = new Threadsafe(lockHandlers.writeLock());
 	}
 	
 	/**
@@ -61,11 +66,11 @@ public final class MultiPacketHandler implements PacketHandler {
 	}
 
 	public ThreadsafeIterable<MultiPacketHandler, PacketHandler> exclusiveThreadsafe() {
-		return new Threadsafe(lockHandlers.writeLock());
+		return writeThreadsafe;
 	}
 	
 	public ThreadsafeIterable<MultiPacketHandler, PacketHandler> readOnlyThreadsafe() {
-		return new Threadsafe(lockHandlers.readLock());
+		return readThreadsafe;
 	}
 	
 	private final class Threadsafe implements ThreadsafeIterable<MultiPacketHandler, PacketHandler> {

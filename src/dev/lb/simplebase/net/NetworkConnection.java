@@ -345,9 +345,9 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 		}
 	}
 	
-	protected abstract void receiveConnectionCheck(int uuid);
+	public abstract void receiveConnectionCheck(int uuid);
 	
-	protected void receiveConnectionCheckReply(int uuid) {
+	public void receiveConnectionCheckReply(int uuid) {
 		synchronized (lockCurrentState) {
 			synchronized (lockPing) { //Dealing with the ping
 				if(pingCurrentUUID != uuid) {
@@ -388,7 +388,7 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	 */
 	protected abstract void closeTimeoutImpl();
 	
-	protected abstract void receiveUDPLogout();
+	public abstract void receiveUDPLogout();
 	
 	/**
 	 * {@link NetworkConnection}s are always client-to-server connection. This flag indicates which side of
