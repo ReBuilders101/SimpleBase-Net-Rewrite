@@ -23,7 +23,7 @@ public final class NetworkPacketFormats {
 	 */
 	private static final int PACKET_UUID = ByteDataHelper.cInt(new byte[] {'P', 'A', 'C', 'K'});
 	public static final NetworkPacketFormat<ConnectionAdapter, PacketIDMappingProvider, Packet> PACKET = 
-			new NetworkPacketFormat1Packet<>(PACKET_UUID, ConnectionAdapter::receivePacket);
+			new NetworkPacketFormat1Packet<>(PACKET_UUID, "Packet", ConnectionAdapter::receivePacket);
 	
 	
 	/**
@@ -32,7 +32,7 @@ public final class NetworkPacketFormats {
 	 */
 	private static final int CHECK_UUID = ByteDataHelper.cInt(new byte[] {'C', 'H', 'C', 'K'});
 	public static final NetworkPacketFormat<ConnectionAdapter, Object, Integer> CHECK =
-			new NetworkPacketFormat4Bytes<>(CHECK_UUID, ConnectionAdapter::receiveCheck);
+			new NetworkPacketFormat4Bytes<>(CHECK_UUID, "Check", ConnectionAdapter::receiveCheck);
 
 	
 	/**
@@ -41,18 +41,18 @@ public final class NetworkPacketFormats {
 	 */
 	private static final int CHECKREPLY_UUID = ByteDataHelper.cInt(new byte[] {'C', 'H', 'R', 'P'});
 	public static final NetworkPacketFormat<ConnectionAdapter, Object, Integer> CHECKREPLY = 
-			new NetworkPacketFormat4Bytes<>(CHECKREPLY_UUID, ConnectionAdapter::receiveCheckReply);
+			new NetworkPacketFormat4Bytes<>(CHECKREPLY_UUID, "Check-Reply", ConnectionAdapter::receiveCheckReply);
 
 	
 	
 	private static final int LOGIN_UUID = ByteDataHelper.cInt(new byte[] {'H', 'E', 'L', 'O'});
 	public static final NetworkPacketFormat<ConnectionAdapter, Object, Object> LOGIN =
-			new NetworkPacketFormatEmpty<>(LOGIN_UUID, ConnectionAdapter::receiveUdpLogin);
+			new NetworkPacketFormatEmpty<>(LOGIN_UUID, "UDP-Login", ConnectionAdapter::receiveUdpLogin);
 
 	
 	private static final int LOGOUT_UUID = ByteDataHelper.cInt(new byte[] {'B', 'Y', 'E', 'X'});
 	public static final NetworkPacketFormat<ConnectionAdapter, Object, Object> LOGOUT =
-			new NetworkPacketFormatEmpty<>(LOGOUT_UUID, ConnectionAdapter::receiveUdpLogout);
+			new NetworkPacketFormatEmpty<>(LOGOUT_UUID, "UDP-Logout", ConnectionAdapter::receiveUdpLogout);
 	
 	
 	

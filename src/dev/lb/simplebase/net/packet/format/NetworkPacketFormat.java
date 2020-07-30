@@ -11,9 +11,20 @@ import java.nio.ByteBuffer;
 public abstract class NetworkPacketFormat<Connection, DecodeContext, Data> {	
 	
 	private final int uuid;
+	private final String name;
 	
-	protected NetworkPacketFormat(int uuid) {
+	protected NetworkPacketFormat(int uuid, String name) {
 		this.uuid = uuid;
+		this.name = name;
+	}
+	
+	/**
+	 * The name of this format. Should be short and descriptive, but 
+	 * is not required to be unique
+	 * @return The name of this format
+	 */
+	public String getName() {
+		return name;
 	}
 	
 	/**

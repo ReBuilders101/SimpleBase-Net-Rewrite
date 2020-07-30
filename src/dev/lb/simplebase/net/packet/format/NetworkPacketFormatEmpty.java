@@ -8,8 +8,8 @@ import dev.lb.simplebase.net.annotation.Internal;
 @Internal
 class NetworkPacketFormatEmpty<Connection> extends NetworkPacketFormat<Connection, Object, Object> {
 
-	protected NetworkPacketFormatEmpty(int uuid, Consumer<Connection> consumer) {
-		super(uuid);
+	protected NetworkPacketFormatEmpty(int uuid, String name, Consumer<Connection> consumer) {
+		super(uuid, name);
 		this.consumer = consumer;
 	}
 

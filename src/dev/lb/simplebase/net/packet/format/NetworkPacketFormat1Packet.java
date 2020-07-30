@@ -19,8 +19,8 @@ class NetworkPacketFormat1Packet<Connection> extends NetworkPacketFormat<Connect
 
 	private final BiConsumer<Connection, Packet> consumer;
 	
-	protected NetworkPacketFormat1Packet(int uuid, BiConsumer<Connection, Packet> consumer) {
-		super(uuid);
+	protected NetworkPacketFormat1Packet(int uuid, String name, BiConsumer<Connection, Packet> consumer) {
+		super(uuid, name);
 		this.consumer = consumer;
 	}
 

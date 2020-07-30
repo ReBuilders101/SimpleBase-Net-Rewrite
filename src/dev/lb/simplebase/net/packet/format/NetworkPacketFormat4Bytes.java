@@ -11,8 +11,8 @@ class NetworkPacketFormat4Bytes<Connection> extends NetworkPacketFormat<Connecti
 
 	private final ObjIntConsumer<Connection> consumer;
 	
-	protected NetworkPacketFormat4Bytes(int uuid, ObjIntConsumer<Connection> consumer) {
-		super(uuid);
+	protected NetworkPacketFormat4Bytes(int uuid, String name, ObjIntConsumer<Connection> consumer) {
+		super(uuid, name);
 		this.consumer = consumer;
 	}
 
