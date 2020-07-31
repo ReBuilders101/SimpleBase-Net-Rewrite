@@ -29,8 +29,6 @@ public abstract class NetworkConnection {
 	protected static final AbstractLogger SEND_LOGGER = NetworkManager.getModuleLogger("connection-send");
 	protected static final AbstractLogger STATE_LOGGER = NetworkManager.getModuleLogger("connection-state");
 	
-	public static final AtomicInteger GLOBAL_CHECK_UUID = new AtomicInteger(0);
-	
 	//Sync/state
 	protected NetworkConnectionState currentState;
 	protected final Object lockCurrentState;

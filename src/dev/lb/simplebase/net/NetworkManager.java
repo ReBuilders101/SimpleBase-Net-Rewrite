@@ -111,8 +111,8 @@ public final class NetworkManager {
 	
 	//UTILITIES ################################################################################
 	
-	public static Stream<NetworkID> getInternalServers() {
-		return InternalServerManager.serverList.keySet().stream();
+	public static Stream<NetworkManagerServer> getInternalServers() {
+		return InternalServerManager.getInternalServers();
 	}
 	
 	/**
@@ -171,7 +171,7 @@ public final class NetworkManager {
 		}
 		
 		public InternalNetworkConnection createInternalConnectionPeer(InternalNetworkConnection request) {
-			InternalServerManager.createServerPeer(request);
+			return InternalServerManager.createServerPeer(request);
 		};
 	}
 }

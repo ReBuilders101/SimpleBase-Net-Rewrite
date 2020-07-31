@@ -31,8 +31,10 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon implemen
 	/**
 	 * The {@link ConfigureConnectionEvent} will be posted when a new connection has been accepted by the server.<br>
 	 * Can be used to set the connection's custom object
+	 * <p>
+	 * If cancelled, the connection will not be created
 	 */
-	public final EventAccessor<ConfigureConnectionEvent> ConfigureNewConnection = new EventAccessor<>(ConfigureConnectionEvent.class);
+	public final EventAccessor<ConfigureConnectionEvent> ConfigureConnection = new EventAccessor<>(ConfigureConnectionEvent.class);
 	
 	protected NetworkManagerServer(NetworkID local, ServerConfig config) {
 		super(local, config);
@@ -239,7 +241,7 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon implemen
 			PacketSendingFailed,
 			PacketReceiveRejected,
 			UnknownConnectionlessPacket,
-			ConfigureNewConnection
+			ConfigureConnection
 		};
 	}
 

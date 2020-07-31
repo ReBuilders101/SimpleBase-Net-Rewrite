@@ -2,39 +2,47 @@ package dev.lb.simplebase.net;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import dev.lb.simplebase.net.annotation.Internal;
+import dev.lb.simplebase.net.connection.InternalNetworkConnection;
 import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
 import dev.lb.simplebase.net.id.NetworkID;
+import dev.lb.simplebase.net.log.AbstractLogger;
 
 /**
  * Lists all available internal servers
  */
 @Internal
 class InternalServerManager {
-
-	protected static final Map<NetworkID, NetworkManagerServer> serverList = new HashMap<>();
+	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("internal-servers");
 	
-	protected static synchronized LocalPeerNetworkConnection createServerPeer(LocalPeerNetworkConnection source) {
+	private static final Map<NetworkID, NetworkManagerServer> serverList = new HashMap<>();
+	
+	protected static synchronized InternalNetworkConnection createServerPeer(InternalNetworkConnection source) {
 		final NetworkManagerServer server = serverList.get(source.getRemoteID());
 		if(server == null) return null;
 		//TODO post events
-		final LocalPeerNetworkConnection peer = new LocalPeerNetworkConnection(server.getLocalID(), source.getLocalID(),
-				server, server.getConfig().getConnectionCheckTimeout(), true, null, source); //TODO custom object -> ConnectEvent
-		server.getEventDispatcher().post(server.ConfigureNewConnection, new ConfigureConnectionEvent());
+		final ConfigureConnectionEvent event = new ConfigureConnectionEvent(server, source.getLocalID());
+		server.getEventDispatcher().post(server.ConfigureConnection, event);
+		if(event.isCancelled()) return null;
+		
+		final InternalNetworkConnection peer = new InternalNetworkConnection(server, source,
+				server.getConfig().getConnectionCheckTimeout(), true, event.getCustomObject());
+		
 		server.addInitializedConnection(peer);
-		NetworkManager.NET_LOG.info("Created local peer connection between %s and %s", source.getLocalID(), source.getRemoteID());
+		LOGGER.info("Created local peer connection between %s and %s", source.getLocalID(), source.getRemoteID());
 		return peer;
 	}
 	
 	protected static synchronized boolean register(NetworkManagerServer server) {
 		final NetworkID serverId = server.getLocalID();
 		if(serverList.containsKey(serverId)) {
-			NetworkManager.NET_LOG.warning("Cannot register an internal server for the same local ID twice");
+			LOGGER.warning("Cannot register an internal server for the same local ID twice");
 			return false;
 		} else {
 			serverList.put(serverId, server);
-			NetworkManager.NET_LOG.info("Registered internal server for local ID %s", serverId);
+			LOGGER.info("Registered internal server for local ID %s", serverId);
 			return true;
 		}
 	}
@@ -43,12 +51,15 @@ class InternalServerManager {
 		final NetworkID serverId = server.getLocalID();
 		if(serverList.containsKey(serverId)) {
 			serverList.remove(serverId);
-			NetworkManager.NET_LOG.info("Unregistered internal server for loacl ID %s", serverId);
+			LOGGER.info("Unregistered internal server for loacl ID %s", serverId);
 			return true;
 		} else {
-			NetworkManager.NET_LOG.warning("Cannot unregister an internal server that is not in the local server list");
+			LOGGER.warning("Cannot unregister an internal server that is not in the local server list");
 			return false;
 		}
 	}
 	
+	protected static synchronized Stream<NetworkManagerServer> getInternalServers() {
+		return serverList.values().stream();
+	}
 }
