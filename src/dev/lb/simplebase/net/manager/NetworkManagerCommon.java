@@ -4,15 +4,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-import dev.lb.simplebase.net.NetworkConnection;
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.config.CommonConfig;
+import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.event.EventAccessor;
 import dev.lb.simplebase.net.event.EventDispatchChain;
 import dev.lb.simplebase.net.event.EventDispatcher;
-import dev.lb.simplebase.net.events.ConnectionCheckSuccessEvent;
 import dev.lb.simplebase.net.events.ConnectionClosedEvent;
 import dev.lb.simplebase.net.events.PacketSendingFailedEvent;
 import dev.lb.simplebase.net.events.PacketReceiveRejectedEvent;
@@ -62,13 +61,6 @@ public abstract class NetworkManagerCommon {
 	public final EventAccessor<PacketReceiveRejectedEvent> PacketReceiveRejected;
 	
 	/**
-	 * The {@link ConnectionCheckSuccessEvent} will be posted when a {@link NetworkConnection} remote
-	 * partner confirms that the connection is still alive. If the connection was closed from this
-	 * side before the reply from the remote side was received, the event will be pre-cancelled.
-	 */
-	public final EventAccessor<ConnectionCheckSuccessEvent> ConnectionCheckSuccess;
-	
-	/**
 	 * The {@link UnknownConnectionlessPacketEvent} will be posted when a packet over a UDP connection
 	 * or a similar protocol that doesn't maintain a stable connection was received from a source
 	 * that didn't register with a login packet before
@@ -103,7 +95,6 @@ public abstract class NetworkManagerCommon {
 		ConnectionClosed = new EventAccessor<>(ConnectionClosedEvent.class);
 		PacketSendingFailed = new EventAccessor<>(PacketSendingFailedEvent.class);
 		PacketReceiveRejected = new EventAccessor<>(PacketReceiveRejectedEvent.class);
-		ConnectionCheckSuccess = new EventAccessor<>(ConnectionCheckSuccessEvent.class);
 		UnknownConnectionlessPacket = new EventAccessor<>(UnknownConnectionlessPacketEvent.class);
 		
 		dispatcher = new EventDispatcher(() -> getLocalID().getDescription());
@@ -181,9 +172,13 @@ public abstract class NetworkManagerCommon {
 	}
 	
 	/**
-	 * Push a packet received by a connection to this manager
+	 * <b>Internal.</b> Use {@link NetworkConnection#receivePacket(Packet)}
+	 * to simulate a received packet instead.<p>
+	 * Push a packet received by a connection to this manager.
+	 * The manager can accept packets on any thread and will handle it correctly.
 	 */
-	protected void receivePacketOnConnectionThread(Packet packet, PacketContext context) {
+	@Internal
+	public void receivePacketOnConnectionThread(Packet packet, PacketContext context) {
 		if(managedThread.isPresent()) {
 			multiThreadHandler.handlePacket(packet, context);
 		} else {
@@ -201,17 +196,19 @@ public abstract class NetworkManagerCommon {
 	protected abstract PacketContext getConnectionlessPacketContext(NetworkID source);
 	
 	/**
+	 * <b>Internal only.</b> Using this can leave connections in a broken state where 
+	 * handler threads might not be closed.
 	 * Removes the connection with the proper synchronization, without causing any other
 	 * side effects like closing the connection or posting an event to the dispatcher
 	 */
 	@Internal
-	protected abstract void removeConnectionSilently(NetworkConnection connection);
+	public	abstract void removeConnectionSilently(NetworkConnection connection);
 	
 	/**
 	 * The event dispatcher. Only API-internal code may post events
 	 */
 	@Internal
-	protected EventDispatcher getEventDispatcher() {
+	public EventDispatcher getEventDispatcher() {
 		return dispatcher;
 	}
 	
@@ -242,6 +239,10 @@ public abstract class NetworkManagerCommon {
 		NetworkManager.InternalAccess.INSTANCE.unregisterManagerForConnectionStatusCheck(this);
 	}
 	
-	@Internal
-	protected abstract void onCheckConnectionStatus();
+	/**
+	 * Updates the status of all connections in this manager. Pings the remote partner and removes the connection if
+	 * the partner does not respond
+	 */
+	public abstract void updateConnectionStatus();
+	
 }

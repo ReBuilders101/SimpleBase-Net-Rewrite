@@ -10,6 +10,7 @@ import java.util.function.Function;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.config.ServerConfig;
+import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.event.EventAccessor;
 import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
@@ -222,7 +223,7 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon implemen
 		try {
 			lockConnections.readLock().lock();
 			for(NetworkConnection con : connections.values()) {
-				con.updateCheckTimeout();
+				con.updateConnectionStatus();
 			}
 		} finally {
 			lockConnections.readLock().unlock();

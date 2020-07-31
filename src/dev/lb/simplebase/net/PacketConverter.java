@@ -2,6 +2,7 @@ package dev.lb.simplebase.net;
 
 import java.nio.ByteBuffer;
 import dev.lb.simplebase.net.annotation.Internal;
+import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.io.ByteDataHelper;
 import dev.lb.simplebase.net.io.ReadableByteData;
 import dev.lb.simplebase.net.io.read.NIOReadableData;

@@ -1,6 +1,6 @@
 package dev.lb.simplebase.net.packet;
 
-import dev.lb.simplebase.net.NetworkConnection;
+import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.id.NetworkID;
 
 /**

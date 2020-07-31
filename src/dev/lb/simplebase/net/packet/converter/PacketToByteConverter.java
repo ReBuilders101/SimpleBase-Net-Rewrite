@@ -47,4 +47,10 @@ public final class PacketToByteConverter {
 		}
 	}
 	
+	
+	/**
+	 * This is stored here because you can't have a private/package static member in interfaces (WHY?)<br>
+	 * Belongs to {@link TcpConnectionAdapter}.
+	 */
+	static final AbstractLogger CONNECTION_LOGGER = NetworkManager.getModuleLogger("connection-receive");
 }

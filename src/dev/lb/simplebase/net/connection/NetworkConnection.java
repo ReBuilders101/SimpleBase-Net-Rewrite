@@ -1,18 +1,21 @@
-package dev.lb.simplebase.net;
+package dev.lb.simplebase.net.connection;
 
+import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import dev.lb.simplebase.net.NetworkConnectionState;
+import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.config.CommonConfig;
-import dev.lb.simplebase.net.events.ConnectionCheckSuccessEvent;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.events.ConnectionClosedEvent;
 import dev.lb.simplebase.net.events.PacketSendingFailedEvent;
 import dev.lb.simplebase.net.id.NetworkID;
+import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
@@ -23,47 +26,41 @@ import dev.lb.simplebase.net.util.ThreadsafeAction;
  * It can handle opening, closing and checking the status.
  */
 @Threadsafe
-public abstract class NetworkConnection implements ThreadsafeAction<NetworkConnection> {
-
+public abstract class NetworkConnection {
+	protected static final AbstractLogger RECEIVE_LOGGER = NetworkManager.getModuleLogger("connection-receive");
+	protected static final AbstractLogger SEND_LOGGER = NetworkManager.getModuleLogger("connection-send");
+	protected static final AbstractLogger STATE_LOGGER = NetworkManager.getModuleLogger("connection-state");
+	
 	public static final AtomicInteger GLOBAL_CHECK_UUID = new AtomicInteger(0);
 	
+	//Sync/state
 	protected NetworkConnectionState currentState;
 	protected final Object lockCurrentState;
-	
-	private long pingStartTime;
-	private int pingLastValue;
-	private int pingCurrentUUID;
-	private final Object lockPing;
-	
-	private final Context packetContext;
-	private final NetworkManagerCommon networkManager;
-	private final PacketConverter converter;
-	private final NetworkID localID;
-	private final NetworkID remoteID;
-	private final int checkTimeoutMS;
+	//Components
+	protected final PingTracker pingTracker;
+	protected final PacketContext packetContext;
+	protected final Threadsafe threadsafeState;
+	//Values
+	protected final NetworkManagerCommon networkManager;
+	protected final NetworkID remoteID;
 	private final boolean isServerSide;
 	
-	protected NetworkConnection(NetworkID localID, NetworkID remoteID, NetworkManagerCommon networkManager,
+	protected NetworkConnection(NetworkManagerCommon networkManager, NetworkID remoteID,
 			NetworkConnectionState initialState, int checkTimeoutMS, boolean serverSide, Object customObject) {
-		Objects.requireNonNull(localID, "'localID' parameter must not be null");
 		Objects.requireNonNull(remoteID, "'remoteID' parameter must not be null");
 		Objects.requireNonNull(networkManager, "'networkManager' parameter must not be null");
 		Objects.requireNonNull(initialState, "'initialState' parameter must not be null");
 		
-		this.localID = localID;
-		this.remoteID = remoteID;
 		this.networkManager = networkManager;
-		this.packetContext = new Context(customObject);
-		this.checkTimeoutMS = checkTimeoutMS;
+		this.remoteID = remoteID;
 		this.isServerSide = serverSide;
+		
+		this.packetContext = new Context(customObject);
+		this.pingTracker = new PingTracker(checkTimeoutMS);
+		this.threadsafeState = new Threadsafe();
+		
 		this.currentState = initialState;
 		this.lockCurrentState = new Object();
-		this.converter = new PacketConverter(networkManager, this);
-		
-		this.pingLastValue = -1;
-		this.pingStartTime = -1;
-		this.pingCurrentUUID = -1;
-		this.lockPing = new Object();
 	}
 	
 	/**
@@ -84,11 +81,11 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	public boolean openConnection() {
 		synchronized (lockCurrentState) {
 			if(currentState.canOpenConnection()) {
-				NetworkManager.NET_LOG.info("Attempting to open connection from %s to %s (At state %s)", localID, remoteID, currentState);
+				STATE_LOGGER.debug("Attempting to open connection from %s to %s (At state %s)", getLocalID(), remoteID, currentState);
 				openConnectionImpl();
 				return true;
 			} else {
-				NetworkManager.NET_LOG.warning("Cannot open a connection that is in state " + currentState);
+				STATE_LOGGER.info("Cannot open a connection that is in state %s", currentState);
 				return false;
 			}
 		}
@@ -126,9 +123,10 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	protected boolean closeConnection(ConnectionCloseReason reason) {
 		synchronized (lockCurrentState) {
 			if(currentState.hasBeenClosed()) {
+				STATE_LOGGER.debug("Cannot close a connection that is in state %s", currentState);
 				return false;
 			} else {
-				NetworkManager.NET_LOG.info("Attempting to close connection from %s to %s (At state %s)", localID, remoteID, currentState);
+				STATE_LOGGER.debug("Attempting to close connection from %s to %s (At state %s)", getLocalID(), remoteID, currentState);
 				closeConnectionImpl(reason);
 				return true;
 			}
@@ -161,17 +159,15 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	public boolean checkConnection() {
 		synchronized (lockCurrentState) {
 			if(currentState == NetworkConnectionState.OPEN) {
-				synchronized (lockPing) { //We edit the ping here
-					currentState = NetworkConnectionState.CHECKING;
-					int uuid = GLOBAL_CHECK_UUID.getAndIncrement();
-					if(pingCurrentUUID != -1 || pingStartTime != -1) NetworkManager.NET_LOG.info("Initialized check request while previous was unsanswered");
-					pingCurrentUUID = uuid;
-					pingStartTime = System.currentTimeMillis();
-					NetworkManager.NET_LOG.info("Attempting to check connection from %s to %s (At state %s)", localID, remoteID, currentState);
-					checkConnectionImpl(uuid);
-				}
+					final int pingId = pingTracker.initiatePing();
+					STATE_LOGGER.debug("Attempting to check connection from %s to %s (At state %s)", getLocalID(), remoteID, currentState);
+					if(pingId < 0 || !checkConnectionImpl(pingId)) {
+						SEND_LOGGER.warning("Connection check failed to send");
+						pingTracker.cancelPing(pingId);
+					}
 				return true;
 			} else {
+				STATE_LOGGER.info("Cannot check connection at state %s", currentState);
 				return false;
 			}
  		}
@@ -180,7 +176,7 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	/**
 	 * Will be called when checking. State is already checked and synced.
 	 */
-	protected abstract void checkConnectionImpl(int uuid);
+	protected abstract boolean checkConnectionImpl(int uuid);
 
 	/**
 	 * The time (in ms) after which no response from the remote side
@@ -193,47 +189,12 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	 * @return The timeout in {@code ms} until a connection is considered disconnected
 	 */
 	public int getCheckTimeout() {
-		return checkTimeoutMS;
+		return pingTracker.timeoutMs;
 	}
 	
-	/**
-	 * Ensures that the state of the connection is not altered while the {@link Consumer}
-	 * is running.<p>
-	 * In some cases, the actual state is changed by external effects, such as a remote partner
-	 * closing the connection. In those cases, The value of the state variable will only be
-	 * updated <b>after</b> this method completes. Because of this, the state variable is
-	 * never guaranteed to exactly correspond to the undelying network object's state.<br>
-	 * These cases are relatively rare, and it is safe to assume that the current state is the actual one.
-	 * <p>
-	 * <i>Original method documentation:</i><br>
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void action(Consumer<NetworkConnection> action) {
-		synchronized (lockCurrentState) {
-			action.accept(this);
-		}
-	}
-
-	/**
-	 * Ensures that the state of the connection is not altered while the {@link Function}
-	 * is running, returning the function's result.<p>
-	 * In some cases, the actual state is changed by external effects, such as a remote partner
-	 * closing the connection. In those cases, The value of the state variable will only be
-	 * updated <b>after</b> this method completes. Because of this, the state variable is
-	 * never guaranteed to exactly correspond to the undelying network object's state.<br>
-	 * These cases are relatively rare, and it is safe to assume that the current state is the actual one.
-	 * <p>
-	 * <i>Original method documentation:</i><br>
-	 * {@inheritDoc}
-	 */
-	@Override
-	public <R> R actionReturn(Function<NetworkConnection, R> action) {
-		synchronized (lockCurrentState) {
-			return action.apply(this);
-		}
-	}
-
+	protected abstract void sendRawByteData(ByteBuffer buffer);
+	
+	
 	/**
 	 * The current {@link NetworkConnectionState} of this connection.<p>
 	 * This method is fine for simply viewing the current state, but is not useful
@@ -244,7 +205,13 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	 * @return The current connection state
 	 */
 	public NetworkConnectionState getCurrentState() {
-		return currentState;
+		synchronized (lockCurrentState) {
+			return currentState;
+		}
+	}
+	
+	public ThreadsafeAction<NetworkConnection> threadsafe() {
+		return threadsafeState;
 	}
 	
 	/**
@@ -269,7 +236,7 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	 * @return The local connection ID
 	 */
 	public NetworkID getLocalID() {
-		return localID;
+		return networkManager.getLocalID();
 	}
 	
 	/**
@@ -310,16 +277,12 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 			sendPacketImpl(packet);
 			return true;
 		} else {
+			SEND_LOGGER.info("Packet sending failed for state %s. No event generated", currentState);
 			return false;
 		}
 	}
 	
 	protected abstract void sendPacketImpl(Packet packet);
-	
-	@Internal
-	protected PacketContext getContext() {
-		return packetContext;
-	}
 	
 	/**
 	 * Can simulate a received packet on this connection. The packet will go through the
@@ -341,55 +304,28 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 	 * @return The last recorded send/receive delay, or {@code -1} if no delay has been recorded yet
 	 */
 	public int getLastConnectionDelay() {
-		synchronized (lockPing) {
-			return pingLastValue;
-		}
-	}
-	
-	public abstract void receiveConnectionCheck(int uuid);
-	
-	public void receiveConnectionCheckReply(int uuid) {
-		synchronized (lockCurrentState) {
-			synchronized (lockPing) { //Dealing with the ping
-				if(pingCurrentUUID != uuid) {
-					NetworkManager.NET_LOG.info("Ping uuid mismatch. Ping response ignored, UUID reset");
-				} else if(pingLastValue == -1) {
-					NetworkManager.NET_LOG.info("No recorded ping start time. Ping response ignored");
-				} else {
-					final long time = System.currentTimeMillis();
-					pingLastValue = (int) (time - pingStartTime); //calc the total time
-				}
-				pingCurrentUUID = -1;
-				pingStartTime = -1;
-				currentState = NetworkConnectionState.OPEN;
-			}
-		}
-	}
-	
-	protected PacketConverter getConverter() {
-		return converter;
-	}
-	
-	protected void updateCheckTimeout() {
-		synchronized (lockCurrentState) {
-			if(currentState == NetworkConnectionState.CHECKING) {
-				synchronized (lockPing) {
-					if(pingStartTime == -1) return;
-					final long currentTimeout = System.currentTimeMillis() - pingStartTime;
-					if(currentTimeout > checkTimeoutMS) {
-						closeTimeoutImpl();
-					}
-				}
-			}
-		}
+		return pingTracker.getLastPingTime();
 	}
 	
 	/**
-	 * Handles a connection closing because the check timeout expired
+	 * The remote partner has sent a check message.
+	 * Reply with a check reply message
+	 * @param uuid
 	 */
-	protected abstract void closeTimeoutImpl();
+	public abstract void receiveConnectionCheck(int uuid);
 	
-	public abstract void receiveUDPLogout();
+	/**
+	 * Updates this connection's status depending on the last check:
+	 * If the ping was returned, the connection stays open, if the
+	 * ping timed out, the connection will be closed
+	 */
+	public void updateConnectionStatus() {
+		synchronized (lockCurrentState) {
+			if(currentState == NetworkConnectionState.CHECKING && pingTracker.isTimedOut()) {
+				closeConnection(ConnectionCloseReason.TIMEOUT);
+			}
+		}
+	}
 	
 	/**
 	 * {@link NetworkConnection}s are always client-to-server connection. This flag indicates which side of
@@ -400,6 +336,14 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 		return isServerSide;
 	}
 	
+	/**
+	 * Can be used by implementations of {@link #closeConnectionImpl(ConnectionCloseReason)}
+	 * to handle all manager-related close() procedures.
+	 * <br>
+	 * Call this while the state is CLOSING
+	 * @param reason Required
+	 * @param exception Optional
+	 */
 	protected void postEventAndRemoveConnection(ConnectionCloseReason reason, Exception exception) {
 		getNetworkManager().getEventDispatcher().post(getNetworkManager().ConnectionClosed,
 				new ConnectionClosedEvent(reason, exception));
@@ -417,17 +361,17 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 		
 		@Override
 		public NetworkID getLocalID() {
-			return localID;
+			return NetworkConnection.this.getLocalID();
 		}
 
 		@Override
 		public NetworkID getRemoteID() {
-			return remoteID;
+			return NetworkConnection.this.getRemoteID();
 		}
 
 		@Override
 		public boolean isServer() {
-			return isServerSide;
+			return NetworkConnection.this.isServerSide;
 		}
 
 		@Override
@@ -445,5 +389,87 @@ public abstract class NetworkConnection implements ThreadsafeAction<NetworkConne
 		public <T> T getCustomData(Class<T> dataType) {
 			return (T) customData;
 		}
+	}
+	
+	protected static final AtomicInteger PING_TRACKER_UUID_GENERATOR = new AtomicInteger(0);
+	class PingTracker {
+		private final int timeoutMs;
+		
+		private int cachedPingTime;
+		
+		private boolean pingActive;
+		private long lastPingStartTime;
+		private int lastPingUuid;
+		
+		private PingTracker(int timeoutMs) {
+			this.timeoutMs = timeoutMs;
+			this.cachedPingTime = -1; //No time
+			reset();
+		}
+		
+		private void reset() {
+			this.pingActive = false;
+			this.lastPingStartTime = -1;
+			this.lastPingUuid = -1;
+		}
+		
+		public int initiatePing() {
+			//Make uuid
+			final int uuid = PING_TRACKER_UUID_GENERATOR.getAndIncrement();
+			//Set values
+			pingActive = true;
+			lastPingStartTime = NetworkManager.getClockMillis();
+			lastPingUuid = uuid;
+			//Update state
+			NetworkConnection.this.currentState = NetworkConnectionState.CHECKING;
+			return uuid;
+		}
+		
+		public void confirmPing(int id) {
+			if(id == lastPingUuid) {
+				//Store the time difference
+				cachedPingTime = (int) (NetworkManager.getClockMillis() - lastPingStartTime);
+				reset();
+				NetworkConnection.this.currentState = NetworkConnectionState.OPEN;
+			} else {
+				STATE_LOGGER.warning("PingTracker: Inconsistent state (attempted to confirm inactive ping); resetting");
+			}
+		}
+		
+		public void cancelPing(int id) {
+			if(id == lastPingUuid) {
+				//Reset
+				reset();
+				NetworkConnection.this.currentState = NetworkConnectionState.OPEN;
+			} else {
+				STATE_LOGGER.warning("PingTracker: Inconsistent state (attempted to cancel inactive ping); resetting");
+			}
+		}
+		
+		public boolean isTimedOut() {	
+			return pingActive && (NetworkManager.getClockMillis() - lastPingStartTime > timeoutMs);
+		}
+		
+		public int getLastPingTime() {
+			return cachedPingTime;
+		}
+	}
+	
+	private class Threadsafe implements ThreadsafeAction<NetworkConnection> {
+
+		@Override
+		public void action(Consumer<NetworkConnection> action) {
+			synchronized (lockCurrentState) {
+				action.accept(NetworkConnection.this);
+			}
+		}
+
+		@Override
+		public <R> R actionReturn(Function<NetworkConnection, R> action) {
+			synchronized (lockCurrentState) {
+				return action.apply(NetworkConnection.this);
+			}
+		}
+		
 	}
 }

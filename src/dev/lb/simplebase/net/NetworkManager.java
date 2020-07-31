@@ -41,9 +41,9 @@ public final class NetworkManager {
 					Formatter.getCurrentTime(),
 					Formatter.getThreadName()),
 			Formatter.getDefault());
-	static final AbstractLogger LOGGER = getModuleLogger("net-core");
 	
 	private static final Map<String, AbstractLogger> existingDelegateLoggers = new HashMap<>();
+	static final AbstractLogger LOGGER = getModuleLogger("net-core");
 	
 	/**
 	 * Gets a logger for a custom subsystem. Loggers are cached, and re-calling this method with the same
@@ -85,7 +85,7 @@ public final class NetworkManager {
 			public void run() {
 				synchronized (cleanUpTasks) {
 					if(cleanUpTasks.size() > 0) {
-						LOGGER.warning("Cleanup tasks hav not been run. Please call NetworkManager.cleanUp() before exiting the program");
+						LOGGER.warning("Cleanup tasks have not been run. Please call NetworkManager.cleanUp() before exiting the program");
 						cleanUp();
 					}
 				}
@@ -101,8 +101,10 @@ public final class NetworkManager {
 	
 	public static void cleanUp() {
 		synchronized (cleanUpTasks) {
+			LOGGER.info("Cleanup: running %d tasks", cleanUpTasks.size());
 			cleanUpTasks.forEach(Runnable::run);
 			cleanUpTasks.clear();
+			LOGGER.info("Cleanup: completed; task list cleared");
 		}
 	}
 	
@@ -110,6 +112,17 @@ public final class NetworkManager {
 	
 	public static Stream<NetworkID> getInternalServers() {
 		return InternalServerManager.serverList.keySet().stream();
+	}
+	
+	/**
+	 * A consistent time source. Defaults to
+	 * {@link System#currentTimeMillis()}, but can be swapped for a faster or more preceise time source if necessary
+	 * (See 'granularity' in the docs)
+	 * @return The current time in milliseconds. The value will be positive, but there are no guarantees to what point
+	 * in time the {@code 0} value represents (This may be an Epoch date, or e.g. the start time of the program).
+	 */
+	public static long getClockMillis() {
+		return System.currentTimeMillis();
 	}
 	
 	//MANAGER FACTORIES #######################################################################
@@ -155,6 +168,5 @@ public final class NetworkManager {
 		public void unregisterManagerForConnectionStatusCheck(NetworkManagerCommon manager) {
 			GlobalConnectionCheck.unsubscribe(manager);
 		}
-		
 	}
 }
