@@ -49,4 +49,6 @@ public interface PacketContext {
 	 * @throws ClassCastException If the requested type and the actual type of the object are incompatible
 	 */
 	public <T> T getCustomData(Class<T> dataType);
+	
+	public NetworkConnection getConnection();
 }

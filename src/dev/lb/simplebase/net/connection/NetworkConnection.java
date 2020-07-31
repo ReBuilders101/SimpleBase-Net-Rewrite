@@ -30,7 +30,7 @@ public abstract class NetworkConnection {
 	protected static final AbstractLogger STATE_LOGGER = NetworkManager.getModuleLogger("connection-state");
 	
 	//Sync/state
-	protected NetworkConnectionState currentState;
+	protected volatile NetworkConnectionState currentState;
 	protected final Object lockCurrentState;
 	//Components
 	protected final PingTracker pingTracker;
@@ -389,6 +389,11 @@ public abstract class NetworkConnection {
 		@SuppressWarnings("unchecked")
 		public <T> T getCustomData(Class<T> dataType) {
 			return (T) customData;
+		}
+
+		@Override
+		public NetworkConnection getConnection() {
+			return NetworkConnection.this;
 		}
 	}
 	
