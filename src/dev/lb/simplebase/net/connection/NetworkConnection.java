@@ -207,9 +207,8 @@ public abstract class NetworkConnection {
 	 * @return The current connection state
 	 */
 	public NetworkConnectionState getCurrentState() {
-		synchronized (lockCurrentState) {
-			return currentState;
-		}
+		//Explicitly not synced: Value is always valid, for sync use ThreadsafeAction
+		return currentState;
 	}
 	
 	public ThreadsafeAction<NetworkConnection> threadsafe() {
@@ -274,7 +273,7 @@ public abstract class NetworkConnection {
 	 * no {@link PacketSendingFailedEvent} will be posted</b>
 	 */
 	public boolean sendPacket(Packet packet) {
-		//No sync intentionally
+		//No sync intentionally for performance, will generate a Sending failed event otherwise
 		if(getCurrentState().canSendData()) {
 			sendPacketImpl(packet);
 			return true;

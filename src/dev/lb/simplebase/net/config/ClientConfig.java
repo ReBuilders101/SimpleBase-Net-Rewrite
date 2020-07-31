@@ -1,6 +1,6 @@
 package dev.lb.simplebase.net.config;
 
-import dev.lb.simplebase.net.NetworkManagerClient;
+import dev.lb.simplebase.net.manager.NetworkManagerClient;
 import dev.lb.simplebase.net.packet.PacketContext;
 
 /**

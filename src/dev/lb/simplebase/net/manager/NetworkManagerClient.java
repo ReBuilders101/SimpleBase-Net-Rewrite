@@ -1,7 +1,8 @@
-package dev.lb.simplebase.net;
+package dev.lb.simplebase.net.manager;
 
 import java.util.Objects;
 
+import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.config.ClientConfig;
 import dev.lb.simplebase.net.config.ConnectionType;
@@ -11,7 +12,6 @@ import dev.lb.simplebase.net.connection.NetworkConnectionState;
 import dev.lb.simplebase.net.event.EventAccessor;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.AbstractLogger;
-import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.PacketContext;
 import dev.lb.simplebase.net.util.ThreadsafeAction;
 
@@ -29,7 +29,7 @@ public final class NetworkManagerClient extends NetworkManagerCommon {
 	private final NetworkID remoteID;
 	private final NetworkConnection connection;
 	
-	protected NetworkManagerClient(NetworkID local, NetworkID remote, ClientConfig config) {
+	public NetworkManagerClient(NetworkID local, NetworkID remote, ClientConfig config) {
 		super(local, config); //This will null-check most both, Below will null-check the config and type
 		Objects.requireNonNull(config, "'config' parameter must not be null");
 		this.connection = getImplementation(ConnectionType.resolve(config.getConnectionType(), remote));
@@ -76,7 +76,7 @@ public final class NetworkManagerClient extends NetworkManagerCommon {
 	@Override
 	public void removeConnectionSilently(NetworkConnection connection) {
 		//Don't actually do anything, it is closed now anyways
-		NetworkManager.LOGGER.debug("Server connection closed (removal from client %s requested)", getLocalID());
+		LOGGER.debug("Server connection closed (removal from client %s requested)", getLocalID());
 	}
 
 	@Override

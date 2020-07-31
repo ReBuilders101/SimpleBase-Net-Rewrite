@@ -22,6 +22,7 @@ import dev.lb.simplebase.net.log.Formatter;
 import dev.lb.simplebase.net.log.LogLevel;
 import dev.lb.simplebase.net.log.Loggers;
 import dev.lb.simplebase.net.log.PrintStreamLogger;
+import dev.lb.simplebase.net.manager.NetworkManagerClient;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 
 @StaticType
