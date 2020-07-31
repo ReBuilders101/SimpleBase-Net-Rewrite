@@ -60,6 +60,14 @@ public abstract class NetworkConnection {
 	}
 	
 	/**
+	 * The {@link PacketContext} that a packet received on this connection will have
+	 * @return The connection's context
+	 */
+	public PacketContext getPacketContext() {
+		return packetContext;
+	}
+	
+	/**
 	 * Opens the connection to the remote partner. Opening can only happen from {@link NetworkConnectionState#INITIALIZED},
 	 * for all other states if will fail. If opening is attempted, the connection will move to the {@link NetworkConnectionState#OPENING} state.
 	 * <p>

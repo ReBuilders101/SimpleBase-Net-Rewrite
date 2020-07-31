@@ -5,12 +5,15 @@ import java.util.Objects;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.config.ClientConfig;
 import dev.lb.simplebase.net.config.ConnectionType;
+import dev.lb.simplebase.net.connection.InternalNetworkConnection;
 import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.connection.NetworkConnectionState;
 import dev.lb.simplebase.net.event.EventAccessor;
 import dev.lb.simplebase.net.id.NetworkID;
+import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.PacketContext;
+import dev.lb.simplebase.net.util.ThreadsafeAction;
 
 /**
  * The {@link NetworkManagerClient} represents the central network interface for
@@ -21,7 +24,8 @@ import dev.lb.simplebase.net.packet.PacketContext;
  */
 @Threadsafe
 public final class NetworkManagerClient extends NetworkManagerCommon {
-
+	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("client-manager");
+	
 	private final NetworkID remoteID;
 	private final NetworkConnection connection;
 	
@@ -52,6 +56,10 @@ public final class NetworkManagerClient extends NetworkManagerCommon {
 		return connection.getCurrentState();
 	}
 	
+	public ThreadsafeAction<NetworkConnection> getThreadsafeServerConnection() {
+		return connection.threadsafe();
+	}
+	
 	public NetworkConnection getServerConnection() {
 		return connection;
 	}
@@ -59,16 +67,16 @@ public final class NetworkManagerClient extends NetworkManagerCommon {
 	@Override
 	protected PacketContext getConnectionlessPacketContext(NetworkID source) {
 		if(remoteID.equals(source)) { //Even connectionless packets must come from the server
-			return connection.getContext();
+			return connection.getPacketContext();
 		} else {
 			return null;
 		}
 	}
 
 	@Override
-	protected void removeConnectionSilently(NetworkConnection connection) {
-		//Client does not remove its connection
-		NetworkManager.NET_LOG.debug("Client Manager: Remove connection called");
+	public void removeConnectionSilently(NetworkConnection connection) {
+		//Don't actually do anything, it is closed now anyways
+		NetworkManager.LOGGER.debug("Server connection closed (removal from client %s requested)", getLocalID());
 	}
 
 	@Override
@@ -79,8 +87,8 @@ public final class NetworkManagerClient extends NetworkManagerCommon {
 	private NetworkConnection getImplementation(ConnectionType type) {
 		switch (type) {
 		case INTERNAL:
-			return new LocalPeerNetworkConnection(getLocalID(), remoteID, this,
-					getConfig().getConnectionCheckTimeout(), false, getConfig().getCustomData());
+			return new InternalNetworkConnection(this, remoteID, getConfig().getConnectionCheckTimeout(),
+					false, getConfig().getCustomData());
 		default:
 			throw new IllegalArgumentException("Invalid connection type: " + type);
 		}
@@ -93,7 +101,6 @@ public final class NetworkManagerClient extends NetworkManagerCommon {
 	public EventAccessor<?>[] getEvents() {
 		return new EventAccessor<?>[] {
 			ConnectionClosed,
-			ConnectionCheckSuccess,
 			PacketSendingFailed,
 			PacketReceiveRejected,
 			UnknownConnectionlessPacket
@@ -101,14 +108,14 @@ public final class NetworkManagerClient extends NetworkManagerCommon {
 	}
 
 	@Override
-	protected void onCheckConnectionStatus() {
-		connection.updateConnectionStatus();
-	}
-
-	@Override
 	public void cleanUp() {
 		super.cleanUp();
 		connection.closeConnection();
+	}
+
+	@Override
+	public void updateConnectionStatus() {
+		connection.updateConnectionStatus();
 	}
 	
 }
