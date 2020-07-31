@@ -29,7 +29,7 @@ class NetworkPacketFormat1Packet<Connection> extends NetworkPacketFormat<Connect
 		if(length < 8) {
 			//If 8 bytes are not yet read, read packet type and length (4 bytes each) completely
 			return 8 - length;	
-		} else if(currentBuffer.limit() >= 8) {
+		} else if(length >= 8) {
 			//If 8 bytes are available, read packet length
 			currentBuffer.position(4); //Skip the packet type
 			final int packetLength = ByteDataHelper.cInt(currentBuffer) + 8; //data + header

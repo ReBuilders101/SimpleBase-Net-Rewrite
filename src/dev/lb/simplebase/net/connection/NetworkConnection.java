@@ -1,12 +1,10 @@
 package dev.lb.simplebase.net.connection;
 
-import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import dev.lb.simplebase.net.NetworkConnectionState;
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
@@ -191,8 +189,6 @@ public abstract class NetworkConnection {
 	public int getCheckTimeout() {
 		return pingTracker.timeoutMs;
 	}
-	
-	protected abstract void sendRawByteData(ByteBuffer buffer);
 	
 	
 	/**
@@ -414,35 +410,41 @@ public abstract class NetworkConnection {
 		}
 		
 		public int initiatePing() {
-			//Make uuid
-			final int uuid = PING_TRACKER_UUID_GENERATOR.getAndIncrement();
-			//Set values
-			pingActive = true;
-			lastPingStartTime = NetworkManager.getClockMillis();
-			lastPingUuid = uuid;
-			//Update state
-			NetworkConnection.this.currentState = NetworkConnectionState.CHECKING;
-			return uuid;
+			synchronized (lockCurrentState) {
+				//Make uuid
+				final int uuid = PING_TRACKER_UUID_GENERATOR.getAndIncrement();
+				//Set values
+				pingActive = true;
+				lastPingStartTime = NetworkManager.getClockMillis();
+				lastPingUuid = uuid;
+				//Update state
+				NetworkConnection.this.currentState = NetworkConnectionState.CHECKING;
+				return uuid;
+			}
 		}
 		
 		public void confirmPing(int id) {
-			if(id == lastPingUuid) {
-				//Store the time difference
-				cachedPingTime = (int) (NetworkManager.getClockMillis() - lastPingStartTime);
-				reset();
-				NetworkConnection.this.currentState = NetworkConnectionState.OPEN;
-			} else {
-				STATE_LOGGER.warning("PingTracker: Inconsistent state (attempted to confirm inactive ping); resetting");
+			synchronized (lockCurrentState) {
+				if(id == lastPingUuid) {
+					//Store the time difference
+					cachedPingTime = (int) (NetworkManager.getClockMillis() - lastPingStartTime);
+					reset();
+					NetworkConnection.this.currentState = NetworkConnectionState.OPEN;
+				} else {
+					STATE_LOGGER.warning("PingTracker: Inconsistent state (attempted to confirm inactive ping); resetting");
+				}
 			}
 		}
 		
 		public void cancelPing(int id) {
-			if(id == lastPingUuid) {
-				//Reset
-				reset();
-				NetworkConnection.this.currentState = NetworkConnectionState.OPEN;
-			} else {
-				STATE_LOGGER.warning("PingTracker: Inconsistent state (attempted to cancel inactive ping); resetting");
+			synchronized (lockCurrentState) {
+				if(id == lastPingUuid) {
+					//Reset
+					reset();
+					NetworkConnection.this.currentState = NetworkConnectionState.OPEN;
+				} else {
+					STATE_LOGGER.warning("PingTracker: Inconsistent state (attempted to cancel inactive ping); resetting");
+				}
 			}
 		}
 		

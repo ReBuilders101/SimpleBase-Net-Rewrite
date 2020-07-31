@@ -6,6 +6,7 @@ import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.config.ClientConfig;
 import dev.lb.simplebase.net.config.ConnectionType;
 import dev.lb.simplebase.net.connection.NetworkConnection;
+import dev.lb.simplebase.net.connection.NetworkConnectionState;
 import dev.lb.simplebase.net.event.EventAccessor;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;

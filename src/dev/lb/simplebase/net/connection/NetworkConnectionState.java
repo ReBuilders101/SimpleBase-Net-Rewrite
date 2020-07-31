@@ -1,9 +1,7 @@
-package dev.lb.simplebase.net;
+package dev.lb.simplebase.net.connection;
 
 import java.net.Socket;
 import java.util.Objects;
-
-import dev.lb.simplebase.net.connection.NetworkConnection;
 
 /**
  * Stores the current state of a {@link NetworkConnection} in its lifecycle.

@@ -13,6 +13,7 @@ import dev.lb.simplebase.net.annotation.StaticType;
 import dev.lb.simplebase.net.config.ClientConfig;
 import dev.lb.simplebase.net.config.ServerConfig;
 import dev.lb.simplebase.net.config.ServerType;
+import dev.lb.simplebase.net.connection.InternalNetworkConnection;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.AbstractLogLevel;
 import dev.lb.simplebase.net.log.AbstractLogger;
@@ -168,5 +169,9 @@ public final class NetworkManager {
 		public void unregisterManagerForConnectionStatusCheck(NetworkManagerCommon manager) {
 			GlobalConnectionCheck.unsubscribe(manager);
 		}
+		
+		public InternalNetworkConnection createInternalConnectionPeer(InternalNetworkConnection request) {
+			InternalServerManager.createServerPeer(request);
+		};
 	}
 }
