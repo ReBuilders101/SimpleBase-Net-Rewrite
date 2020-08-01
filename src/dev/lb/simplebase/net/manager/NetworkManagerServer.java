@@ -199,17 +199,20 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 	/**
 	 * The connection will simply be added, the connection creator is responsible for posting the correct events
 	 * @param newConnection The new connection
+	 * @return Whether the connection was successful
 	 */
 	@Internal
-	public void addInitializedConnection(NetworkConnection newConnection) {
+	public boolean addInitializedConnection(NetworkConnection newConnection) {
 		try {
 			lockServer.writeLock().lock();
+			if(currentState != ServerManagerState.RUNNING) return false;
 			final NetworkID id = newConnection.getRemoteID();
 			if(connections.get(id) == null) {
 				connections.put(id, newConnection);
 			} else {
 				throw new IllegalArgumentException("Connection with that ID is already present");
 			}
+			return true;
 		} finally {
 			lockServer.writeLock().unlock();
 		}

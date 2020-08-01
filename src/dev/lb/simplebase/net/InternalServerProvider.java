@@ -31,7 +31,12 @@ class InternalServerProvider {
 		final InternalNetworkConnection peer = new InternalNetworkConnection(server, source,
 				server.getConfig().getConnectionCheckTimeout(), true, event.getCustomObject());
 		
-		server.addInitializedConnection(peer);
+		final boolean canConnect = server.addInitializedConnection(peer);
+		if(!canConnect) {
+			LOGGER.warning("Server %s rejected an internal connection, closing peer");
+			peer.closeConnection();
+			return null;
+		}
 		LOGGER.info("Created local peer connection between %s and %s", source.getLocalID(), source.getRemoteID());
 		return peer;
 	}
