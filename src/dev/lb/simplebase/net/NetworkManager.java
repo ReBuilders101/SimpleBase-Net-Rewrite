@@ -113,7 +113,7 @@ public final class NetworkManager {
 	//UTILITIES ################################################################################
 	
 	public static Stream<NetworkManagerServer> getInternalServers() {
-		return InternalServerManager.getInternalServers();
+		return InternalServerProvider.getInternalServers();
 	}
 	
 	
@@ -173,7 +173,15 @@ public final class NetworkManager {
 		}
 		
 		public InternalNetworkConnection createInternalConnectionPeer(InternalNetworkConnection request) {
-			return InternalServerManager.createServerPeer(request);
-		};
+			return InternalServerProvider.createServerPeer(request);
+		}	
+		
+		public void registerServerManagerForInternalConnections(NetworkManagerServer server) {
+			InternalServerProvider.register(server);
+		}
+		
+		public void unregisterServerManagerForInternalConnections(NetworkManagerServer server) {
+			InternalServerProvider.unregister(server);
+		}
 	}
 }

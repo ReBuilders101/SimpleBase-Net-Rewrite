@@ -14,7 +14,7 @@ import dev.lb.simplebase.net.log.AbstractLogger;
  * Lists all available internal servers
  */
 @Internal
-class InternalServerManager {
+class InternalServerProvider {
 	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("internal-servers");
 	
 	private static final Map<NetworkID, NetworkManagerServer> serverList = new HashMap<>();
