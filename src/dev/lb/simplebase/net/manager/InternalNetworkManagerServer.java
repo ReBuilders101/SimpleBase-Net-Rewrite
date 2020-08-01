@@ -1,7 +1,6 @@
 package dev.lb.simplebase.net.manager;
 
 import dev.lb.simplebase.net.NetworkManager;
-import dev.lb.simplebase.net.NetworkManagerServer;
 import dev.lb.simplebase.net.config.ServerConfig;
 import dev.lb.simplebase.net.id.NetworkID;
 

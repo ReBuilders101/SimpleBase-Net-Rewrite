@@ -3,8 +3,8 @@ package dev.lb.simplebase.net.events;
 import java.io.IOException;
 import java.net.Socket;
 
-import dev.lb.simplebase.net.NetworkManagerServer;
 import dev.lb.simplebase.net.connection.NetworkConnectionState;
+import dev.lb.simplebase.net.manager.NetworkManagerServer;
 
 /**
  * Gives a reason why a connection was closed in the {@link ConnectionClosedEvent}

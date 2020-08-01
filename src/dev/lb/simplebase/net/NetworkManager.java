@@ -24,6 +24,7 @@ import dev.lb.simplebase.net.log.Loggers;
 import dev.lb.simplebase.net.log.PrintStreamLogger;
 import dev.lb.simplebase.net.manager.NetworkManagerClient;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
+import dev.lb.simplebase.net.manager.NetworkManagerServer;
 
 @StaticType
 public final class NetworkManager {

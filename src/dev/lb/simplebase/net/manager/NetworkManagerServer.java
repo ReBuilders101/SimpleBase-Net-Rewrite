@@ -1,4 +1,4 @@
-package dev.lb.simplebase.net;
+package dev.lb.simplebase.net.manager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,6 +9,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.config.ServerConfig;
@@ -18,8 +19,6 @@ import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.AbstractLogger;
-import dev.lb.simplebase.net.manager.NetworkManagerCommon;
-import dev.lb.simplebase.net.manager.ServerManagerState;
 import dev.lb.simplebase.net.packet.PacketContext;
 import dev.lb.simplebase.net.util.LockBasedThreadsafeIterable;
 import dev.lb.simplebase.net.util.LockHelper;
@@ -202,7 +201,7 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 	 * @param newConnection The new connection
 	 */
 	@Internal
-	protected void addInitializedConnection(NetworkConnection newConnection) {
+	public void addInitializedConnection(NetworkConnection newConnection) {
 		try {
 			lockServer.writeLock().lock();
 			final NetworkID id = newConnection.getRemoteID();

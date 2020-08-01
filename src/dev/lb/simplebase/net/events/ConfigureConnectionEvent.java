@@ -1,8 +1,8 @@
 package dev.lb.simplebase.net.events;
 
-import dev.lb.simplebase.net.NetworkManagerServer;
 import dev.lb.simplebase.net.event.Event;
 import dev.lb.simplebase.net.id.NetworkID;
+import dev.lb.simplebase.net.manager.NetworkManagerServer;
 
 
 public class ConfigureConnectionEvent extends Event {

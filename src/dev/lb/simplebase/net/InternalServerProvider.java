@@ -9,6 +9,7 @@ import dev.lb.simplebase.net.connection.InternalNetworkConnection;
 import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.manager.NetworkManagerServer;
 
 /**
  * Lists all available internal servers
