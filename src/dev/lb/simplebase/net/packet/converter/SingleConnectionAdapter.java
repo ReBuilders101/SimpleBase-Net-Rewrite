@@ -12,5 +12,10 @@ public interface SingleConnectionAdapter extends ConnectionAdapter {
 	public default void receiveUdpLogin() {
 		PacketToByteConverter.CONNECTION_LOGGER.warning("Unexpected packet: Received UDP-Login for an existing connection implementation");
 	}
+
+	@Override
+	public default void receiveServerInfoRequest() {
+		PacketToByteConverter.CONNECTION_LOGGER.warning("Unexpected packet: Received Server-Info-Request for an existing connection implementation");
+	}
 	
 }

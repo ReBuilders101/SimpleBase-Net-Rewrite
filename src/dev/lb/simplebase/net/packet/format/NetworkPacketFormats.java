@@ -54,6 +54,9 @@ public final class NetworkPacketFormats {
 	public static final NetworkPacketFormat<ConnectionAdapter, Object, Object> LOGOUT =
 			new NetworkPacketFormatEmpty<>(LOGOUT_UUID, "UDP-Logout", ConnectionAdapter::receiveUdpLogout);
 	
+	private static final int SERVERINFO_UUID = ByteDataHelper.cInt(new byte[] {'S', 'I', 'R', 'Q'});
+	public static final NetworkPacketFormat<ConnectionAdapter, Object, Object> SERVERINFO =
+			new NetworkPacketFormatEmpty<>(SERVERINFO_UUID, "Server-Info-Request", ConnectionAdapter::receiveServerInfoRequest);
 	
 	
 	private static final Lazy<Set<NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider , ?>>> ALL_FORMATS =
@@ -64,6 +67,7 @@ public final class NetworkPacketFormats {
 				set.add(CHECKREPLY);
 				set.add(LOGIN);
 				set.add(LOGOUT);
+				set.add(SERVERINFO);
 				return Collections.unmodifiableSet(set);
 			});
 	public static Set<NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider , ?>> allFormats() {
