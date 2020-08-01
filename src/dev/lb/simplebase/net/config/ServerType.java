@@ -123,8 +123,8 @@ public enum ServerType {
 			if(!id.hasFunction(NetworkIDFunction.INTERNAL))
 				throw new IllegalArgumentException("Server NetworkID must implement INTERNAL if that server type is used");
 		} else { //Any network
-			if(!id.hasFunction(NetworkIDFunction.NETWORK))
-				throw new IllegalArgumentException("Server NetworkID must implement NETWORK if any network server type is used");
+			if(!id.hasFunction(NetworkIDFunction.NETWORK) || !id.hasFunction(NetworkIDFunction.BIND))
+				throw new IllegalArgumentException("Server NetworkID must implement NETWORK and BIND if any network server type is used");
 		}
 		return type;
 	}

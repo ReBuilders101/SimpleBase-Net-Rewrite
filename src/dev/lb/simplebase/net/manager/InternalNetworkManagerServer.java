@@ -10,7 +10,7 @@ public class InternalNetworkManagerServer extends NetworkManagerServer {
 	protected InternalNetworkManagerServer(NetworkID local, ServerConfig config) {
 		super(local, config);
 		if(ServerType.resolve(config.getServerType(), local) != ServerType.INTERNAL)
-			throw new IllegalArgumentException("Invalid NetworkID: For serverType INTERNAL, the NetworkIdFunction INTERNAL must be implemented");
+			throw new IllegalArgumentException("Invalid ServerConfig: ServerType must be INTERNAL");
 		if(!config.getRegisterInternalServer()) 
 			throw new IllegalArgumentException("Invalid ServerConfig: For serverType INTERNAL, registerInternalServer flag must be true");
 	}

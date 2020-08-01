@@ -244,6 +244,18 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 		}
 	}
 
+	public boolean disconnectClient(NetworkID clientId) {
+		try {
+			lockServer.writeLock().lock();
+			final NetworkConnection removedCon = connections.get(clientId);
+			if(removedCon == null) return false;
+			removedCon.closeConnection();
+			return true;
+		} finally {
+			lockServer.writeLock().unlock();
+		}
+	}
+	
 	@Override
 	public EventAccessor<?>[] getEvents() {
 		return new EventAccessor<?>[] {
