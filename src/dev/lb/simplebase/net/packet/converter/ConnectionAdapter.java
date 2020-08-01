@@ -10,4 +10,6 @@ public interface ConnectionAdapter {
 	public void receiveCheck(int uuid);
 	public void receiveCheckReply(int uuid);
 	public void receiveServerInfoRequest();
+	public void receiveServerInfoPacket(Packet packet);
+	
 }
