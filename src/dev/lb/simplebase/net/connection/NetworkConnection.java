@@ -78,19 +78,14 @@ public abstract class NetworkConnection {
 	 * <p>
 	 * When checking state before/after calling this method, make sure to do this in an {@link #action(Consumer)} block to
 	 * ensure thread safety.
-	 * @return {@code true} if opening the connection was <b>attempted</b>, {@code false} if it was not attempted
-	 * because the connection was in a state where this is not possible (See {@link NetworkConnectionState#canOpenConnection()}).
-	 * The returned value does not contain any information about the success of an attempt to establish the connection.
 	 */
-	public boolean openConnection() {
+	public void openConnection() {
 		synchronized (lockCurrentState) {
 			if(currentState.canOpenConnection()) {
 				STATE_LOGGER.debug("Attempting to open connection from %s to %s (At state %s)", getLocalID(), remoteID, currentState);
 				openConnectionImpl();
-				return true;
 			} else {
 				STATE_LOGGER.info("Cannot open a connection that is in state %s", currentState);
-				return false;
 			}
 		}
 	}
@@ -111,20 +106,17 @@ public abstract class NetworkConnection {
 	 * <p>
 	 * Closing the connection will automatically remove it from the {@link NetworkManager}'s connection list and post a
 	 * {@link ConnectionClosedEvent} to that manager when the closing process is completed.
-	 * @return {@code true} if closing the connection was <b>attempted</b>, {@code false} if it was not attempted
-	 * because the connection was in a state where this is not possible because it already has been
-	 * closed (See {@link NetworkConnectionState#hasBeenClosed()}).
-	 * The returned value does not contain any information about the success of an attempt to close the connection.
 	 */
-	public boolean closeConnection() {
-		return closeConnection(ConnectionCloseReason.EXPECTED);
+	public void closeConnection() {
+		closeConnection(ConnectionCloseReason.EXPECTED);
 	}
 	
 	/**
-	 * Used during server stopping to set a different state than EXPECTED
+	 * <b>Internal</b>
+	 * Close with a certain reason
 	 */
 	@Internal
-	protected boolean closeConnection(ConnectionCloseReason reason) {
+	public boolean closeConnection(ConnectionCloseReason reason) {
 		synchronized (lockCurrentState) {
 			if(currentState.hasBeenClosed()) {
 				STATE_LOGGER.debug("Cannot close a connection that is in state %s", currentState);
@@ -160,7 +152,7 @@ public abstract class NetworkConnection {
 	 * because the connection was in a state where this is not possible.
 	 * The returned value does not contain any information about the success of the connection check.
 	 */
-	public boolean checkConnection() {
+	public void checkConnection() {
 		synchronized (lockCurrentState) {
 			if(currentState == NetworkConnectionState.OPEN) {
 					final int pingId = pingTracker.initiatePing();
@@ -169,10 +161,8 @@ public abstract class NetworkConnection {
 						SEND_LOGGER.warning("Connection check failed to send");
 						pingTracker.cancelPing(pingId);
 					}
-				return true;
 			} else {
 				STATE_LOGGER.info("Cannot check connection at state %s", currentState);
-				return false;
 			}
  		}
 	}

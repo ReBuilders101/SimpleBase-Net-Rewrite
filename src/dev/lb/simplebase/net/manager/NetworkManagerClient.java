@@ -40,16 +40,16 @@ public final class NetworkManagerClient extends NetworkManagerCommon {
 		return remoteID;
 	}
 	
-	public boolean openConnectionToServer() {
-		return connection.openConnection();
+	public void openConnectionToServer() {
+		connection.openConnection();
 	}
 	
-	public boolean closeConnectionToServer() {
-		return connection.closeConnection();
+	public void closeConnectionToServer() {
+		connection.closeConnection();
 	}
 	
-	public boolean checkConnectionToServer() {
-		return connection.checkConnection();
+	public void checkConnectionToServer() {
+		connection.checkConnection();
 	}
 	
 	public NetworkConnectionState getServerConnectionState() {

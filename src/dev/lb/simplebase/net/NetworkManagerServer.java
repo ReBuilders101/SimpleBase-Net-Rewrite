@@ -1,11 +1,13 @@
 package dev.lb.simplebase.net;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.stream.Stream;
 
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
@@ -15,18 +17,24 @@ import dev.lb.simplebase.net.event.EventAccessor;
 import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
+import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
+import dev.lb.simplebase.net.manager.ServerManagerState;
 import dev.lb.simplebase.net.packet.PacketContext;
-import dev.lb.simplebase.net.util.ThreadsafeAction;
+import dev.lb.simplebase.net.util.LockBasedThreadsafeIterable;
+import dev.lb.simplebase.net.util.LockHelper;
+import dev.lb.simplebase.net.util.ThreadsafeIterable;
 
 @Threadsafe
-public abstract class NetworkManagerServer extends NetworkManagerCommon implements ThreadsafeAction<NetworkManagerServer>{
-
-	private final Map<NetworkID, NetworkConnection> connections;
-	private final ReadWriteLock lockConnections;
+public abstract class NetworkManagerServer extends NetworkManagerCommon {
+	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("server-manager");
 	
-	private ServerState currentState;
-	private final Object lockCurrentState;
+	private final Map<NetworkID, NetworkConnection> connections;
+	private volatile ServerManagerState currentState;
+	
+	private final ReadWriteLock lockServer;
+	private final ThreadsafeIterable<NetworkManagerServer, NetworkConnection> readThreadsafe;
+	private final ThreadsafeIterable<NetworkManagerServer, NetworkConnection> writeThreadsafe;
 	
 	/**
 	 * The {@link ConfigureConnectionEvent} will be posted when a new connection has been accepted by the server.<br>
@@ -39,74 +47,105 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon implemen
 	protected NetworkManagerServer(NetworkID local, ServerConfig config) {
 		super(local, config);
 		this.connections = new HashMap<>();
-		this.lockConnections = new ReentrantReadWriteLock();
+		this.lockServer = new ReentrantReadWriteLock();
+		this.currentState = ServerManagerState.INITIALIZED;
 		
-		this.currentState = ServerState.INITIALIZED;
-		this.lockCurrentState = new Object();
+		this.readThreadsafe = new LockBasedThreadsafeIterable<>(this, connections::values, lockServer.readLock(), true);
+		this.writeThreadsafe = new LockBasedThreadsafeIterable<>(this, connections::values, lockServer.writeLock(), true);
 	}
 
+	public ThreadsafeIterable<NetworkManagerServer, NetworkConnection> readOnlyThreadsafe() {
+		return readThreadsafe;
+	}
 	
-	public boolean startServer() {
-		synchronized (lockCurrentState) {
-			if(currentState != ServerState.INITIALIZED) {
-				return false;
+	public ThreadsafeIterable<NetworkManagerServer, NetworkConnection> exclusiveThreadsafe() {
+		return writeThreadsafe;
+	}
+	
+	/**
+	 * Lists all currently prensent active connections.
+	 * Creates a mutable <b>copy</b> of the current connection list.
+	 * The list will no longer be modified and can safely be stored.
+	 * @return A list of all currently present connections
+	 * @see #getConnectionsFast()
+	 */
+	public List<NetworkConnection> getConnections() {
+		try {
+			lockServer.readLock().lock();
+			return new ArrayList<>(connections.values());
+		} finally {
+			lockServer.readLock().unlock();
+		}
+	}
+	
+	/**
+	 * Lists all currently prensent active connections
+	 * This method avoids making a copy of the connections list for quick read-only access.
+	 * <p>
+	 * <b>May only be called from threadsafe code</b><br>
+	 * Use {@link #readOnlyThreadsafe()} or {@link #exclusiveThreadsafe()} and 
+	 * {@link ThreadsafeIterable#action(Consumer)} to acquire a lock for the connections list
+	 * @return A stream of all currently present connections
+	 * @throws IllegalStateException If the lock is not held by the current thread (optional)
+	 * @see #getConnections()
+	 */
+	public Stream<NetworkConnection> getConnectionsFast() {
+		if(LockHelper.isHeldByCurrentThread(lockServer.readLock(), true)) { 
+			return connections.values().stream();
+		} else {
+			throw new IllegalStateException("Current thread does not hold lock"); //No lock, no iterator
+		}
+	}
+	
+	public void startServer() {
+		try {
+			lockServer.writeLock().lock();
+			if(currentState == ServerManagerState.INITIALIZED) {
+				LOGGER.info("Starting server (%s)...", getLocalID().getDescription());
+				currentState = ServerManagerState.STARTING;
+				//Custom startup
+				final ServerManagerState state = startServerImpl();
+				if(state.ordinal() < ServerManagerState.STARTING.ordinal())
+					throw new IllegalStateException("Resulting state must be greater than STARTING");
+				currentState = state;
 			} else {
-				currentState = ServerState.STARTING;
-				NetworkManager.NET_LOG.info("Attempting to start server with ID %s", getLocalID());
-				
-				if(startServerImpl()) {
-					registerInternal();
-				}
-				return true;
+				LOGGER.error("Cannot start server (%s) from state %s", getLocalID().getDescription(), currentState);
 			}
+		} finally {
+			lockServer.writeLock().unlock();
 		}
 	}
 	
 	/**
-	 * Will be synced on state, state is STARTING.
-	 * Has to set the resulting state and do the log itself
-	 * @return whether it was successful at starting
+	 * State will be synced.<br>
+	 * State will still be STARTING<br>
+	 * Starting server %s... already logged
+	 * @return The resulting state of starting
 	 */
 	@Internal
-	protected abstract boolean startServerImpl();
+	protected abstract ServerManagerState startServerImpl();
 	
-	/**
-	 * registers this on the internal server manager
-	 */
-	@Internal
-	private void registerInternal() {
-		if(getConfig().getRegisterInternalServer()) {
-			InternalServerManager.register(this);
-		}
-	}
-	
-	public boolean stopServer() {
-		synchronized (lockCurrentState) {
-			if(currentState != ServerState.RUNNING) {
-				return false;
-			} else {
-				currentState = ServerState.STOPPING;
-				NetworkManager.NET_LOG.info("Attempting to stop server with ID %s", getLocalID());
-				
-				if(getConfig().getRegisterInternalServer()) {
-					InternalServerManager.unregister(this);
+	public void stopServer() {
+		try {
+			lockServer.writeLock().lock();
+			if(currentState == ServerManagerState.RUNNING) {
+				LOGGER.info("Stopping server (%s)...", getLocalID().getDescription());
+				currentState = ServerManagerState.STOPPING;
+				//Disconnect everyone
+				LOGGER.info("Closing %d connections for server shutdown", connections.size());
+				for(NetworkConnection con : connections.values()) {
+					con.closeConnection(ConnectionCloseReason.SERVER);
 				}
-				
+				//Then custom stuff
 				stopServerImpl();
-				
-				try {
-					lockConnections.writeLock().lock();
-					NetworkManager.NET_LOG.info("Closing %d connections for server shutdown", connections.size());
-					for(NetworkConnection con : connections.values()) {
-						con.closeConnection(ConnectionCloseReason.SERVER);
-					}
-				} finally {
-					lockConnections.writeLock().unlock();
-				}
-				currentState = ServerState.STOPPED;
-				NetworkManager.NET_LOG.info("Server stopped. (ID %s)", getLocalID());
-				return true;
+				currentState = ServerManagerState.STOPPED;
+			} else if(currentState == ServerManagerState.STOPPED) {
+				LOGGER.info("Server (%s) is already stopped", getLocalID().getDescription());
+			} else {
+				LOGGER.error("Cannot stop server (%s) from state %s", getLocalID().getDescription(), currentState);
 			}
+		} finally {
+			lockServer.writeLock().unlock();
 		}
 	}
 	
@@ -128,33 +167,14 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon implemen
 	/**
 	 * The current state of the server. As the state might be modified
 	 * concurrently, the returned value is outdated immediately.
-	 * It is recommended to use {@link #getThreadsafeState()} together with
-	 * {@link #action(java.util.function.Consumer)} if the state should not be changed
+	 * It is recommended to use {@link #readOnlyThreadsafe()} if the state should not be changed
 	 * while a block of code is running.
-	 * @return The current {@link ServerState}
+	 * @return The current {@link ServerManagerState}
 	 */
-	public ServerState getCurrentState() {
-		synchronized (lockCurrentState) {
-			return currentState;
-		}
+	public ServerManagerState getCurrentState() {
+		return currentState; //Volatile single-get -> no sync
 	}
 	
-	/**
-	 * The current {@link ServerState} of this connection.<p>
-	 * This method can only be used if the caller thread holds the state's monitor.
-	 * It is designed to be used inside a {@link #action(Consumer)} block when
-	 * concurrent modification should be prevented.
-	 * @return The current connection state
-	 * @throws IllegalStateException If the current thread does not hold the state's monitor
-	 */
-	public ServerState getThreadsafeState() {
-		if(Thread.holdsLock(lockCurrentState)) {
-			return currentState;
-		} else {
-			throw new IllegalStateException("Current thread does not hold object monitor");
-		}
-	}
-
 	/**
 	 * Finds a network connection for a remote side NetworkID. Returns {@code null} if no connection was found.
 	 * <p>
@@ -170,10 +190,10 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon implemen
 	 */
 	public NetworkConnection getConnection(NetworkID remoteID) {
 		try {
-			lockConnections.readLock().lock();
+			lockServer.readLock().lock();
 			return connections.get(remoteID);
 		} finally {
-			lockConnections.readLock().unlock();
+			lockServer.readLock().unlock();
 		}
 	}
 
@@ -184,7 +204,7 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon implemen
 	@Internal
 	protected void addInitializedConnection(NetworkConnection newConnection) {
 		try {
-			lockConnections.writeLock().lock();
+			lockServer.writeLock().lock();
 			final NetworkID id = newConnection.getRemoteID();
 			if(connections.get(id) == null) {
 				connections.put(id, newConnection);
@@ -192,52 +212,38 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon implemen
 				throw new IllegalArgumentException("Connection with that ID is already present");
 			}
 		} finally {
-			lockConnections.writeLock().unlock();
+			lockServer.writeLock().unlock();
 		}
 	}
 
 	@Override
 	protected PacketContext getConnectionlessPacketContext(NetworkID source) {
 		try {
-			lockConnections.readLock().lock();
+			lockServer.readLock().lock();
 			final NetworkConnection connection = connections.get(source);
-			return connection == null ? null : connection.getContext();
+			return connection == null ? null : connection.getPacketContext();
 		} finally {
-			lockConnections.readLock().unlock();
+			lockServer.readLock().unlock();
 		}
 	}
 
 
 	@Override
-	protected void removeConnectionSilently(NetworkConnection connection) {
+	public void removeConnectionSilently(NetworkConnection connection) {
 		try {
-			lockConnections.writeLock().lock();
+			lockServer.writeLock().lock();
 			final NetworkID id = connection.getRemoteID();
 			final NetworkConnection removedCon = connections.remove(id);
 			if(removedCon != connection) throw new IllegalStateException("Server connection map was in an invalid state");
 		} finally {
-			lockConnections.writeLock().unlock();
+			lockServer.writeLock().unlock();
 		}
 	}
-
-	@Override
-	protected void onCheckConnectionStatus() {
-		try {
-			lockConnections.readLock().lock();
-			for(NetworkConnection con : connections.values()) {
-				con.updateConnectionStatus();
-			}
-		} finally {
-			lockConnections.readLock().unlock();
-		}
-	}
-
 
 	@Override
 	public EventAccessor<?>[] getEvents() {
 		return new EventAccessor<?>[] {
 			ConnectionClosed,
-			ConnectionCheckSuccess,
 			PacketSendingFailed,
 			PacketReceiveRejected,
 			UnknownConnectionlessPacket,
@@ -245,26 +251,15 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon implemen
 		};
 	}
 
-
 	@Override
-	public void action(Consumer<NetworkManagerServer> action) {
+	public void updateConnectionStatus() {
 		try {
-			lockConnections.writeLock().lock();
-			action.accept(this);
+			lockServer.readLock().lock();
+			for(NetworkConnection con : connections.values()) {
+				con.updateConnectionStatus();
+			}
 		} finally {
-			lockConnections.writeLock().unlock();
+			lockServer.readLock().unlock();
 		}
 	}
-
-
-	@Override
-	public <R> R actionReturn(Function<NetworkManagerServer, R> action) {
-		try {
-			lockConnections.writeLock().lock();
-			return action.apply(this);
-		} finally {
-			lockConnections.writeLock().unlock();
-		}
-	}
-	
 }
