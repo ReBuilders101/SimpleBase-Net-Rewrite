@@ -111,8 +111,6 @@ public abstract class NetworkManagerCommon {
 		if(config.getGlobalConnectionCheck()) {
 			NetworkManager.InternalAccess.INSTANCE.registerManagerForConnectionStatusCheck(this);
 		}
-		
-		NetworkManager.addCleanUpTask(this::cleanUp);
 	}
 	
 	/**
@@ -235,7 +233,7 @@ public abstract class NetworkManagerCommon {
 	 * Cleans up all resources and connections held by this manager. Should be called manually before
 	 * the manager is left to garbage collection.
 	 */
-	protected void cleanUp() {
+	public void cleanUp() {
 		NetworkManager.InternalAccess.INSTANCE.unregisterManagerForConnectionStatusCheck(this);
 	}
 	

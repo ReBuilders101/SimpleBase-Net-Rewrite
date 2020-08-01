@@ -31,29 +31,28 @@ public class InternalNetworkConnection extends NetworkConnection {
 	}
 	
 	@Override
-	protected void openConnectionImpl() {
-		synchronized (lockCurrentState) {
-			currentState = NetworkConnectionState.OPENING;
-			final InternalNetworkConnection foundPeer = NetworkManager.InternalAccess.INSTANCE.createInternalConnectionPeer(this);
-			if(foundPeer == null) { //failed to find
-				//Fail
-				STATE_LOGGER.error("Failed to find a peer for server id %s", remoteID);
-				currentState = NetworkConnectionState.CLOSED;
-			} else {
-				this.setPeerConnection(foundPeer);
-			}
-			currentState = NetworkConnectionState.OPEN;
-		} 
+	protected NetworkConnectionState openConnectionImpl() {
+		final InternalNetworkConnection foundPeer = NetworkManager.InternalAccess.INSTANCE.createInternalConnectionPeer(this);
+		if(foundPeer == null) { //failed to find
+			//Fail
+			STATE_LOGGER.error("Failed to find a peer for server id %s", remoteID);
+			return NetworkConnectionState.CLOSED;
+		} else {
+			this.setPeerConnection(foundPeer);
+		}
+		return NetworkConnectionState.OPEN;
 	}
 
 	@Override
-	protected void closeConnectionImpl(ConnectionCloseReason reason) {
+	protected NetworkConnectionState closeConnectionImpl(ConnectionCloseReason reason) {
 		 //If the peer has called this method, don't tell him again because he already knows
 		if(reason != ConnectionCloseReason.REMOTE) {
 			peer.closeConnection(ConnectionCloseReason.REMOTE);			
 		}
 		//Just remove from the server
 		postEventAndRemoveConnection(reason, null);
+		
+		return NetworkConnectionState.CLOSED;
 	}
 
 	@Override

@@ -135,6 +135,8 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 				for(NetworkConnection con : connections.values()) {
 					con.closeConnection(ConnectionCloseReason.SERVER);
 				}
+				//remove all closed connections
+				connections.clear();
 				//Then custom stuff
 				stopServerImpl();
 				currentState = ServerManagerState.STOPPED;
@@ -262,6 +264,14 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 			}
 		} finally {
 			lockServer.readLock().unlock();
+		}
+	}
+
+	@Override
+	public void cleanUp() {
+		super.cleanUp();
+		if(currentState != ServerManagerState.STOPPED) {
+			stopServer();
 		}
 	}
 }

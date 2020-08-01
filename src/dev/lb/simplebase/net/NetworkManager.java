@@ -22,6 +22,7 @@ import dev.lb.simplebase.net.log.Formatter;
 import dev.lb.simplebase.net.log.LogLevel;
 import dev.lb.simplebase.net.log.Loggers;
 import dev.lb.simplebase.net.log.PrintStreamLogger;
+import dev.lb.simplebase.net.manager.ManagerInstanceProvider;
 import dev.lb.simplebase.net.manager.NetworkManagerClient;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.manager.NetworkManagerServer;
@@ -131,6 +132,11 @@ public final class NetworkManager {
 	
 	//MANAGER FACTORIES #######################################################################
 	
+	private static <T extends NetworkManagerCommon> T register(T instance) {
+		addCleanUpTask(instance::cleanUp);
+		return instance;
+	}
+	
 	public static NetworkManagerClient createClient(NetworkID clientLocal, NetworkID serverRemote) {
 		return createClient(clientLocal, serverRemote, new ClientConfig());
 	}
@@ -140,7 +146,7 @@ public final class NetworkManager {
 		Objects.requireNonNull(serverRemote, "'serverRemote' parameter must not be null");
 		Objects.requireNonNull(config, "'config' parameter must not be null");
 		
-		return new NetworkManagerClient(clientLocal, serverRemote, config);
+		return register(PROVIDER.createClient(clientLocal, serverRemote, config));
 	}
 	
 	public static NetworkManagerServer createServer(NetworkID serverLocal) {
@@ -154,11 +160,13 @@ public final class NetworkManager {
 		final ServerType actualType = ServerType.resolve(config.getServerType(), serverLocal);
 		switch (actualType) {
 		case INTERNAL:
-			
+			return register(PROVIDER.createInternalServer(serverLocal, config));
 		default:
 			throw new IllegalArgumentException("Invalid server type: " + actualType);
 		}
 	}
+	
+	private static final ManagerInstanceProvider PROVIDER = ManagerInstanceProvider.get();
 
 	@Internal
 	public static class InternalAccess {

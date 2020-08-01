@@ -48,7 +48,7 @@ class InternalServerProvider {
 			return false;
 		} else {
 			serverList.put(serverId, server);
-			LOGGER.info("Registered internal server for local ID %s", serverId);
+			LOGGER.info("Registered internal server for local ID %s", serverId.getDescription());
 			return true;
 		}
 	}
@@ -57,7 +57,7 @@ class InternalServerProvider {
 		final NetworkID serverId = server.getLocalID();
 		if(serverList.containsKey(serverId)) {
 			serverList.remove(serverId);
-			LOGGER.info("Unregistered internal server for loacl ID %s", serverId);
+			LOGGER.info("Unregistered internal server for loacl ID %s", serverId.getDescription());
 			return true;
 		} else {
 			LOGGER.warning("Cannot unregister an internal server that is not in the local server list");

@@ -82,8 +82,10 @@ public abstract class NetworkConnection {
 	public void openConnection() {
 		synchronized (lockCurrentState) {
 			if(currentState.canOpenConnection()) {
-				STATE_LOGGER.debug("Attempting to open connection from %s to %s (At state %s)", getLocalID(), remoteID, currentState);
-				openConnectionImpl();
+				STATE_LOGGER.debug("Attempting to open connection from %s to %s (At state %s)",
+						getLocalID().getDescription(), remoteID.getDescription(), currentState);
+				currentState = NetworkConnectionState.OPENING;
+				currentState = openConnectionImpl();
 			} else {
 				STATE_LOGGER.info("Cannot open a connection that is in state %s", currentState);
 			}
@@ -93,7 +95,7 @@ public abstract class NetworkConnection {
 	/**
 	 * Will be called when opening. State is already checked and synced.
 	 */
-	protected abstract void openConnectionImpl();
+	protected abstract NetworkConnectionState openConnectionImpl();
 	
 	/**
 	 * Closes the connection to the remote partner, or marks this connection as closed if the
@@ -122,8 +124,10 @@ public abstract class NetworkConnection {
 				STATE_LOGGER.debug("Cannot close a connection that is in state %s", currentState);
 				return false;
 			} else {
-				STATE_LOGGER.debug("Attempting to close connection from %s to %s (At state %s)", getLocalID(), remoteID, currentState);
-				closeConnectionImpl(reason);
+				STATE_LOGGER.debug("Attempting to close connection from %s to %s (At state %s; Reason %s)",
+						getLocalID().getDescription(), remoteID.getDescription(), currentState, reason);
+				currentState = NetworkConnectionState.CLOSING;
+				currentState = closeConnectionImpl(reason);
 				return true;
 			}
 		}
@@ -132,7 +136,7 @@ public abstract class NetworkConnection {
 	/**
 	 * Will be called when closing. State is already checked and synced.
 	 */
-	protected abstract void closeConnectionImpl(ConnectionCloseReason reason);
+	protected abstract NetworkConnectionState closeConnectionImpl(ConnectionCloseReason reason);
 	
 	/**
 	 * Checks whether the connection is still alive by sending a ping signal through the connection.
@@ -156,7 +160,8 @@ public abstract class NetworkConnection {
 		synchronized (lockCurrentState) {
 			if(currentState == NetworkConnectionState.OPEN) {
 					final int pingId = pingTracker.initiatePing();
-					STATE_LOGGER.debug("Attempting to check connection from %s to %s (At state %s)", getLocalID(), remoteID, currentState);
+					STATE_LOGGER.debug("Attempting to check connection from %s to %s (At state %s)",
+							getLocalID().getDescription(), remoteID.getDescription(), currentState);
 					if(pingId < 0 || !checkConnectionImpl(pingId)) {
 						SEND_LOGGER.warning("Connection check failed to send");
 						pingTracker.cancelPing(pingId);

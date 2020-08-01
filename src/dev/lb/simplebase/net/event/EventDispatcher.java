@@ -39,7 +39,7 @@ public class EventDispatcher {
 	public synchronized <E extends Event> boolean post(EventAccessor<E> handler, E event) {
 		Objects.requireNonNull(handler, "'handler' parameter must not be null");
 		Objects.requireNonNull(event, "'event' parameter must not be null");
-		LOGGER.debug("Posted event (" + handler.getEventClass() + ") to " +
+		LOGGER.debug("Posted event (" + handler.getEventClass().getSimpleName() + ") to " +
 				handler.getHandlerCount() + " handlers for " + sourceDescription.get());
 		handler.post(event);
 		return event.isCancelled();

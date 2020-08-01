@@ -18,12 +18,14 @@ public class InternalNetworkManagerServer extends NetworkManagerServer {
 	@Override
 	protected ServerManagerState startServerImpl() {
 		NetworkManager.InternalAccess.INSTANCE.registerServerManagerForInternalConnections(this);
+		LOGGER.info("... Sever start successful (%s)", getLocalID().getDescription());
 		return ServerManagerState.RUNNING;
 	}
 
 	@Override
 	protected void stopServerImpl() {
 		NetworkManager.InternalAccess.INSTANCE.unregisterServerManagerForInternalConnections(this);
+		LOGGER.info("... Server stopped (%s)", getLocalID().getDescription());
 	}
 	
 }
