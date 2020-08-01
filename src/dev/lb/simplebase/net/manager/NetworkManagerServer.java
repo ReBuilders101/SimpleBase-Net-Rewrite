@@ -17,6 +17,7 @@ import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.event.EventAccessor;
 import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
+import dev.lb.simplebase.net.events.FilterRawConnectionEvent;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.packet.PacketContext;
@@ -37,11 +38,21 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 	
 	/**
 	 * The {@link ConfigureConnectionEvent} will be posted when a new connection has been accepted by the server.<br>
-	 * Can be used to set the connection's custom object
-	 * <p>
-	 * If cancelled, the connection will not be created
+	 * Can be used to set the connection's custom object.
 	 */
 	public final EventAccessor<ConfigureConnectionEvent> ConfigureConnection = new EventAccessor<>(ConfigureConnectionEvent.class);
+	
+	/**
+	 * The {@link FilterRawConnectionEvent} will be posted when a new connection from a network location is attempted.
+	 * Can be used to decline/terminate a connection based in IP-Address before a NetworkId is created.
+	 * <br>Can be used to set the string name of the used {@link NetworkID}.
+	 * <p>
+	 * If cancelled, the connection will be terminated.
+	 * <p>
+	 * <b>Not fired for internal connections</b><br>
+	 * Use this for filtering only, use the {@link #ConfigureConnection} event to react to a new connection.
+	 */
+	public final EventAccessor<FilterRawConnectionEvent> FilterRawConnection = new EventAccessor<>(FilterRawConnectionEvent.class);
 	
 	protected NetworkManagerServer(NetworkID local, ServerConfig config) {
 		super(local, config);

@@ -26,7 +26,7 @@ class InternalServerProvider {
 		//TODO post events
 		final ConfigureConnectionEvent event = new ConfigureConnectionEvent(server, source.getLocalID());
 		server.getEventDispatcher().post(server.ConfigureConnection, event);
-		if(event.isCancelled()) return null;
+//		if(event.isCancelled()) return null; //Is no longer cancellable
 		
 		final InternalNetworkConnection peer = new InternalNetworkConnection(server, source,
 				server.getConfig().getConnectionCheckTimeout(), true, event.getCustomObject());

@@ -1,6 +1,7 @@
 package dev.lb.simplebase.net.manager;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -8,12 +9,15 @@ import java.net.SocketAddress;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.config.ServerConfig;
 import dev.lb.simplebase.net.config.ServerType;
+import dev.lb.simplebase.net.connection.NetworkConnection;
+import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
+import dev.lb.simplebase.net.events.FilterRawConnectionEvent;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFunction;
 import dev.lb.simplebase.net.manager.ServerSocketAcceptorThread.AcceptorThreadDeathReason;
 
 public class SocketNetworkManagerServer extends NetworkManagerServer {
-
+	
 	private final TcpModule tcpModule;
 	private final UdpModule udpModule;
 	private final LanModule lanModule;
@@ -88,7 +92,36 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 	
 	@Internal
 	void acceptIncomingRawConnection(Socket connectedSocket) {
+		//Find the address depending on socket implementation
+		final SocketAddress remote = connectedSocket.getRemoteSocketAddress();
+		final InetSocketAddress remoteAddress;
+		if(remote instanceof InetSocketAddress) {
+			remoteAddress = (InetSocketAddress) remote;
+		} else {
+			remoteAddress = new InetSocketAddress(connectedSocket.getInetAddress(), connectedSocket.getPort());
+		}
 		
+		//post and handle the event
+		final FilterRawConnectionEvent event1 = new FilterRawConnectionEvent(remoteAddress, 
+				ManagerInstanceProvider.generateNetworkIdName("RemoteId-"));
+		getEventDispatcher().post(FilterRawConnection, event1);
+		if(event1.isCancelled()) {
+			try {
+				connectedSocket.close();
+			} catch (IOException e) {
+				LOGGER.error("Error while closing a declined TCP socket", e);
+			}
+		} else {
+			final NetworkID networkId = NetworkID.createID(event1.getNetworkIdName(), remoteAddress);
+			
+			//Next event
+			final ConfigureConnectionEvent event2 = new ConfigureConnectionEvent(this, networkId);
+			getEventDispatcher().post(ConfigureConnection, event2);
+			
+			event2.getCustomObject(); //use this for connection
+			final NetworkConnection tcpConnection = null; //TODO impl
+			addInitializedConnection(tcpConnection);
+		}
 	}
 	
 	

@@ -1,6 +1,7 @@
 package dev.lb.simplebase.net.manager;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
@@ -42,6 +43,11 @@ public final class ManagerInstanceProvider {
 		if(elements.length <= 2) throw new RuntimeException("Unexpected thread state");
 		if(elements[2].getClassName() != NetworkManager.class.getName()) throw new RuntimeException("Unexpecetd caller");
 		return INSTANCE;
+	}
+	
+	private static final AtomicInteger NAME_INDEX = new AtomicInteger(0);
+	static String generateNetworkIdName(String prefix) {
+		return prefix + NAME_INDEX.getAndIncrement();
 	}
 	
 }

@@ -13,7 +13,7 @@ public class ConfigureConnectionEvent extends Event {
 	private Object customObject;
 	
 	public ConfigureConnectionEvent(NetworkManagerServer server, NetworkID remoteId) {
-		super(true, false);
+		super(false, false);
 		this.server = server;
 		this.remoteId = remoteId;
 		this.customObject = null;
