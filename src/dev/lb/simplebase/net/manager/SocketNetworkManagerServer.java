@@ -92,6 +92,18 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 	
 	@Internal
 	void acceptIncomingRawConnection(Socket connectedSocket) {
+		//Immediately cancel the connection
+		final ServerManagerState stateSnapshot = getCurrentState(); //We are not synced here, but if it is STOPPING or STOPPED it can never be RUNNING again
+		if(stateSnapshot.ordinal() > ServerManagerState.RUNNING.ordinal()) {
+			LOGGER.warning("Declining incoming TCP socket connection because server is already %s", stateSnapshot);
+			try {
+				connectedSocket.close();
+			} catch (IOException e) {
+				LOGGER.error("Error while closing a declined TCP socket", e);
+			}
+			return;
+		}
+		
 		//Find the address depending on socket implementation
 		final SocketAddress remote = connectedSocket.getRemoteSocketAddress();
 		final InetSocketAddress remoteAddress;
@@ -120,7 +132,13 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 			
 			event2.getCustomObject(); //use this for connection
 			final NetworkConnection tcpConnection = null; //TODO impl
-			addInitializedConnection(tcpConnection);
+			
+			//This will start the sync. An exclusive lock for this whole method would be too expensive
+			if(!addInitializedConnection(tcpConnection)) {
+				//Can't connect after all, maybe the server was stopped in the time we created the connection
+				LOGGER.warning("Re-Closed an initialized connection: Server was stopped during connection init");
+				tcpConnection.closeConnection();
+			}
 		}
 	}
 	

@@ -65,7 +65,7 @@ public class ServerSocketAcceptorThread extends Thread {
 	public void interrupt() {
 		super.interrupt();
 		//This will produce a SocketException in the accept() method, ending the loop
-		if(isInterrupted()) {
+		if(isInterrupted() && !serverSocket.isClosed()) {
 			try {
 				serverSocket.close();
 			} catch (IOException e) {

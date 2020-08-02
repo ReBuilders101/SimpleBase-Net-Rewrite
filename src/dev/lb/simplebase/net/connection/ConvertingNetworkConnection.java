@@ -10,6 +10,7 @@ import dev.lb.simplebase.net.packet.converter.ByteToPacketConverter;
 import dev.lb.simplebase.net.packet.converter.ConnectionAdapter;
 import dev.lb.simplebase.net.packet.converter.PacketToByteConverter;
 import dev.lb.simplebase.net.packet.converter.SingleConnectionAdapter;
+import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
 
 /**
  * A network connection that converts packets to/from bytes when sending them
@@ -31,7 +32,23 @@ public abstract class ConvertingNetworkConnection extends NetworkConnection {
 
 	protected abstract void sendRawByteData(ByteBuffer buffer);
 	
-	private class Adapter implements SingleConnectionAdapter {
+	@Override
+	protected boolean checkConnectionImpl(int uuid) {
+		packetToByteConverter.convertAndPublish(NetworkPacketFormats.CHECK, uuid);
+		return true;
+	}
+
+	@Override
+	protected void sendPacketImpl(Packet packet) {
+		packetToByteConverter.convertAndPublish(NetworkPacketFormats.PACKET, packet);
+	}
+
+	@Override
+	public void receiveConnectionCheck(int uuid) {
+		packetToByteConverter.convertAndPublish(NetworkPacketFormats.CHECKREPLY, uuid);
+	}
+	
+	protected class Adapter implements SingleConnectionAdapter {
 
 		private final boolean udpWarning;
 		
