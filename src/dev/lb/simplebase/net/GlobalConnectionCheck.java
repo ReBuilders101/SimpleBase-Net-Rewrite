@@ -87,7 +87,7 @@ public class GlobalConnectionCheck {
 				}
 				//Do the check
 				synchronized (managers) {
-					managers.forEach(NetworkManagerCommon::updateCheckTimeout); 
+					managers.forEach(NetworkManagerCommon::updateConnectionStatus); 
 				}
 			}
 		}
