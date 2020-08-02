@@ -10,6 +10,7 @@ import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.config.ServerConfig;
 import dev.lb.simplebase.net.config.ServerType;
 import dev.lb.simplebase.net.connection.NetworkConnection;
+import dev.lb.simplebase.net.connection.TcpSocketNetworkConnection;
 import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
 import dev.lb.simplebase.net.events.FilterRawConnectionEvent;
 import dev.lb.simplebase.net.id.NetworkID;
@@ -130,14 +131,19 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 			final ConfigureConnectionEvent event2 = new ConfigureConnectionEvent(this, networkId);
 			getEventDispatcher().post(ConfigureConnection, event2);
 			
-			event2.getCustomObject(); //use this for connection
-			final NetworkConnection tcpConnection = null; //TODO impl
 			
-			//This will start the sync. An exclusive lock for this whole method would be too expensive
-			if(!addInitializedConnection(tcpConnection)) {
-				//Can't connect after all, maybe the server was stopped in the time we created the connection
-				LOGGER.warning("Re-Closed an initialized connection: Server was stopped during connection init");
-				tcpConnection.closeConnection();
+			try {
+				final NetworkConnection tcpConnection = new TcpSocketNetworkConnection(this, networkId, connectedSocket,
+						getConfig().getConnectionCheckTimeout(), true, event2.getCustomObject());
+				
+				//This will start the sync. An exclusive lock for this whole method would be too expensive
+				if(!addInitializedConnection(tcpConnection)) {
+					//Can't connect after all, maybe the server was stopped in the time we created the connection
+					LOGGER.warning("Re-Closed an initialized connection: Server was stopped during connection init");
+					tcpConnection.closeConnection();
+				}
+			} catch (IOException e) {
+				LOGGER.error("Socked moved to an invalid state while creating connection object", e);
 			}
 		}
 	}

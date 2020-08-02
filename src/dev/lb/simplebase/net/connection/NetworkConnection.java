@@ -390,6 +390,12 @@ public abstract class NetworkConnection {
 		public NetworkConnection getConnection() {
 			return NetworkConnection.this;
 		}
+
+		@Override
+		public String toString() {
+			return "Context [getLocalID()=" + getLocalID() + ", getRemoteID()=" + getRemoteID() + ", isServer()="
+					+ isServer() + "]";
+		}
 	}
 	
 	protected static final AtomicInteger PING_TRACKER_UUID_GENERATOR = new AtomicInteger(0);

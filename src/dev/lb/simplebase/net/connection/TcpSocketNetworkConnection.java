@@ -18,10 +18,23 @@ public class TcpSocketNetworkConnection extends ConvertingNetworkConnection {
 	public TcpSocketNetworkConnection(NetworkManagerCommon networkManager, NetworkID remoteID,
 			int checkTimeoutMS, boolean serverSide, Object customObject) {
 		super(networkManager, remoteID, NetworkConnectionState.INITIALIZED, checkTimeoutMS, serverSide, customObject, true);
-		this.thread = new DataReceiverThread();
 		this.socket = new Socket();
+		this.thread = new DataReceiverThread();
+	}
+	
+	public TcpSocketNetworkConnection(NetworkManagerCommon networkManager, NetworkID remoteID, Socket activeSocket,
+			int checkTimeoutMS, boolean serverSide, Object customObject) throws IOException {
+		super(networkManager, remoteID, assertSocketState(activeSocket), checkTimeoutMS, serverSide, customObject, true);
+		this.socket = activeSocket;
+		this.thread = new DataReceiverThread();
 	}
 
+	private static NetworkConnectionState assertSocketState(Socket socket) throws IOException {
+		if(socket.isClosed()) throw new IOException("Socket is already closed");
+		if(!socket.isConnected()) throw new IOException("Socket is not connected");
+		return NetworkConnectionState.OPEN;
+	}
+	
 	@Override
 	protected NetworkConnectionState openConnectionImpl() {
 		try {

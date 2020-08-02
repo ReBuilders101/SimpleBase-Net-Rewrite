@@ -78,8 +78,10 @@ public class InternalNetworkConnection extends NetworkConnection {
 	}
 
 	private void requirePeer() {
-		STATE_LOGGER.fatal("Unexpected State: Peer not present (%s)", currentState);
-		throw new IllegalStateException("Peer not present");
+		if(peer == null) {
+			STATE_LOGGER.fatal("Unexpected State: Peer not present (%s)", currentState);
+			throw new IllegalStateException("Peer not present");
+		}
 	}
 	
 }
