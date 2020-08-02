@@ -13,6 +13,7 @@ import dev.lb.simplebase.net.connection.TcpSocketNetworkConnection;
 import dev.lb.simplebase.net.event.EventAccessor;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
 import dev.lb.simplebase.net.util.ThreadsafeAction;
 
@@ -51,6 +52,10 @@ public final class NetworkManagerClient extends NetworkManagerCommon {
 
 	public void checkConnectionToServer() {
 		connection.checkConnection();
+	}
+	
+	public boolean sendPacketToServer(Packet packet) {
+		return connection.sendPacket(packet);
 	}
 
 	public NetworkConnectionState getServerConnectionState() {

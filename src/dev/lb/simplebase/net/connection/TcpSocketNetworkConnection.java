@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
@@ -27,6 +28,7 @@ public class TcpSocketNetworkConnection extends ConvertingNetworkConnection {
 		super(networkManager, remoteID, assertSocketState(activeSocket), checkTimeoutMS, serverSide, customObject, true);
 		this.socket = activeSocket;
 		this.thread = new DataReceiverThread();
+		this.thread.start();
 	}
 
 	private static NetworkConnectionState assertSocketState(Socket socket) throws IOException {
@@ -73,8 +75,13 @@ public class TcpSocketNetworkConnection extends ConvertingNetworkConnection {
 		}
 	}
 
+	private static final AtomicInteger THREAD_ID = new AtomicInteger(0);
 	private class DataReceiverThread extends Thread {
-
+		
+		public DataReceiverThread() {
+			super("DataReceiverThread-" + THREAD_ID.getAndIncrement());
+		}
+		
 		@Override
 		public void run() {
 			ConnectionCloseReason closeReason = ConnectionCloseReason.UNKNOWN;

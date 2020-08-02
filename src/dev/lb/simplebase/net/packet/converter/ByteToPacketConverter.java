@@ -36,6 +36,7 @@ public final class ByteToPacketConverter {
 	 * {@code requiredBytes} will never be 0 after this method returns.
 	 */
 	private void updateAccumulationState(int receivedAmount) {
+		requiredBytes -= receivedAmount;
 		if(currentFormat == null) {
 			//Here we try to figure out what our next format should be
 			if(requiredBytes == 0) { //Should have 4 bytes now

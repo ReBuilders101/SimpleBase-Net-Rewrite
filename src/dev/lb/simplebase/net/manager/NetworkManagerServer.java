@@ -79,7 +79,7 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 	 * @return A list of all currently present connections
 	 * @see #getConnectionsFast()
 	 */
-	public List<NetworkConnection> getConnections() {
+	public List<NetworkConnection> getConnectionsCopy() {
 		try {
 			lockServer.readLock().lock();
 			return new ArrayList<>(connections.values());
@@ -97,7 +97,7 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 	 * {@link ThreadsafeIterable#action(Consumer)} to acquire a lock for the connections list
 	 * @return A stream of all currently present connections
 	 * @throws IllegalStateException If the lock is not held by the current thread (optional)
-	 * @see #getConnections()
+	 * @see #getConnectionsCopy()
 	 */
 	public Stream<NetworkConnection> getConnectionsFast() {
 		if(LockHelper.isHeldByCurrentThread(lockServer.readLock(), true)) { 
@@ -144,7 +144,9 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 				//Disconnect everyone
 				LOGGER.info("Closing %d connections for server shutdown", connections.size());
 				for(NetworkConnection con : connections.values()) {
+					System.out.println("closing");
 					con.closeConnection(ConnectionCloseReason.SERVER);
+					System.out.println("closed");
 				}
 				//remove all closed connections
 				connections.clear();

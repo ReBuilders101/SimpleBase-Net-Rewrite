@@ -41,7 +41,7 @@ public final class PacketToByteConverter {
 			ByteBuffer toSend = ByteBuffer.allocate(buffer.remaining() + 4);
 			ByteDataHelper.cInt(format.getUniqueIdentifier(), toSend);
 			toSend.put(buffer);
-			destination.accept(buffer);
+			destination.accept(toSend);
 		} else {
 			LOGGER.debug("Format (%s) produced an invalid packet for data %s", format.getName(), data);
 		}

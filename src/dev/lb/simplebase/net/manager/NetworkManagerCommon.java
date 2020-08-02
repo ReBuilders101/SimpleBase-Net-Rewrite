@@ -234,6 +234,7 @@ public abstract class NetworkManagerCommon {
 	 * the manager is left to garbage collection.
 	 */
 	public void cleanUp() {
+		managedThread.ifPresent(Thread::interrupt);
 		NetworkManager.InternalAccess.INSTANCE.unregisterManagerForConnectionStatusCheck(this);
 	}
 	
