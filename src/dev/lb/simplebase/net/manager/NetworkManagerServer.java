@@ -20,6 +20,7 @@ import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.events.FilterRawConnectionEvent;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
 import dev.lb.simplebase.net.util.LockBasedThreadsafeIterable;
 import dev.lb.simplebase.net.util.LockHelper;
@@ -206,6 +207,34 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 		try {
 			lockServer.readLock().lock();
 			return connections.get(remoteID);
+		} finally {
+			lockServer.readLock().unlock();
+		}
+	}
+	
+	
+	public boolean sendPacketToClient(NetworkID client, Packet packet) {
+		try {
+			lockServer.readLock().lock();
+			final NetworkConnection con = connections.get(client);
+			if(con == null) {
+				return false;
+			} else {
+				return con.sendPacket(packet);
+			}
+		} finally {
+			lockServer.readLock().unlock();
+		}
+	}
+	
+	public boolean sendPacketToAllClients(Packet packet) {
+		try {
+			lockServer.readLock().lock();
+			boolean allSent = true;
+			for(NetworkConnection con : connections.values()) {
+				allSent &= con.sendPacket(packet);
+			}
+			return allSent;
 		} finally {
 			lockServer.readLock().unlock();
 		}
