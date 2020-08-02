@@ -31,7 +31,7 @@ class NetworkPacketFormatEmpty<Connection> extends NetworkPacketFormat<Connectio
 	}
 
 	@Override
-	public ByteBuffer encode(Object context, Object data) {
+	public ByteBuffer encode(Object context, Object data, int bufferSize) {
 		return ByteBuffer.allocate(0);
 	}
 	

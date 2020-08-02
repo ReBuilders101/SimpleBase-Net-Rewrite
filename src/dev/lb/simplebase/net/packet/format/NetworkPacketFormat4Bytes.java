@@ -33,7 +33,7 @@ class NetworkPacketFormat4Bytes<Connection> extends NetworkPacketFormat<Connecti
 	}
 
 	@Override
-	public ByteBuffer encode(Object context, Integer data) {
+	public ByteBuffer encode(Object context, Integer data, int bufferSize) {
 		final ByteBuffer buffer = ByteBuffer.allocate(4);
 		ByteDataHelper.cInt(data.intValue(), buffer);
 		buffer.flip();

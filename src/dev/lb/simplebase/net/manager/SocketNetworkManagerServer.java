@@ -1,14 +1,18 @@
 package dev.lb.simplebase.net.manager;
 
 import java.io.IOException;
+import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.net.SocketException;
+import java.nio.ByteBuffer;
 
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.config.ServerConfig;
 import dev.lb.simplebase.net.config.ServerType;
+import dev.lb.simplebase.net.connection.DatagramSocketReceiverThread;
 import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.connection.TcpSocketNetworkConnection;
 import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
@@ -16,12 +20,14 @@ import dev.lb.simplebase.net.events.FilterRawConnectionEvent;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFunction;
 import dev.lb.simplebase.net.manager.ServerSocketAcceptorThread.AcceptorThreadDeathReason;
+import dev.lb.simplebase.net.packet.converter.AddressBasedDecoderPool;
+import dev.lb.simplebase.net.packet.converter.AnonymousServerConnectionAdapter;
+import dev.lb.simplebase.net.packet.converter.MutableAddressConnectionAdapter;
 
 public class SocketNetworkManagerServer extends NetworkManagerServer {
 	
 	private final TcpModule tcpModule;
 	private final UdpModule udpModule;
-	private final LanModule lanModule;
 	
 	protected SocketNetworkManagerServer(NetworkID local, ServerConfig config) throws IOException {
 		super(local, config);
@@ -30,12 +36,11 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 		
 		//Module setup
 		final boolean detection = config.getAllowDetection();
-		if(actualType.supportsUdp()) {
-			udpModule = new UdpModule(detection);
-			lanModule = detection ? udpModule : null;
+		final boolean udpConnect = actualType.supportsUdp();
+		if(detection || udpConnect) {
+			udpModule = new UdpModule(detection, udpConnect);
 		} else {
 			udpModule = null;
-			lanModule = detection ? new LanModule() : null;
 		}
 		if(actualType.supportsTcp()) {
 			tcpModule = new TcpModule();
@@ -46,7 +51,7 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 	
 	
 	public boolean supportsUdp() {
-		return udpModule != null;
+		return udpModule != null && udpModule.udp;
 	}
 	
 	public boolean supportsTcp() {
@@ -54,7 +59,7 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 	}
 	
 	public boolean supportsDetection() {
-		return lanModule != null;
+		return udpModule != null && udpModule.lan;
 	}
 
 	@Override
@@ -69,7 +74,7 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 			}
 		}
 		
-		
+		//TODO start UDP
 		
 		return ServerManagerState.RUNNING;
 	}
@@ -79,6 +84,10 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 	protected void stopServerImpl() {
 		if(tcpModule != null) {
 			tcpModule.stop();
+		}
+		
+		if(udpModule != null) {
+			udpModule.stop();
 		}
 	}
 	
@@ -169,25 +178,85 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 			acceptorThread.interrupt();
 		}
 		
-		@SuppressWarnings("unused")
-		public boolean isActive() {
-			return acceptorThread.isAlive() && serverSocket.isBound() && !serverSocket.isClosed();
-		}
-		
 		public void notifyAcceptorThreadDeath(AcceptorThreadDeathReason reason) {
 			LOGGER.debug("Ignoring thread death notification %s: No cleanup required, server keeps running for other modules", reason);
 		}
 		
 	}
 	
-	private final class UdpModule extends LanModule {
-		public UdpModule(boolean lanCapable) {
+	private class UdpModule {
+		protected final DatagramSocket serverSocket;
+		protected final AddressBasedDecoderPool pooledDecoders;
+		protected final DatagramSocketReceiverThread receiverThread;
+		
+		private final boolean lan;
+		private final boolean udp;
+		
+		public UdpModule(boolean lan, boolean udp) throws SocketException {
+			if(!(lan || udp)) throw new IllegalArgumentException("UdpModule must support either LAN or UDP connections");
+			this.lan = lan;
+			this.udp = udp;
 			
+			this.serverSocket = new DatagramSocket();
+			this.pooledDecoders = new AddressBasedDecoderPool(UdpAnonymousConnectionAdapter::new, getMappingContainer(), getConfig().getPacketBufferInitialSize());
+			this.receiverThread = new DatagramSocketReceiverThread(serverSocket, pooledDecoders::decode, getConfig().getPacketBufferInitialSize());
+		}
+		
+		public void start() {
+			
+		}
+		
+		public void stop() {
+			
+		}
+		
+		public void receiveUdpLogin(InetSocketAddress address) {
+			if(udp) {
+				//TODO
+			} else {
+				LOGGER.debug("Received a UDP-Login for server %s, but UDP module is disabled", getLocalID().getDescription());
+			}
+		}
+		
+		public void receiveServerInfoRequest(InetSocketAddress address) {
+			if(lan) {
+				//TODO
+			} else {
+				LOGGER.debug("Received a Server-Info-Request for server %s, but LAN module is disabled", getLocalID().getDescription());
+			}
 		}
 		
 	}
 	
-	private class LanModule {
+	private class UdpAnonymousConnectionAdapter implements AnonymousServerConnectionAdapter, MutableAddressConnectionAdapter {
+
+		private final ReferenceCounter counter;
+		private volatile InetSocketAddress address;
+		
+		public UdpAnonymousConnectionAdapter(InetSocketAddress address) {
+			this.address = address;
+			this.counter = new ReferenceCounter();
+		}
+		
+		@Override
+		public void receiveUdpLogin() {
+			udpModule.receiveUdpLogin(address);
+		}
+
+		@Override
+		public void receiveServerInfoRequest() {
+			udpModule.receiveServerInfoRequest(address);
+		}
+
+		@Override
+		public void setAddress(InetSocketAddress address) {
+			this.address = address;
+		}
+
+		@Override
+		public ReferenceCounter getUseCountManager() {
+			return counter;
+		}
 		
 	}
 }

@@ -26,8 +26,10 @@ public abstract class ConvertingNetworkConnection extends NetworkConnection {
 		super(networkManager, remoteID, initialState, checkTimeoutMS, serverSide, customObject);
 		
 		this.connectionAdapter = new Adapter(udpWarning);
-		this.packetToByteConverter = new PacketToByteConverter(networkManager.getMappingContainer(), this::sendRawByteData);
-		this.byteToPacketConverter = new ByteToPacketConverter(connectionAdapter, networkManager.getMappingContainer());
+		this.packetToByteConverter = new PacketToByteConverter(networkManager.getMappingContainer(), this::sendRawByteData,
+				networkManager.getConfig().getPacketBufferInitialSize());
+		this.byteToPacketConverter = new ByteToPacketConverter(connectionAdapter, networkManager.getMappingContainer(),
+				networkManager.getConfig().getPacketBufferInitialSize());
 	}
 
 	protected abstract void sendRawByteData(ByteBuffer buffer);

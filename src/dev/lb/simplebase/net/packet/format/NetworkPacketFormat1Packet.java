@@ -66,7 +66,7 @@ class NetworkPacketFormat1Packet<Connection> extends NetworkPacketFormat<Connect
 	}
 
 	@Override
-	public ByteBuffer encode(PacketIDMappingProvider context, Packet data) {
+	public ByteBuffer encode(PacketIDMappingProvider context, Packet data, int bufferSize) {
 		final PacketIDMapping mapping = context.findMapping(data.getClass());
 		if(mapping == null) return null;
 		final int packetId = mapping.getPacketID();
@@ -74,7 +74,7 @@ class NetworkPacketFormat1Packet<Connection> extends NetworkPacketFormat<Connect
 		final WritableNIOData writableData;
 		
 		if(expectedSize < 0) {
-			writableData = new DynamicNIOWritableData(NetworkPacketFormats.PACKET_BUFFER_SIZE);
+			writableData = new DynamicNIOWritableData(bufferSize);
 		} else {
 			writableData = new FixedNIOWritableData(expectedSize);
 		}

@@ -19,16 +19,18 @@ public final class ByteToPacketConverter {
 	
 	private final PacketIDMappingProvider provider;
 	private final ConnectionAdapter receiver;
-
+	private final int bufferSize;
+	
 	private NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider, ?> currentFormat;
 	private ByteBuffer buffer; //Will be ready for put() operations
 	private int requiredBytes;
 
-	public ByteToPacketConverter(ConnectionAdapter connection, PacketIDMappingProvider provider) {
+	public ByteToPacketConverter(ConnectionAdapter connection, PacketIDMappingProvider provider, int bufferSize) {
 		this.receiver = connection;
 		this.provider = provider;
+		this.bufferSize = bufferSize;
 		this.currentFormat = null;
-		this.buffer = ByteBuffer.allocate(NetworkPacketFormats.PACKET_BUFFER_SIZE);
+		this.buffer = ByteBuffer.allocate(bufferSize);
 		this.requiredBytes = 4; //Prepare for format id reading
 	}
 	
@@ -127,6 +129,10 @@ public final class ByteToPacketConverter {
 		}
 	}
 	
+	public ConnectionAdapter getConnectionAdapter() {
+		return receiver;
+	}
+	
 	private void acceptBytesUnchecked(ByteBuffer data, int amount) {
 		ensureCapacity(amount);
 		data.put(data);
@@ -135,10 +141,10 @@ public final class ByteToPacketConverter {
 
 	private void ensureCapacity(int required) {
 		if(buffer == null) {
-			buffer = ByteBuffer.allocate(Math.max(NetworkPacketFormats.PACKET_BUFFER_SIZE, required));
+			buffer = ByteBuffer.allocate(Math.max(bufferSize, required));
 		} else if(buffer.remaining() < required){
-			final int newCapacity = buffer.capacity() + NetworkPacketFormats.PACKET_BUFFER_SIZE * 
-					((int) Math.floorDiv(required, NetworkPacketFormats.PACKET_BUFFER_SIZE));
+			final int newCapacity = buffer.capacity() + bufferSize * 
+					((int) Math.floorDiv(required, bufferSize));
 			final ByteBuffer newBuffer = ByteBuffer.allocate(newCapacity); //ready for put() by default
 			buffer.flip(); //prepare for get() to copy into the new buffer
 			newBuffer.put(buffer);

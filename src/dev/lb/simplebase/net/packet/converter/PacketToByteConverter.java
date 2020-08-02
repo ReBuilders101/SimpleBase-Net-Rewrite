@@ -18,15 +18,17 @@ public final class PacketToByteConverter {
 	
 	private final PacketIDMappingProvider provider;
 	private final Consumer<ByteBuffer> destination;
+	private final int bufferSize;
 	
 	/**
 	 * Creates a new instance
 	 * @param provider Provides {@link PacketIDMapping}s to look up numerical packet IDs
 	 * @param destination The next stage that sends bytes through a connection
 	 */
-	public PacketToByteConverter(PacketIDMappingProvider provider, Consumer<ByteBuffer> destination) {
+	public PacketToByteConverter(PacketIDMappingProvider provider, Consumer<ByteBuffer> destination, int bufferSize) {
 		this.provider = provider;
 		this.destination = destination;
+		this.bufferSize = bufferSize;
 	}
 
 	/**
@@ -36,7 +38,7 @@ public final class PacketToByteConverter {
 	 * @param data The data to encode
 	 */
 	public <Data> void convertAndPublish(NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider, Data> format, Data data) {
-		final ByteBuffer buffer = format.encode(provider, data);
+		final ByteBuffer buffer = format.encode(provider, data, bufferSize);
 		if(buffer != null) {
 			ByteBuffer toSend = ByteBuffer.allocate(buffer.remaining() + 4);
 			ByteDataHelper.cInt(format.getUniqueIdentifier(), toSend);

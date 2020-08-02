@@ -23,7 +23,7 @@ public class ClientConfig extends CommonConfig {
 	 * <table>
 	 * <tr><th>Getter method name</th><th>Initial value</th></tr>
 	 * <tr><td>{@link #getUseManagedThread()}</td><td>{@code true}<td></tr>
-	 * <tr><td>{@link #getEncodeBufferInitialSize()}</td><td>{@code 128}</td></tr>
+	 * <tr><td>{@link #getPacketBufferInitialSize()}</td><td>{@code 128}</td></tr>
 	 * <tr><td>{@link #getConnectionCheckTimeout()}</td><td>{@code 1000}</td></tr>
 	 * <tr><td>{@link #getConnectionType()}</td><td>{@link ConnectionType#DEFAULT}</td></tr>
 	 * <tr><td>{@link #getCustomData()}</td><td>{@code null}</td></tr>

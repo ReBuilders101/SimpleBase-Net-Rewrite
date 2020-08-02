@@ -10,9 +10,7 @@ import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
 import dev.lb.simplebase.net.packet.converter.ConnectionAdapter;
 import dev.lb.simplebase.net.util.Lazy;
 
-public final class NetworkPacketFormats {
-	public static final int PACKET_BUFFER_SIZE = 128;
-	
+public final class NetworkPacketFormats {	
 	private NetworkPacketFormats() {}
 
 	/**

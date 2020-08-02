@@ -22,7 +22,7 @@ public abstract class CommonConfig implements Cloneable {
 	 */
 	public static int DISABLE_CONNECTION_TIMEOUT = -1;
 	
-	protected static final int BUFFER_INITIAL_DEFAULT = 128;
+	protected static final int BUFFER_INITIAL_DEFAULT = 512;
 	protected static final int CONNECTION_CHECK_DEFAULT = 1000;
 	protected static final boolean USE_MANAGED_DEFAULT = true;
 	protected static final boolean GLOBAL_CHECK_DEFAULT = false;
@@ -42,7 +42,7 @@ public abstract class CommonConfig implements Cloneable {
 	 * <table>
 	 * <tr><th>Getter method name</th><th>Initial value</th></tr>
 	 * <tr><td>{@link #getUseManagedThread()}</td><td>{@value #USE_MANAGED_DEFAULT}<td></tr>
-	 * <tr><td>{@link #getEncodeBufferInitialSize()}</td><td>{@value #BUFFER_INITIAL_DEFAULT}</td></tr>
+	 * <tr><td>{@link #getPacketBufferInitialSize()}</td><td>{@value #BUFFER_INITIAL_DEFAULT}</td></tr>
 	 * <tr><td>{@link #getConnectionCheckTimeout()}</td><td>{@value #CONNECTION_CHECK_DEFAULT}</td></tr>
 	 * <tr><td>{@link #getGlobalConnectionCheck()}</td><td>{@value #GLOBAL_CHECK_DEFAULT}</td></tr>
 	 * </table>
@@ -103,18 +103,20 @@ public abstract class CommonConfig implements Cloneable {
 	 * @param value The new value for the initial size of the packet encode buffer
 	 * @throws IllegalStateException If this config object is locked ({@link #isLocked()})
 	 */
-	public synchronized void setEncodeBufferInitialSize(int value) {
+	public synchronized void setPacketBufferInitialSize(int value) {
 		checkLocked();
 		this.encodeBufferInitialSize = value;
 	}
 	
 	/**
-	 * The size in bytes that the buffer used to encode packets will have when
-	 * created. The buffer is able to dynamically expand if it is to small, but this takes
+	 * The size in bytes that the buffer used to encode and decode packets will have when
+	 * created.<p> The encode buffer is able to dynamically expand if it is to small, but this takes
 	 * additional time. If the buffer is to large, memory space is wasted.
+	 * <br>
+	 * The decode buffer for UDP packets cannot expand, larger packets will be truncated.
 	 * @return The initial size of the packet encode buffer
 	 */
-	public synchronized int getEncodeBufferInitialSize() {
+	public synchronized int getPacketBufferInitialSize() {
 		return encodeBufferInitialSize;
 	}
 	

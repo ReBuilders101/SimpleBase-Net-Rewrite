@@ -112,5 +112,5 @@ public abstract class NetworkPacketFormat<Connection, DecodeContext, Data> {
 	 * @param data The packet to encode
 	 * @return The filled {@link ByteBuffer}, or {@code null} if the packet is invalid
 	 */
-	public abstract ByteBuffer encode(DecodeContext context, Data data);
+	public abstract ByteBuffer encode(DecodeContext context, Data data, int bufferSize);
 }
