@@ -283,12 +283,12 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 	@Override
 	public void updateConnectionStatus() {
 		try {
-			lockServer.readLock().lock();
+			lockServer.writeLock().lock();
 			for(NetworkConnection con : connections.values()) {
 				con.updateConnectionStatus();
 			}
 		} finally {
-			lockServer.readLock().unlock();
+			lockServer.writeLock().unlock();
 		}
 	}
 
