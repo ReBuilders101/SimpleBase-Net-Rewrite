@@ -19,7 +19,6 @@ import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
 import dev.lb.simplebase.net.events.FilterRawConnectionEvent;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFunction;
-import dev.lb.simplebase.net.manager.ServerSocketAcceptorThread.AcceptorThreadDeathReason;
 import dev.lb.simplebase.net.packet.converter.AddressBasedDecoderPool;
 import dev.lb.simplebase.net.packet.converter.AnonymousServerConnectionAdapter;
 import dev.lb.simplebase.net.packet.converter.MutableAddressConnectionAdapter;
@@ -92,8 +91,8 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 	}
 	
 	@Internal
-	void notifyAcceptorThreadClosure(AcceptorThreadDeathReason reason) {
-		if(supportsTcp()) {
+	void notifyTCPAcceptorThreadClosure(AcceptorThreadDeathReason reason) {
+		if(tcpModule != null) {
 			tcpModule.notifyAcceptorThreadDeath(reason);
 		} else {
 			LOGGER.warning("SocketNetworkManagerServer was notified of acceptor thread death despite not managing a TCP module");
@@ -179,7 +178,7 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 		}
 		
 		public void notifyAcceptorThreadDeath(AcceptorThreadDeathReason reason) {
-			LOGGER.debug("Ignoring thread death notification %s: No cleanup required, server keeps running for other modules", reason);
+			LOGGER.debug("Ignoring TCP thread death notification %s: No cleanup required, server keeps running for other modules", reason);
 		}
 		
 	}
@@ -198,10 +197,16 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 			this.udp = udp;
 			
 			this.serverSocket = new DatagramSocket();
-			this.pooledDecoders = new AddressBasedDecoderPool(UdpAnonymousConnectionAdapter::new, getMappingContainer(), getConfig().getPacketBufferInitialSize());
-			this.receiverThread = new DatagramSocketReceiverThread(serverSocket, pooledDecoders::decode, getConfig().getPacketBufferInitialSize());
+			this.pooledDecoders = new AddressBasedDecoderPool(UdpAnonymousConnectionAdapter::new, getMappingContainer(),
+					getConfig().getPacketBufferInitialSize());
+			this.receiverThread = new DatagramSocketReceiverThread(serverSocket, pooledDecoders::decode,
+					this::notifyAcceptorThreadDeath, getConfig().getPacketBufferInitialSize());
 		}
 		
+		public void notifyAcceptorThreadDeath(AcceptorThreadDeathReason reason) {
+			LOGGER.debug("Ignoring UDP thread death notification %s: No cleanup required, server keeps running for other modules", reason);
+		}
+
 		public void start() {
 			
 		}

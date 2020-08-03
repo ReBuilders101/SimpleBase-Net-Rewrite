@@ -65,6 +65,7 @@ public class AddressBasedDecoderPool {
 				getCounter(decoder).release();
 				if(getCounter(decoder).getCounter() == 0) {
 					usedAdapters.remove(address, decoder);
+					decoder.resetToFindFormat(); //clear any extra data
 					freeAdapters.add(decoder);
 				}
 			} else {

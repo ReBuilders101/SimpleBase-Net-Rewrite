@@ -31,7 +31,7 @@ public class ServerSocketAcceptorThread extends Thread {
 	public void run() {
 		AcceptorThreadDeathReason deathReason = AcceptorThreadDeathReason.UNKNOWN;
 		try {
-			LOGGER.info("ServerSocket listener thread started");
+			LOGGER.info("TCP ServerSocket listener thread started");
 			while(!this.isInterrupted()) {
 				try {
 					final Socket socket = serverSocket.accept();
@@ -41,23 +41,23 @@ public class ServerSocketAcceptorThread extends Thread {
 						deathReason = AcceptorThreadDeathReason.INTERRUPTED;
 					} else {
 						deathReason = AcceptorThreadDeathReason.EXTERNAL;
-						LOGGER.error("ServerSocket listener thread: Unexpected error", e);
+						LOGGER.error("TCP ServerSocket listener thread: Unexpected error", e);
 					}
 					return;
 				} catch (SocketTimeoutException e) {
 					deathReason = AcceptorThreadDeathReason.TIMEOUT;
-					LOGGER.error("ServerSocket listener thread: Unexpected error", e);
+					LOGGER.error("TCP ServerSocket listener thread: Unexpected error", e);
 					return;
 				} catch (IOException e) {
 					deathReason = AcceptorThreadDeathReason.IOEXCEPTION;
-					LOGGER.error("ServerSocket listener thread: Unexpected error", e);
+					LOGGER.error("TCP ServerSocket listener thread: Unexpected error", e);
 					return;
 				}
 			}
 		} finally {
 			//Always run these, however the thread ends
-			manager.notifyAcceptorThreadClosure(deathReason);
-			LOGGER.info("ServerSocket listener thread ended with reason %s", deathReason);
+			manager.notifyTCPAcceptorThreadClosure(deathReason);
+			LOGGER.info("TCP ServerSocket listener thread ended with reason %s", deathReason);
 		}
 	}
 
@@ -72,33 +72,5 @@ public class ServerSocketAcceptorThread extends Thread {
 				LOGGER.error("Cannot close the server socket for listener thread interrupt");
 			}
 		}
-	}
-
-	/**
-	 * Contains options for reasons why a {@link ServerSocketAcceptorThread} ends.<br>
-	 * Can be passed to the {@link NetworkManagerServer} that handled the {@link ServerSocket}.
-	 */
-	public static enum AcceptorThreadDeathReason {
-		/**
-		 * The thread endend because the underlying {@link ServerSocket} was closed/made unusable by non-API code
-		 */
-		EXTERNAL,
-		/**
-		 * The thread ended because it was interrupted by calling the {@link Thread#interrupt()} method.<br>
-		 * This is considered the only non-exceptional way to end this thread.
-		 */
-		INTERRUPTED,
-		/**
-		 * The thread endend because the underlying {@link ServerSocket} threw an {@link IOException}.
-		 */
-		IOEXCEPTION,
-		/**
-		 * The thread endend because the underlying {@link ServerSocket} threw a {@link SocketTimeoutException}.
-		 */
-		TIMEOUT,
-		/**
-		 * The thread endend for a reason that could not be determined.
-		 */
-		UNKNOWN;
 	}
 }

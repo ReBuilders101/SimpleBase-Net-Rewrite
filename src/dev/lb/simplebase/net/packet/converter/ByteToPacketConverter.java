@@ -81,7 +81,7 @@ public final class ByteToPacketConverter {
 		}
 	}
 	
-	private void resetToFindFormat() {
+	public void resetToFindFormat() {
 		currentFormat = null;
 		buffer.clear();
 		requiredBytes = 4; //The format ID
