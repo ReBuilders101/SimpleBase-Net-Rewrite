@@ -35,7 +35,7 @@ public class ServerSocketAcceptorThread extends Thread {
 			while(!this.isInterrupted()) {
 				try {
 					final Socket socket = serverSocket.accept();
-					manager.acceptIncomingRawConnection(socket);
+					manager.acceptIncomingRawTcpConnection(socket);
 				} catch (SocketException e) {
 					if(this.isInterrupted()) {
 						deathReason = AcceptorThreadDeathReason.INTERRUPTED;

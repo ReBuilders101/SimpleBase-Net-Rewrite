@@ -100,9 +100,9 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 	 * @throws IllegalStateException If the lock is not held by the current thread (optional)
 	 * @see #getConnectionsCopy()
 	 */
-	public Stream<NetworkConnection> getConnectionsFast() {
+	public Iterable<NetworkConnection> getConnectionsFast() {
 		if(LockHelper.isHeldByCurrentThread(lockServer.readLock(), true)) { 
-			return connections.values().stream();
+			return connections.values();
 		} else {
 			throw new IllegalStateException("Current thread does not hold lock"); //No lock, no iterator
 		}
