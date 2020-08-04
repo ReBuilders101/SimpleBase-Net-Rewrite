@@ -86,18 +86,18 @@ public abstract class NetworkConnection {
 				STATE_LOGGER.debug("Attempting to open connection from %s to %s (At state %s)",
 						getLocalID().getDescription(), remoteID.getDescription(), currentState);
 				currentState = NetworkConnectionState.OPENING;
-				currentState = openConnectionImpl();
+				return openConnectionImpl();
 			} else {
 				STATE_LOGGER.info("Cannot open a connection that is in state %s", currentState);
+				return Task.completed();
 			}
 		}
-		return Task.completed();
 	}
 	
 	/**
 	 * Will be called when opening. State is already checked and synced.
 	 */
-	protected abstract NetworkConnectionState openConnectionImpl();
+	protected abstract Task openConnectionImpl(); //TODO implement CONNECT_ACK packet and wait for that
 	
 	/**
 	 * Closes the connection to the remote partner, or marks this connection as closed if the
@@ -124,20 +124,20 @@ public abstract class NetworkConnection {
 		synchronized (lockCurrentState) {
 			if(currentState.hasBeenClosed()) {
 				STATE_LOGGER.debug("Cannot close a connection that is in state %s", currentState);
+				return Task.completed();
 			} else {
 				STATE_LOGGER.debug("Attempting to close connection from %s to %s (At state %s; Reason %s)",
 						getLocalID().getDescription(), remoteID.getDescription(), currentState, reason);
 				currentState = NetworkConnectionState.CLOSING;
-				currentState = closeConnectionImpl(reason);
+				return closeConnectionImpl(reason);
 			}
 		}
-		return Task.completed();
 	}
 	
 	/**
 	 * Will be called when closing. State is already checked and synced.
 	 */
-	protected abstract NetworkConnectionState closeConnectionImpl(ConnectionCloseReason reason);
+	protected abstract Task closeConnectionImpl(ConnectionCloseReason reason);
 	
 	/**
 	 * Checks whether the connection is still alive by sending a ping signal through the connection.

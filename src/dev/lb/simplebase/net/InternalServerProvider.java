@@ -23,7 +23,6 @@ class InternalServerProvider {
 	protected static synchronized InternalNetworkConnection createServerPeer(InternalNetworkConnection source) {
 		final NetworkManagerServer server = serverList.get(source.getRemoteID());
 		if(server == null) return null;
-		//TODO post events
 		final ConfigureConnectionEvent event = new ConfigureConnectionEvent(server, source.getLocalID());
 		server.getEventDispatcher().post(server.ConfigureConnection, event);
 //		if(event.isCancelled()) return null; //Is no longer cancellable

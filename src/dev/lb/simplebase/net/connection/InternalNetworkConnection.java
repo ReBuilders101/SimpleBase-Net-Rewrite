@@ -5,6 +5,7 @@ import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.Packet;
+import dev.lb.simplebase.net.util.Task;
 
 public class InternalNetworkConnection extends NetworkConnection {
 
@@ -31,28 +32,29 @@ public class InternalNetworkConnection extends NetworkConnection {
 	}
 	
 	@Override
-	protected NetworkConnectionState openConnectionImpl() {
+	protected Task openConnectionImpl() {
 		final InternalNetworkConnection foundPeer = NetworkManager.InternalAccess.INSTANCE.createInternalConnectionPeer(this);
 		if(foundPeer == null) { //failed to find
 			//Fail
 			STATE_LOGGER.error("Failed to find a peer for server id %s", remoteID);
-			return NetworkConnectionState.CLOSED;
+			currentState = NetworkConnectionState.CLOSED;
 		} else {
 			this.setPeerConnection(foundPeer);
 		}
-		return NetworkConnectionState.OPEN;
+		currentState = NetworkConnectionState.OPEN;
+		return Task.completed();
 	}
 
 	@Override
-	protected NetworkConnectionState closeConnectionImpl(ConnectionCloseReason reason) {
+	protected Task closeConnectionImpl(ConnectionCloseReason reason) {
 		 //If the peer has called this method, don't tell him again because he already knows
 		if(reason != ConnectionCloseReason.REMOTE) {
 			peer.closeConnection(ConnectionCloseReason.REMOTE);			
 		}
 		//Just remove from the server
 		postEventAndRemoveConnection(reason, null);
-		
-		return NetworkConnectionState.CLOSED;
+		currentState = NetworkConnectionState.CLOSED;
+		return Task.completed();
 	}
 
 	@Override

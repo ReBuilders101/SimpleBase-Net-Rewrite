@@ -10,6 +10,7 @@ import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFunction;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
+import dev.lb.simplebase.net.util.Task;
 
 public class TcpSocketNetworkConnection extends ConvertingNetworkConnection {
 
@@ -38,22 +39,24 @@ public class TcpSocketNetworkConnection extends ConvertingNetworkConnection {
 	}
 	
 	@Override
-	protected NetworkConnectionState openConnectionImpl() {
+	protected Task openConnectionImpl() {
 		try {
 			socket.connect(remoteID.getFunction(NetworkIDFunction.CONNECT));
 			thread.start();
-			return NetworkConnectionState.OPEN;
+			currentState = NetworkConnectionState.OPEN;
 		} catch (IOException e) {
 			STATE_LOGGER.error("Cannot connect socket to server", e);
-			return NetworkConnectionState.CLOSED;
+			currentState = NetworkConnectionState.CLOSED;
 		}
+		return Task.completed();
 	}
 
 	@Override
-	protected NetworkConnectionState closeConnectionImpl(ConnectionCloseReason reason) {
+	protected Task closeConnectionImpl(ConnectionCloseReason reason) {
 		thread.interrupt(); //Will close the socket
 		postEventAndRemoveConnection(reason, null);
-		return NetworkConnectionState.CLOSED;
+		currentState = NetworkConnectionState.CLOSED;
+		return Task.completed();
 	}
 	
 	@Override

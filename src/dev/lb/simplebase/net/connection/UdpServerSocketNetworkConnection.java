@@ -9,6 +9,7 @@ import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFunction;
 import dev.lb.simplebase.net.manager.SocketNetworkManagerServer;
+import dev.lb.simplebase.net.util.Task;
 
 /**
  * From Server-Side
@@ -42,16 +43,18 @@ public class UdpServerSocketNetworkConnection extends ConvertingNetworkConnectio
 	}
 
 	@Override
-	protected NetworkConnectionState openConnectionImpl() {
+	protected Task openConnectionImpl() {
 		//this type should already be open when constructed
 		STATE_LOGGER.error("Invalid state: Cannot open a server-side connection");
-		return NetworkConnectionState.OPEN;
+		currentState = NetworkConnectionState.OPEN;
+		return Task.completed();
 	}
 
 	@Override
-	protected NetworkConnectionState closeConnectionImpl(ConnectionCloseReason reason) {
+	protected Task closeConnectionImpl(ConnectionCloseReason reason) {
 		postEventAndRemoveConnection(reason, null);
-		return NetworkConnectionState.CLOSED;
+		currentState = NetworkConnectionState.CLOSED;
+		return Task.completed();
 	}
 	
 	public void decode(ByteBuffer buffer) {

@@ -14,6 +14,7 @@ import dev.lb.simplebase.net.id.NetworkIDFunction;
 import dev.lb.simplebase.net.manager.AcceptorThreadDeathReason;
 import dev.lb.simplebase.net.manager.NetworkManagerClient;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
+import dev.lb.simplebase.net.util.Task;
 
 public class UdpClientSocketNetworkConnection extends ConvertingNetworkConnection {
 
@@ -55,23 +56,25 @@ public class UdpClientSocketNetworkConnection extends ConvertingNetworkConnectio
 	}
 
 	@Override
-	protected NetworkConnectionState openConnectionImpl() {
+	protected Task openConnectionImpl() {
 		try {
 			socket.connect(remoteAddress);
 		} catch (SocketException e) {
 			STATE_LOGGER.error("Error while connecting UDP socket", e);
-			return NetworkConnectionState.CLOSED;
+			currentState = NetworkConnectionState.CLOSED;
 		}
 		thread.start();
 		packetToByteConverter.convertAndPublish(NetworkPacketFormats.LOGIN, null);
-		return NetworkConnectionState.OPEN;
+		currentState = NetworkConnectionState.OPEN;
+		return Task.completed();
 	}
 
 	@Override
-	protected NetworkConnectionState closeConnectionImpl(ConnectionCloseReason reason) {
+	protected Task closeConnectionImpl(ConnectionCloseReason reason) {
 		postEventAndRemoveConnection(reason, null);
 		thread.interrupt(); //Will close the socket
-		return NetworkConnectionState.CLOSED;
+		currentState = NetworkConnectionState.CLOSED;
+		return Task.completed();
 	}
 
 }
