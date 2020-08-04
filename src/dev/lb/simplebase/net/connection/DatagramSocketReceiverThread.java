@@ -6,6 +6,7 @@ import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -15,6 +16,7 @@ import dev.lb.simplebase.net.manager.AcceptorThreadDeathReason;
 
 public class DatagramSocketReceiverThread extends Thread {
 	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("server-accept");
+	private static final AtomicInteger THREAD_ID = new AtomicInteger(0);
 	
 	private final DatagramSocket socket;
 	private final Consumer<AcceptorThreadDeathReason> deathReasonHandler;
@@ -23,6 +25,7 @@ public class DatagramSocketReceiverThread extends Thread {
 
 	public DatagramSocketReceiverThread(DatagramSocket socket, BiConsumer<InetSocketAddress, ByteBuffer> receiveData,
 			Consumer<AcceptorThreadDeathReason> deathReasonHandler, int bufferSize) {
+		super("DatagramSocketReceiverThread-" + THREAD_ID.getAndIncrement());
 		this.socket = socket;
 		this.dataHandler = receiveData;
 		this.deathReasonHandler = deathReasonHandler;
