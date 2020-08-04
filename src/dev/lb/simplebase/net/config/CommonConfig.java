@@ -14,7 +14,7 @@ import dev.lb.simplebase.net.packet.handler.PacketHandler;
  * which prevents further modification.
  */
 @Threadsafe
-public abstract class CommonConfig implements Cloneable {
+public abstract class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 
 	/**
 	 * Can be used in {@link #setConnectionCheckTimeout(int)} to disable
@@ -69,9 +69,11 @@ public abstract class CommonConfig implements Cloneable {
 	 * @param value The new value for the connection timeout in milliseconds
 	 * @throws IllegalStateException If this config object is locked ({@link #isLocked()})
 	 */
-	public synchronized void setConnectionCheckTimeout(int value) {
+	@SuppressWarnings("unchecked")
+	public synchronized T setConnectionCheckTimeout(int value) {
 		checkLocked();
 		this.connectionCheckTimeout = value;
+		return (T) this;
 	}
 	
 	/**
@@ -81,9 +83,11 @@ public abstract class CommonConfig implements Cloneable {
 	 * @param value The new value for whether to use the managed thread in a manager
 	 * @throws IllegalStateException If this config object is locked ({@link #isLocked()})
 	 */
-	public synchronized void setUseManagedThread(boolean value) {
+	@SuppressWarnings("unchecked")
+	public synchronized T setUseManagedThread(boolean value) {
 		checkLocked();
 		this.useManagedThread = value;
+		return (T) this;
 	}
 	
 	/**
@@ -103,9 +107,11 @@ public abstract class CommonConfig implements Cloneable {
 	 * @param value The new value for the initial size of the packet encode buffer
 	 * @throws IllegalStateException If this config object is locked ({@link #isLocked()})
 	 */
-	public synchronized void setPacketBufferInitialSize(int value) {
+	@SuppressWarnings("unchecked")
+	public synchronized T setPacketBufferInitialSize(int value) {
 		checkLocked();
 		this.encodeBufferInitialSize = value;
+		return (T) this;
 	}
 	
 	/**
@@ -132,9 +138,11 @@ public abstract class CommonConfig implements Cloneable {
 	 * If {@code true}, a global daemon worker thread will periodically check all connections on this manager for a timeout
 	 * @param value The new value for the setting
 	 */
-	public void setGlobalConnectionCheck(boolean value) {
+	@SuppressWarnings("unchecked")
+	public T setGlobalConnectionCheck(boolean value) {
 		checkLocked();
 		this.globalConnectionCheck = value;
+		return (T) this;
 	}
 	
 	/**
@@ -166,5 +174,10 @@ public abstract class CommonConfig implements Cloneable {
 	public synchronized boolean isLocked() {
 		return locked;
 	}
-	
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public T clone() throws CloneNotSupportedException {
+		return (T) super.clone();
+	}
 }

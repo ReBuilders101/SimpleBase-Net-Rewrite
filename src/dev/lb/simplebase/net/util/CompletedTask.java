@@ -2,8 +2,16 @@ package dev.lb.simplebase.net.util;
 
 import java.util.concurrent.TimeUnit;
 
-public class CompletedTask implements Task {
+import dev.lb.simplebase.net.annotation.Internal;
 
+@Internal
+class CompletedTask implements Task {
+
+	//CompletedTask is stateless, so we can use one instance
+	static final CompletedTask INSTANCE = new CompletedTask();
+	
+	private CompletedTask() {}
+	
 	@Override
 	public boolean isDone() {
 		return true;

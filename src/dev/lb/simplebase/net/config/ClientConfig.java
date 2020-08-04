@@ -11,7 +11,7 @@ import dev.lb.simplebase.net.packet.PacketContext;
  * managers, it is best practise to initialize all values once and the call {@link #lock()},
  * which prevents further modification.
  */
-public class ClientConfig extends CommonConfig {
+public class ClientConfig extends CommonConfig<ClientConfig> {
 	
 	private ConnectionType connectionType;
 	private Object customData;
@@ -50,9 +50,10 @@ public class ClientConfig extends CommonConfig {
 	 * @param The new {@link ConnectionType} for this config
 	 * @throws IllegalStateException If this config object is locked ({@link #isLocked()})
 	 */
-	public synchronized void setConnectionType(ConnectionType value) {
+	public synchronized ClientConfig setConnectionType(ConnectionType value) {
 		checkLocked();
 		this.connectionType = value;
+		return this;
 	}
 	
 	/**
@@ -72,8 +73,9 @@ public class ClientConfig extends CommonConfig {
 	 * @param value The new custom object for the server connection
 	 * @throws IllegalStateException If this config object is locked ({@link #isLocked()})
 	 */
-	public synchronized void setCustomData(Object value) {
+	public synchronized ClientConfig setCustomData(Object value) {
 		checkLocked();
 		this.customData = value;
+		return this;
 	}
 }

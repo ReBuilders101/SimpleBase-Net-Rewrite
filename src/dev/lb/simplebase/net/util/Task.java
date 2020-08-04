@@ -92,4 +92,8 @@ public interface Task {
 			}
 		};
 	}
+	
+	public static Task completed() {
+		return CompletedTask.INSTANCE;
+	}
 }
