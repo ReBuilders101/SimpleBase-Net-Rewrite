@@ -1,6 +1,7 @@
 package dev.lb.simplebase.net.manager;
 
 import java.io.IOException;
+import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -8,7 +9,6 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
-
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.config.ServerConfig;
 import dev.lb.simplebase.net.config.ServerType;
@@ -19,9 +19,12 @@ import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
 import dev.lb.simplebase.net.events.FilterRawConnectionEvent;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFunction;
+import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.converter.AddressBasedDecoderPool;
 import dev.lb.simplebase.net.packet.converter.AnonymousServerConnectionAdapter;
 import dev.lb.simplebase.net.packet.converter.MutableAddressConnectionAdapter;
+import dev.lb.simplebase.net.packet.converter.PacketToByteConverter;
+import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
 
 public class SocketNetworkManagerServer extends NetworkManagerServer {
 	
@@ -73,7 +76,16 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 			}
 		}
 		
-		//TODO start UDP
+		if(udpModule != null) {
+			try {
+				udpModule.start();
+			} catch (SocketException e) {
+				LOGGER.error("Cannot start SocketNetworkManagerServer.UdpModule", e);
+				//Also disable the tcp module that was started before
+				if(tcpModule != null) tcpModule.stop();
+				return ServerManagerState.STOPPED;
+			}
+		}
 		
 		return ServerManagerState.RUNNING;
 	}
@@ -167,8 +179,7 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 		}
 		
 		public void start() throws IOException {
-			final SocketAddress address = getLocalID().getFunction(NetworkIDFunction.BIND);
-			serverSocket.bind(address); //Exception Here -> thread not yet started
+			serverSocket.bind(getLocalID().getFunction(NetworkIDFunction.BIND)); //Exception Here -> thread not yet started
 			acceptorThread.start();
 		}
 		
@@ -187,6 +198,7 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 		protected final DatagramSocket serverSocket;
 		protected final AddressBasedDecoderPool pooledDecoders;
 		protected final DatagramSocketReceiverThread receiverThread;
+		protected final PacketToByteConverter toByteConverter;
 		
 		private final boolean lan;
 		private final boolean udp;
@@ -201,18 +213,20 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 					getConfig().getPacketBufferInitialSize());
 			this.receiverThread = new DatagramSocketReceiverThread(serverSocket, pooledDecoders::decode,
 					this::notifyAcceptorThreadDeath, getConfig().getPacketBufferInitialSize());
+			this.toByteConverter = lan ? new PacketToByteConverter(getMappingContainer(), null, getConfig().getPacketBufferInitialSize()) : null;
 		}
 		
 		public void notifyAcceptorThreadDeath(AcceptorThreadDeathReason reason) {
 			LOGGER.debug("Ignoring UDP thread death notification %s: No cleanup required, server keeps running for other modules", reason);
 		}
 
-		public void start() {
-			
+		public void start() throws SocketException {
+			serverSocket.bind(getLocalID().getFunction(NetworkIDFunction.BIND));
+			receiverThread.start();
 		}
 		
 		public void stop() {
-			
+			receiverThread.interrupt();
 		}
 		
 		public void receiveUdpLogin(InetSocketAddress address) {
@@ -225,12 +239,26 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 		
 		public void receiveServerInfoRequest(InetSocketAddress address) {
 			if(lan) {
-				//TODO
+				Packet serverInfoPacket = getConfig().createServerInfoPacket(address);
+				if(serverInfoPacket == null) {
+					LOGGER.debug("No server info reply packet could be generated (To: %s)", address);
+				} else {
+					sendRawByteData(address, toByteConverter.convert(NetworkPacketFormats.SERVERINFOAN, serverInfoPacket));
+				}
 			} else {
 				LOGGER.debug("Received a Server-Info-Request for server %s, but LAN module is disabled", getLocalID().getDescription());
 			}
 		}
 		
+		public void sendRawByteData(InetSocketAddress address, ByteBuffer buffer) {
+			final byte[] array = new byte[buffer.remaining()];
+			buffer.get(array);
+			try {
+				serverSocket.send(new DatagramPacket(array, array.length));
+			} catch (IOException e) {
+				LOGGER.warning("Cannot send raw byte message with UDP socket", e);
+			}
+		}
 	}
 	
 	private class UdpAnonymousConnectionAdapter implements AnonymousServerConnectionAdapter, MutableAddressConnectionAdapter {

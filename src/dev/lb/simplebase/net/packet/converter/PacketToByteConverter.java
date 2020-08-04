@@ -38,14 +38,21 @@ public final class PacketToByteConverter {
 	 * @param data The data to encode
 	 */
 	public <Data> void convertAndPublish(NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider, Data> format, Data data) {
+		final ByteBuffer buffer = convert(format, data);
+		if(buffer != null) destination.accept(buffer);
+	}
+	
+	public <Data> ByteBuffer convert(NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider, Data> format, Data data) {
 		final ByteBuffer buffer = format.encode(provider, data, bufferSize);
 		if(buffer != null) {
 			ByteBuffer toSend = ByteBuffer.allocate(buffer.remaining() + 4);
 			ByteDataHelper.cInt(format.getUniqueIdentifier(), toSend);
 			toSend.put(buffer);
-			destination.accept(toSend);
+			toSend.flip();
+			return toSend;
 		} else {
 			LOGGER.debug("Format (%s) produced an invalid packet for data %s", format.getName(), data);
+			return null;
 		}
 	}
 	

@@ -66,7 +66,9 @@ public class TcpSocketNetworkConnection extends ConvertingNetworkConnection {
 					SEND_LOGGER.warning("Cannot send data: Socket already closed");
 				} else {
 					try {
-						socket.getOutputStream().write(buffer.array());
+						final byte[] array = new byte[buffer.remaining()];
+						buffer.get(array);
+						socket.getOutputStream().write(array);
 					} catch (IOException e) {
 						SEND_LOGGER.error("Cannot send data: Socket throws exception", e);
 					}

@@ -1,5 +1,9 @@
 package dev.lb.simplebase.net.config;
 
+import java.net.InetSocketAddress;
+import java.util.function.Function;
+import dev.lb.simplebase.net.packet.Packet;
+
 public class ServerConfig extends CommonConfig {
 
 	private static final boolean REGISTER_INTERNAL_DEFAULT = true;
@@ -9,6 +13,7 @@ public class ServerConfig extends CommonConfig {
 	private boolean registerInternalServer;
 	private boolean allowDetection;
 	private ServerType serverType;
+	private Function<InetSocketAddress, ? extends Packet> serverInfoFactory;
 	
 	public ServerConfig() {
 		this.registerInternalServer = REGISTER_INTERNAL_DEFAULT;
@@ -41,5 +46,17 @@ public class ServerConfig extends CommonConfig {
 	public void setServerType(ServerType value) {
 		checkLocked();
 		this.serverType = value;
+	}
+	
+	public void setServerInfoPacket(Function<InetSocketAddress, ? extends Packet> factory) {
+		this.serverInfoFactory = factory;
+	}
+	
+	public Packet createServerInfoPacket(InetSocketAddress address) {
+		if(serverInfoFactory == null) {
+			return null;
+		} else {
+			return serverInfoFactory.apply(address);
+		}
 	}
 }
