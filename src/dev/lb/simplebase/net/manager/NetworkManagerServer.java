@@ -22,6 +22,7 @@ import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
 import dev.lb.simplebase.net.util.LockBasedThreadsafeIterable;
 import dev.lb.simplebase.net.util.LockHelper;
+import dev.lb.simplebase.net.util.Task;
 import dev.lb.simplebase.net.util.ThreadsafeIterable;
 
 @Threadsafe
@@ -106,7 +107,7 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 		}
 	}
 	
-	public void startServer() {
+	public Task startServer() {
 		try {
 			lockServer.writeLock().lock();
 			if(currentState == ServerManagerState.INITIALIZED) {
@@ -123,6 +124,7 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 		} finally {
 			lockServer.writeLock().unlock();
 		}
+		return Task.completed();
 	}
 	
 	/**
@@ -134,7 +136,7 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 	@Internal
 	protected abstract ServerManagerState startServerImpl();
 	
-	public void stopServer() {
+	public Task stopServer() {
 		try {
 			lockServer.writeLock().lock();
 			if(currentState == ServerManagerState.RUNNING) {
@@ -160,6 +162,7 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 		} finally {
 			lockServer.writeLock().unlock();
 		}
+		return Task.completed();
 	}
 	
 	/**

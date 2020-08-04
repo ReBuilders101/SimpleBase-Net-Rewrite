@@ -17,6 +17,7 @@ import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
+import dev.lb.simplebase.net.util.Task;
 import dev.lb.simplebase.net.util.ThreadsafeAction;
 
 /**
@@ -79,7 +80,7 @@ public abstract class NetworkConnection {
 	 * When checking state before/after calling this method, make sure to do this in an {@link #action(Consumer)} block to
 	 * ensure thread safety.
 	 */
-	public void openConnection() {
+	public Task openConnection() {
 		synchronized (lockCurrentState) {
 			if(currentState.canOpenConnection()) {
 				STATE_LOGGER.debug("Attempting to open connection from %s to %s (At state %s)",
@@ -90,6 +91,7 @@ public abstract class NetworkConnection {
 				STATE_LOGGER.info("Cannot open a connection that is in state %s", currentState);
 			}
 		}
+		return Task.completed();
 	}
 	
 	/**
@@ -109,8 +111,8 @@ public abstract class NetworkConnection {
 	 * Closing the connection will automatically remove it from the {@link NetworkManager}'s connection list and post a
 	 * {@link ConnectionClosedEvent} to that manager when the closing process is completed.
 	 */
-	public void closeConnection() {
-		closeConnection(ConnectionCloseReason.EXPECTED);
+	public Task closeConnection() {
+		return closeConnection(ConnectionCloseReason.EXPECTED);
 	}
 	
 	/**
@@ -118,19 +120,18 @@ public abstract class NetworkConnection {
 	 * Close with a certain reason
 	 */
 	@Internal
-	public boolean closeConnection(ConnectionCloseReason reason) {
+	public Task closeConnection(ConnectionCloseReason reason) {
 		synchronized (lockCurrentState) {
 			if(currentState.hasBeenClosed()) {
 				STATE_LOGGER.debug("Cannot close a connection that is in state %s", currentState);
-				return false;
 			} else {
 				STATE_LOGGER.debug("Attempting to close connection from %s to %s (At state %s; Reason %s)",
 						getLocalID().getDescription(), remoteID.getDescription(), currentState, reason);
 				currentState = NetworkConnectionState.CLOSING;
 				currentState = closeConnectionImpl(reason);
-				return true;
 			}
 		}
+		return Task.completed();
 	}
 	
 	/**
@@ -156,7 +157,7 @@ public abstract class NetworkConnection {
 	 * because the connection was in a state where this is not possible.
 	 * The returned value does not contain any information about the success of the connection check.
 	 */
-	public void checkConnection() {
+	public Task checkConnection() {
 		synchronized (lockCurrentState) {
 			if(currentState == NetworkConnectionState.OPEN) {
 					final int pingId = pingTracker.initiatePing();
@@ -170,6 +171,7 @@ public abstract class NetworkConnection {
 				STATE_LOGGER.info("Cannot check connection at state %s", currentState);
 			}
  		}
+		return Task.completed(); //TODO this is not even synchrounous for socket connections
 	}
 	
 	/**

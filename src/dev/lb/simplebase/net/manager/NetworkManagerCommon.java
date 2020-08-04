@@ -70,7 +70,7 @@ public abstract class NetworkManagerCommon {
 	
 	
 	private final NetworkID local;
-	private final CommonConfig config;
+	private final CommonConfig<?> config;
 	private final PacketIDMappingProvider provider;
 	private final AtomicReference<PacketHandler> singleThreadHandler;
 	private final ThreadPacketHandler multiThreadHandler;
@@ -82,7 +82,7 @@ public abstract class NetworkManagerCommon {
 	 * @param local The local {@link NetworkID} representing this manager
 	 * @param config The configuration object to create this manager. Will be locked if it is not already.
 	 */
-	protected NetworkManagerCommon(NetworkID local, CommonConfig config) {
+	protected NetworkManagerCommon(NetworkID local, CommonConfig<?> config) {
 		Objects.requireNonNull(local, "'local' parameter must not be null");
 		Objects.requireNonNull(config, "'config' parameter must not be null");
 		config.lock(); //To be sure, now we can use config without caching the values
@@ -191,6 +191,7 @@ public abstract class NetworkManagerCommon {
 	 * @return The corresponding context, or {@code null} if the source is not registered
 	 */
 	@Internal
+	@Deprecated
 	protected abstract PacketContext getConnectionlessPacketContext(NetworkID source);
 	
 	/**
@@ -215,7 +216,7 @@ public abstract class NetworkManagerCommon {
 	 * be locked ({@link CommonConfig#isLocked()}) and effectively immutable.
 	 * @return The configuation object for this manager
 	 */
-	public CommonConfig getConfig() {
+	public CommonConfig<?> getConfig() {
 		return config;
 	}
 	

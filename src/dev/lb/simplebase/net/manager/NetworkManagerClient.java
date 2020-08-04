@@ -16,6 +16,7 @@ import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
+import dev.lb.simplebase.net.util.Task;
 import dev.lb.simplebase.net.util.ThreadsafeAction;
 
 /**
@@ -43,16 +44,16 @@ public final class NetworkManagerClient extends NetworkManagerCommon {
 		return remoteID;
 	}
 
-	public void openConnectionToServer() {
-		connection.openConnection();
+	public Task openConnectionToServer() {
+		return connection.openConnection();
 	}
 
-	public void closeConnectionToServer() {
-		connection.closeConnection();
+	public Task closeConnectionToServer() {
+		return connection.closeConnection();
 	}
 
-	public void checkConnectionToServer() {
-		connection.checkConnection();
+	public Task checkConnectionToServer() {
+		return connection.checkConnection();
 	}
 	
 	public boolean sendPacketToServer(Packet packet) {
