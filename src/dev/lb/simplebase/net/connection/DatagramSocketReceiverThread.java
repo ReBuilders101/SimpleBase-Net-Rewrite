@@ -39,7 +39,8 @@ public class DatagramSocketReceiverThread extends Thread {
 			while(!this.isInterrupted()) {
 				try {
 					socket.receive(receivePacket); //SocketException on close
-					receiveBuffer.flip();
+					receiveBuffer.limit(receivePacket.getLength());
+					receiveBuffer.rewind();
 					dataHandler.accept(getAddress(receivePacket), receiveBuffer);
 					receiveBuffer.clear();
 				} catch (SocketException e) {

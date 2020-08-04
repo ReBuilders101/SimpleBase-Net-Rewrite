@@ -13,6 +13,7 @@ import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFunction;
 import dev.lb.simplebase.net.manager.AcceptorThreadDeathReason;
 import dev.lb.simplebase.net.manager.NetworkManagerClient;
+import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
 
 public class UdpClientSocketNetworkConnection extends ConvertingNetworkConnection {
 
@@ -62,6 +63,7 @@ public class UdpClientSocketNetworkConnection extends ConvertingNetworkConnectio
 			return NetworkConnectionState.CLOSED;
 		}
 		thread.start();
+		packetToByteConverter.convertAndPublish(NetworkPacketFormats.LOGIN, null);
 		return NetworkConnectionState.OPEN;
 	}
 

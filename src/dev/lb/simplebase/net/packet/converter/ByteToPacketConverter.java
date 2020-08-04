@@ -135,14 +135,16 @@ public final class ByteToPacketConverter {
 	
 	private void acceptBytesUnchecked(ByteBuffer data, int amount) {
 		ensureCapacity(amount);
-		data.put(data);
+		final ByteBuffer slice = (ByteBuffer) data.slice().limit(amount);
+		buffer.put(slice);
+		data.position(data.position() + amount);
 		updateAccumulationState(amount);
 	}
 
 	private void ensureCapacity(int required) {
 		if(buffer == null) {
 			buffer = ByteBuffer.allocate(Math.max(bufferSize, required));
-		} else if(buffer.remaining() < required){
+		} else if(buffer.remaining() < required) {
 			final int newCapacity = buffer.capacity() + bufferSize * 
 					((int) Math.floorDiv(required, bufferSize));
 			final ByteBuffer newBuffer = ByteBuffer.allocate(newCapacity); //ready for put() by default

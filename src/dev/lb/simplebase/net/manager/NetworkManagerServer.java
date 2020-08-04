@@ -145,9 +145,7 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 				//Disconnect everyone
 				LOGGER.info("Closing %d connections for server shutdown", connections.size());
 				for(NetworkConnection con : connections.values()) {
-					System.out.println("closing");
 					con.closeConnection(ConnectionCloseReason.SERVER);
-					System.out.println("closed");
 				}
 				//remove all closed connections
 				connections.clear();
