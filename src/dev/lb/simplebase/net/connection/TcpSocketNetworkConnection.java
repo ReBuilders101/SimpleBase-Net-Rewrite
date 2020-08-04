@@ -16,9 +16,9 @@ public class TcpSocketNetworkConnection extends ConvertingNetworkConnection {
 	private final DataReceiverThread thread;
 	private final Socket socket;
 	
-	public TcpSocketNetworkConnection(NetworkManagerCommon networkManager, NetworkID remoteID,
-			int checkTimeoutMS, boolean serverSide, Object customObject) {
-		super(networkManager, remoteID, NetworkConnectionState.INITIALIZED, checkTimeoutMS, serverSide, customObject, true);
+	public TcpSocketNetworkConnection(NetworkManagerCommon networkManager, NetworkID remoteID, boolean serverSide, Object customObject) {
+		super(networkManager, remoteID, NetworkConnectionState.INITIALIZED,
+				networkManager.getConfig().getConnectionCheckTimeout(), serverSide, customObject, true);
 		this.socket = new Socket();
 		this.thread = new DataReceiverThread();
 	}

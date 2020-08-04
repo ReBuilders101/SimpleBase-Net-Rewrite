@@ -10,9 +10,9 @@ public class InternalNetworkConnection extends NetworkConnection {
 
 	private InternalNetworkConnection peer;
 	
-	public InternalNetworkConnection(NetworkManagerCommon networkManager, NetworkID remoteID,
-			int checkTimeoutMS, boolean serverSide, Object customObject) {
-		super(networkManager, remoteID, NetworkConnectionState.INITIALIZED, checkTimeoutMS, serverSide, customObject);
+	public InternalNetworkConnection(NetworkManagerCommon networkManager, NetworkID remoteID, boolean serverSide, Object customObject) {
+		super(networkManager, remoteID, NetworkConnectionState.INITIALIZED,
+				networkManager.getConfig().getConnectionCheckTimeout(), serverSide, customObject);
 		this.peer = null;
 	}
 	

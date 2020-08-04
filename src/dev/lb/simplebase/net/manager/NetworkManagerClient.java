@@ -10,6 +10,7 @@ import dev.lb.simplebase.net.connection.InternalNetworkConnection;
 import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.connection.NetworkConnectionState;
 import dev.lb.simplebase.net.connection.TcpSocketNetworkConnection;
+import dev.lb.simplebase.net.connection.UdpClientSocketNetworkConnection;
 import dev.lb.simplebase.net.event.EventAccessor;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.AbstractLogger;
@@ -93,11 +94,11 @@ public final class NetworkManagerClient extends NetworkManagerCommon {
 	private NetworkConnection getImplementation(ConnectionType type) {
 		switch (type) {
 		case INTERNAL:
-			return new InternalNetworkConnection(this, remoteID, getConfig().getConnectionCheckTimeout(),
-					false, getConfig().getCustomData());
+			return new InternalNetworkConnection(this, remoteID, false, getConfig().getCustomData());
 		case TCP_SOCKET:
-			return new TcpSocketNetworkConnection(this, remoteID, getConfig().getConnectionCheckTimeout(),
-					false, getConfig().getCustomData());
+			return new TcpSocketNetworkConnection(this, remoteID, false, getConfig().getCustomData());
+		case UDP_SOCKET:
+			return new UdpClientSocketNetworkConnection(this, remoteID, getConfig().getCustomData());
 		default:
 			throw new IllegalArgumentException("Invalid connection type: " + type);
 		}

@@ -101,6 +101,7 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 		if(udpModule != null) {
 			udpModule.stop();
 		}
+		LOGGER.info("... Server stopped (%s)", getLocalID().getDescription());
 	}
 
 	@Internal
@@ -251,7 +252,7 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 			this.lan = lan;
 			this.udp = udp;
 
-			this.serverSocket = new DatagramSocket();
+			this.serverSocket = new DatagramSocket(null);
 			this.pooledDecoders = new AddressBasedDecoderPool(UdpAnonymousConnectionAdapter::new, getMappingContainer(),
 					getConfig().getPacketBufferInitialSize());
 			this.receiverThread = new DatagramSocketReceiverThread(serverSocket, this::receiveRawByteData,
