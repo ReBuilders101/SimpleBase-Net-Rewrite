@@ -65,14 +65,15 @@ public class UdpClientSocketNetworkConnection extends ConvertingNetworkConnectio
 		}
 		thread.start();
 		packetToByteConverter.convertAndPublish(NetworkPacketFormats.LOGIN, null);
-		currentState = NetworkConnectionState.OPEN;
-		return Task.completed();
+//		currentState = NetworkConnectionState.OPEN; //When ACK comes
+		return openCompleted;
 	}
 
 	@Override
 	protected Task closeConnectionImpl(ConnectionCloseReason reason) {
-		postEventAndRemoveConnection(reason, null);
+		openCompleted.release();
 		thread.interrupt(); //Will close the socket
+		postEventAndRemoveConnection(reason, null);
 		currentState = NetworkConnectionState.CLOSED;
 		return Task.completed();
 	}

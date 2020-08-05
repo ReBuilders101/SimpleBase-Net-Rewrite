@@ -11,5 +11,6 @@ public interface ConnectionAdapter {
 	public void receiveCheckReply(int uuid);
 	public void receiveServerInfoRequest();
 	public void receiveServerInfoPacket(Packet packet);
+	public void receiveConnectionAccepted();
 	
 }

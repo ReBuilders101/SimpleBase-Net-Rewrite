@@ -43,16 +43,17 @@ public class TcpSocketNetworkConnection extends ConvertingNetworkConnection {
 		try {
 			socket.connect(remoteID.getFunction(NetworkIDFunction.CONNECT));
 			thread.start();
-			currentState = NetworkConnectionState.OPEN;
+//			currentState = NetworkConnectionState.OPEN; //Done when we get the ACK
 		} catch (IOException e) {
 			STATE_LOGGER.error("Cannot connect socket to server", e);
 			currentState = NetworkConnectionState.CLOSED;
 		}
-		return Task.completed();
+		return openCompleted;
 	}
 
 	@Override
 	protected Task closeConnectionImpl(ConnectionCloseReason reason) {
+		openCompleted.release(); //Don't wait for open when the connection is closed
 		thread.interrupt(); //Will close the socket
 		postEventAndRemoveConnection(reason, null);
 		currentState = NetworkConnectionState.CLOSED;

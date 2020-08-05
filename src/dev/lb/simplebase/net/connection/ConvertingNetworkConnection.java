@@ -11,6 +11,7 @@ import dev.lb.simplebase.net.packet.converter.ConnectionAdapter;
 import dev.lb.simplebase.net.packet.converter.PacketToByteConverter;
 import dev.lb.simplebase.net.packet.converter.SingleConnectionAdapter;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
+import dev.lb.simplebase.net.util.AwaitableTask;
 
 /**
  * A network connection that converts packets to/from bytes when sending them
@@ -20,11 +21,13 @@ public abstract class ConvertingNetworkConnection extends NetworkConnection {
 	protected final ByteToPacketConverter byteToPacketConverter;
 	protected final PacketToByteConverter packetToByteConverter;
 	protected final ConnectionAdapter connectionAdapter;
+	protected final AwaitableTask openCompleted;
 	
 	protected ConvertingNetworkConnection(NetworkManagerCommon networkManager, NetworkID remoteID,
 			NetworkConnectionState initialState, int checkTimeoutMS, boolean serverSide, Object customObject, boolean udpWarning) {
 		super(networkManager, remoteID, initialState, checkTimeoutMS, serverSide, customObject);
 		
+		this.openCompleted = new AwaitableTask();
 		this.connectionAdapter = new Adapter(udpWarning);
 		this.packetToByteConverter = new PacketToByteConverter(networkManager.getMappingContainer(), this::sendRawByteData,
 				networkManager.getConfig().getPacketBufferInitialSize());
@@ -48,6 +51,10 @@ public abstract class ConvertingNetworkConnection extends NetworkConnection {
 	@Override
 	public void receiveConnectionCheck(int uuid) {
 		packetToByteConverter.convertAndPublish(NetworkPacketFormats.CHECKREPLY, uuid);
+	}
+	
+	public void sendConnectionAcceptedMessage() {
+		packetToByteConverter.convertAndPublish(NetworkPacketFormats.CONNECTED, null);
 	}
 	
 	protected class Adapter implements SingleConnectionAdapter {
@@ -77,6 +84,14 @@ public abstract class ConvertingNetworkConnection extends NetworkConnection {
 		public void receiveUdpLogout() {
 			if(udpWarning) RECEIVE_LOGGER.warning("Unexpected packet: Received UDP-Login for an existing connection implementation");
 			closeConnection(ConnectionCloseReason.REMOTE);
+		}
+
+		@Override
+		public void receiveConnectionAccepted() {
+			synchronized (lockCurrentState) {
+				currentState = NetworkConnectionState.OPEN;
+				ConvertingNetworkConnection.this.openCompleted.release();
+			}
 		}
 		
 	}

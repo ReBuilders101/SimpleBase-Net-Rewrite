@@ -35,6 +35,7 @@ public class UdpServerSocketNetworkConnection extends ConvertingNetworkConnectio
 		if(!networkManager.supportsUdp()) throw new IllegalArgumentException("Managers for UdpServerSocketNetworkConnections must have a UdpModule");
 		this.socketServer = networkManager;
 		this.remoteAddress = remoteID.getFunction(NetworkIDFunction.CONNECT);
+		openCompleted.release(); //Already open
 	}
 
 	@Override
@@ -47,7 +48,7 @@ public class UdpServerSocketNetworkConnection extends ConvertingNetworkConnectio
 		//this type should already be open when constructed
 		STATE_LOGGER.error("Invalid state: Cannot open a server-side connection");
 		currentState = NetworkConnectionState.OPEN;
-		return Task.completed();
+		return openCompleted;
 	}
 
 	@Override

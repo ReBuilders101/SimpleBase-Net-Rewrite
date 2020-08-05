@@ -11,6 +11,7 @@ import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.config.ServerConfig;
+import dev.lb.simplebase.net.connection.ConvertingNetworkConnection;
 import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.event.EventAccessor;
 import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
@@ -254,6 +255,9 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 				connections.put(id, newConnection);
 			} else {
 				throw new IllegalArgumentException("Connection with that ID is already present");
+			}
+			if(newConnection instanceof ConvertingNetworkConnection) { //A bit of a patchwork, but ok
+				((ConvertingNetworkConnection) newConnection).sendConnectionAcceptedMessage();
 			}
 			return true;
 		} finally {

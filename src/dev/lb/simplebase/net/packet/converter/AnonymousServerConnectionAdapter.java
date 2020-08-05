@@ -35,4 +35,9 @@ public interface AnonymousServerConnectionAdapter extends ConnectionAdapter {
 		PacketToByteConverter.CONNECTION_LOGGER.warning("Unexpected packet: Received Server-Info-Answer for an anonymous connection implementation");
 	}
 
+	@Override
+	public default void receiveConnectionAccepted() {
+		PacketToByteConverter.CONNECTION_LOGGER.warning("Unexpected packet: Received Connection-Accepted for an anonymous connection implementation");
+	}
+
 }

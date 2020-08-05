@@ -24,11 +24,21 @@ public interface Task {
 		}
 	}
 	
+	public default boolean await(long timeout, TimeUnit unit) {
+		try {
+			tryAwait(timeout, unit);
+			return true;
+		} catch (InterruptedException | TimeoutException e) {
+			return false;
+		}
+	}
+	
 	public void tryAwait() throws InterruptedException;
-	public void tryAwait(long timeout, TimeUnit unit) throws InterruptedException;
+	public void tryAwait(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException;
 	
 	public Task then(Runnable chainTask);
 	
+	@Deprecated
 	public default Future<?> asFuture() {
 		return new Future<Object>() {
 
@@ -61,6 +71,7 @@ public interface Task {
 		};
 	}
 	
+	@Deprecated
 	public default <T> Future<T> asFuture(Supplier<T> result) {
 		return new Future<T>() {
 
