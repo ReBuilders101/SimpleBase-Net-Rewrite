@@ -17,6 +17,7 @@ import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
+import dev.lb.simplebase.net.util.AwaitableTask;
 import dev.lb.simplebase.net.util.Task;
 import dev.lb.simplebase.net.util.ThreadsafeAction;
 
@@ -160,18 +161,20 @@ public abstract class NetworkConnection {
 	public Task checkConnection() {
 		synchronized (lockCurrentState) {
 			if(currentState == NetworkConnectionState.OPEN) {
-					final int pingId = pingTracker.initiatePing();
-					STATE_LOGGER.debug("Attempting to check connection from %s to %s (At state %s)",
-							getLocalID().getDescription(), remoteID.getDescription(), currentState);
-					if(pingId < 0 || !checkConnectionImpl(pingId)) {
-						SEND_LOGGER.warning("Connection check failed to send");
-						pingTracker.cancelPing(pingId);
-					}
+				final int pingId = pingTracker.initiatePing();
+				final Task waiter = pingTracker.getPingWaiter(pingId);
+				STATE_LOGGER.debug("Attempting to check connection from %s to %s (At state %s)",
+						getLocalID().getDescription(), remoteID.getDescription(), currentState);
+				if(pingId < 0 || !checkConnectionImpl(pingId)) {
+					SEND_LOGGER.warning("Connection check failed to send");
+					pingTracker.cancelPing(pingId);
+				}
+				return waiter;
 			} else {
 				STATE_LOGGER.info("Cannot check connection at state %s", currentState);
+				return Task.completed();
 			}
- 		}
-		return Task.completed(); //TODO this is not even synchrounous for socket connections
+		}
 	}
 	
 	/**
@@ -409,6 +412,7 @@ public abstract class NetworkConnection {
 		private boolean pingActive;
 		private long lastPingStartTime;
 		private int lastPingUuid;
+		private AwaitableTask currentPingWaiter;
 		
 		private PingTracker(int timeoutMs) {
 			this.timeoutMs = timeoutMs;
@@ -417,9 +421,11 @@ public abstract class NetworkConnection {
 		}
 		
 		private void reset() {
+			if(this.currentPingWaiter != null) this.currentPingWaiter.release();
 			this.pingActive = false;
 			this.lastPingStartTime = -1;
 			this.lastPingUuid = -1;
+			this.currentPingWaiter = null;
 		}
 		
 		public int initiatePing() {
@@ -430,21 +436,35 @@ public abstract class NetworkConnection {
 				pingActive = true;
 				lastPingStartTime = NetworkManager.getClockMillis();
 				lastPingUuid = uuid;
+				currentPingWaiter = new AwaitableTask();
 				//Update state
 				NetworkConnection.this.currentState = NetworkConnectionState.CHECKING;
 				return uuid;
 			}
 		}
 		
+		public Task getPingWaiter(int id) {
+			synchronized (lockCurrentState) {
+				if(id == lastPingUuid && currentPingWaiter != null) {
+					return currentPingWaiter;
+				} else {
+					STATE_LOGGER.warning("PingTracker: Inconsistent state (attempted to get inactive ping waiter); resetting");
+					reset();
+					return Task.completed();
+				}
+			}
+		}
+		
 		public void confirmPing(int id) {
 			synchronized (lockCurrentState) {
-				if(id == lastPingUuid) {
+				if(id == lastPingUuid && currentPingWaiter != null) {
 					//Store the time difference
 					cachedPingTime = (int) (NetworkManager.getClockMillis() - lastPingStartTime);
 					reset();
 					NetworkConnection.this.currentState = NetworkConnectionState.OPEN;
 				} else {
 					STATE_LOGGER.warning("PingTracker: Inconsistent state (attempted to confirm inactive ping); resetting");
+					reset();
 				}
 			}
 		}
@@ -457,6 +477,7 @@ public abstract class NetworkConnection {
 					NetworkConnection.this.currentState = NetworkConnectionState.OPEN;
 				} else {
 					STATE_LOGGER.warning("PingTracker: Inconsistent state (attempted to cancel inactive ping); resetting");
+					reset();
 				}
 			}
 		}
