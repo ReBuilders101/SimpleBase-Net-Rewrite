@@ -1,5 +1,6 @@
 package dev.lb.simplebase.net.util;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import dev.lb.simplebase.net.annotation.Internal;
@@ -18,11 +19,6 @@ class CompletedTask implements Task {
 	}
 
 	@Override
-	public boolean isSynchrounous() {
-		return true;
-	}
-
-	@Override
 	public void tryAwait() throws InterruptedException {
 		return;
 	}
@@ -35,6 +31,12 @@ class CompletedTask implements Task {
 	@Override
 	public Task then(Runnable chainTask) {
 		chainTask.run();
+		return this;
+	}
+
+	@Override
+	public Task thenAsync(Runnable chainTask) {
+		CompletableFuture.runAsync(chainTask);
 		return this;
 	}
 
