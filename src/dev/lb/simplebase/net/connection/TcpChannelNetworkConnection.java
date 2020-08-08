@@ -12,24 +12,27 @@ import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.manager.SelectorManager;
 import dev.lb.simplebase.net.util.Task;
 
-public class TcpChannelNetworkConnection extends ConvertingNetworkConnection {
+public class TcpChannelNetworkConnection extends ConvertingNetworkConnection implements ChannelConnection {
 	
 	private final SocketChannel channel;
 	private SelectionKey selectionKey; //Not final - only set while holding lock
 	private final SelectorManager selectorManager;
+	private final ByteBuffer receiveBuffer;
 	
-	protected TcpChannelNetworkConnection(NetworkManagerCommon networkManager, SelectorManager selctorManager, NetworkID remoteID,
+	public TcpChannelNetworkConnection(NetworkManagerCommon networkManager, SelectorManager selctorManager, NetworkID remoteID,
 			Object customObject) throws IOException {
 		super(networkManager, remoteID, NetworkConnectionState.INITIALIZED,
 				networkManager.getConfig().getConnectionCheckTimeout(), false, customObject, true);
 		
 		
 		this.channel = SocketChannel.open();
+		this.channel.configureBlocking(false);
 		this.selectionKey = null;
 		this.selectorManager = selctorManager;
+		this.receiveBuffer = ByteBuffer.allocate(networkManager.getConfig().getPacketBufferInitialSize());
 	}
 	
-	protected TcpChannelNetworkConnection(NetworkManagerCommon networkManager, SelectorManager selctorManager, NetworkID remoteID,
+	public TcpChannelNetworkConnection(NetworkManagerCommon networkManager, SelectorManager selctorManager, NetworkID remoteID,
 			SocketChannel channel, Object customObject) throws IOException {
 		super(networkManager, remoteID, NetworkConnectionState.OPEN,
 				networkManager.getConfig().getConnectionCheckTimeout(), false, customObject, true);
@@ -37,7 +40,8 @@ public class TcpChannelNetworkConnection extends ConvertingNetworkConnection {
 		this.channel = channel;
 		this.channel.configureBlocking(false);
 		this.selectorManager = selctorManager;
-		this.selectionKey = selctorManager.registerConnection(channel, SelectionKey.OP_READ);
+		this.receiveBuffer = ByteBuffer.allocate(networkManager.getConfig().getPacketBufferInitialSize());
+		this.selectionKey = selctorManager.registerConnection(channel, SelectionKey.OP_READ, this);
 	}
 	
 	@Override
@@ -63,7 +67,7 @@ public class TcpChannelNetworkConnection extends ConvertingNetworkConnection {
 	protected Task openConnectionImpl() {
 		try {
 			channel.connect(remoteID.getFunction(NetworkIDFunction.CONNECT));
-			selectionKey = selectorManager.registerConnection(channel, SelectionKey.OP_CONNECT);
+			selectionKey = selectorManager.registerConnection(channel, SelectionKey.OP_CONNECT, this);
 			if(selectionKey == null) {
 				STATE_LOGGER.error("Cannot open channel connection: No selection key");
 				try {
@@ -95,6 +99,17 @@ public class TcpChannelNetworkConnection extends ConvertingNetworkConnection {
 		postEventAndRemoveConnection(reason, null);
 		currentState = NetworkConnectionState.CLOSED;
 		return Task.completed();
+	}
+
+	@Override
+	public void readNow() {
+		receiveBuffer.clear();
+		try {
+			channel.read(receiveBuffer);
+		} catch (IOException e) {
+			RECEIVE_LOGGER.error("Error while reading from socket channel", e);
+		}
+		byteToPacketConverter.acceptBytes(receiveBuffer);
 	}
 	
 }
