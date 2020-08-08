@@ -14,7 +14,7 @@ import dev.lb.simplebase.net.packet.handler.PacketHandler;
  * which prevents further modification.
  */
 @Threadsafe
-public abstract class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
+public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 
 	/**
 	 * Can be used in {@link #setConnectionCheckTimeout(int)} to disable
@@ -47,7 +47,7 @@ public abstract class CommonConfig<T extends CommonConfig<T>> implements Cloneab
 	 * <tr><td>{@link #getGlobalConnectionCheck()}</td><td>{@value #GLOBAL_CHECK_DEFAULT}</td></tr>
 	 * </table>
 	 */
-	protected CommonConfig() {
+	public CommonConfig() {
 		this.useManagedThread = USE_MANAGED_DEFAULT;
 		this.encodeBufferInitialSize = BUFFER_INITIAL_DEFAULT;
 		this.connectionCheckTimeout = CONNECTION_CHECK_DEFAULT;
@@ -173,6 +173,22 @@ public abstract class CommonConfig<T extends CommonConfig<T>> implements Cloneab
 	 */
 	public synchronized boolean isLocked() {
 		return locked;
+	}
+	
+	public ClientConfig deriveClient() {
+		return new ClientConfig()
+			.setUseManagedThread(getUseManagedThread())
+			.setConnectionCheckTimeout(getConnectionCheckTimeout())
+			.setPacketBufferInitialSize(getPacketBufferInitialSize())
+			.setGlobalConnectionCheck(getGlobalConnectionCheck());
+	}
+	
+	public ServerConfig deriveServer() {
+		return new ServerConfig()
+			.setUseManagedThread(getUseManagedThread())
+			.setConnectionCheckTimeout(getConnectionCheckTimeout())
+			.setPacketBufferInitialSize(getPacketBufferInitialSize())
+			.setGlobalConnectionCheck(getGlobalConnectionCheck());
 	}
 
 	@Override
