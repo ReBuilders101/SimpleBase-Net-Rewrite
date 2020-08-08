@@ -17,16 +17,17 @@ public class TcpSocketNetworkConnection extends ConvertingNetworkConnection {
 	private final DataReceiverThread thread;
 	private final Socket socket;
 	
-	public TcpSocketNetworkConnection(NetworkManagerCommon networkManager, NetworkID remoteID, boolean serverSide, Object customObject) {
+	public TcpSocketNetworkConnection(NetworkManagerCommon networkManager, NetworkID remoteID, Object customObject) {
 		super(networkManager, remoteID, NetworkConnectionState.INITIALIZED,
-				networkManager.getConfig().getConnectionCheckTimeout(), serverSide, customObject, true);
+				networkManager.getConfig().getConnectionCheckTimeout(), false, customObject, true);
 		this.socket = new Socket();
 		this.thread = new DataReceiverThread();
 	}
 	
 	public TcpSocketNetworkConnection(NetworkManagerCommon networkManager, NetworkID remoteID, Socket activeSocket,
-			int checkTimeoutMS, boolean serverSide, Object customObject) throws IOException {
-		super(networkManager, remoteID, assertSocketState(activeSocket), checkTimeoutMS, serverSide, customObject, true);
+			Object customObject) throws IOException {
+		super(networkManager, remoteID, assertSocketState(activeSocket), 
+				networkManager.getConfig().getConnectionCheckTimeout(), true, customObject, true);
 		this.socket = activeSocket;
 		this.thread = new DataReceiverThread();
 		this.thread.start();
@@ -43,12 +44,12 @@ public class TcpSocketNetworkConnection extends ConvertingNetworkConnection {
 		try {
 			socket.connect(remoteID.getFunction(NetworkIDFunction.CONNECT));
 			thread.start();
-//			currentState = NetworkConnectionState.OPEN; //Done when we get the ACK
+			return openCompleted;
 		} catch (IOException e) {
 			STATE_LOGGER.error("Cannot connect socket to server", e);
 			currentState = NetworkConnectionState.CLOSED;
+			return Task.completed();
 		}
-		return openCompleted;
 	}
 
 	@Override

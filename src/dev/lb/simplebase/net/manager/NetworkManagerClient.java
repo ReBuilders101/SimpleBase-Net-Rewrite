@@ -95,9 +95,9 @@ public final class NetworkManagerClient extends NetworkManagerCommon {
 	private NetworkConnection getImplementation(ConnectionType type) {
 		switch (type) {
 		case INTERNAL:
-			return new InternalNetworkConnection(this, remoteID, false, getConfig().getCustomData());
+			return new InternalNetworkConnection(this, remoteID, getConfig().getCustomData());
 		case TCP_SOCKET:
-			return new TcpSocketNetworkConnection(this, remoteID, false, getConfig().getCustomData());
+			return new TcpSocketNetworkConnection(this, remoteID, getConfig().getCustomData());
 		case UDP_SOCKET:
 			return new UdpClientSocketNetworkConnection(this, remoteID, getConfig().getCustomData());
 		default:

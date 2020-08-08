@@ -190,8 +190,7 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 
 
 			try {
-				final NetworkConnection tcpConnection = new TcpSocketNetworkConnection(this, networkId, connectedSocket,
-						getConfig().getConnectionCheckTimeout(), true, event2.getCustomObject());
+				final NetworkConnection tcpConnection = new TcpSocketNetworkConnection(this, networkId, connectedSocket, event2.getCustomObject());
 
 				//This will start the sync. An exclusive lock for this whole method would be too expensive
 				if(!addInitializedConnection(tcpConnection)) {
