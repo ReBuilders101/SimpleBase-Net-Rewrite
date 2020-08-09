@@ -128,4 +128,13 @@ public interface Task {
 	public static Task completed() {
 		return CompletedTask.INSTANCE;
 	}
+	
+	/**
+	 * Creates a new task that will complete once all tasks in the parameters are completed
+	 * @param tasks The tasks that are required to be completed
+	 * @return The new combined task
+	 */
+	public static Task requireAll(Task...tasks) {
+		return new CombinedTask(tasks);
+	}
 }

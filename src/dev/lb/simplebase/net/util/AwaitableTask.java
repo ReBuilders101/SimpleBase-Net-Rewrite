@@ -19,7 +19,11 @@ public class AwaitableTask implements Task {
 	private final List<Runnable> completeTasks;
 	
 	public AwaitableTask() {
-		this.waiter = new CountDownLatch(1);
+		this(1);
+	}
+	
+	protected AwaitableTask(int counter) {
+		this.waiter = new CountDownLatch(counter);
 		this.completeTasks = new ArrayList<>();
 	}
 	
