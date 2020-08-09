@@ -159,13 +159,13 @@ public final class NetworkManager {
 		switch (actualType) {
 		case INTERNAL:
 			return register(PROVIDER.createInternalServer(serverLocal, config));
-		case TCP_SOCKET:
-		case UDP_SOCKET:
-		case COMBINED_SOCKET:
+		case TCP_IO:
+		case UDP_IO:
+		case COMBINED_IO:
 			return register(PROVIDER.createSocketServer(serverLocal, config));
-		case TCP_CHANNEL:
-		case UDP_CHANNEL:
-		case COMBINED_CHANNEL:
+		case TCP_NIO:
+		case UDP_NIO:
+		case COMBINED_NIO:
 			return register(PROVIDER.createChannelServer(serverLocal, config));
 		default:
 			throw new IllegalArgumentException("Invalid server type: " + actualType);

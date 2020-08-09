@@ -96,9 +96,9 @@ public final class NetworkManagerClient extends NetworkManagerCommon {
 		switch (type) {
 		case INTERNAL:
 			return new InternalNetworkConnection(this, remoteID, getConfig().getCustomData());
-		case TCP_SOCKET:
+		case TCP:
 			return new TcpSocketNetworkConnection(this, remoteID, getConfig().getCustomData());
-		case UDP_SOCKET:
+		case UDP:
 			return new UdpClientSocketNetworkConnection(this, remoteID, getConfig().getCustomData());
 		default:
 			throw new IllegalArgumentException("Invalid connection type: " + type);

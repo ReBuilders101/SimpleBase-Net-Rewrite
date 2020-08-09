@@ -29,28 +29,30 @@ public enum ConnectionType {
 	 * The used server {@link NetworkID} must implement {@link NetworkIDFunction#NETWORK}.<br>
 	 * The server must be able to accept TCP connections.
 	 */
-	TCP_SOCKET,
+	TCP,
 	/**
 	 * Uses a {@link SocketChannel} to establish a TCP connection to the server.
 	 * The used server {@link NetworkID} must implement {@link NetworkIDFunction#NETWORK}.<br>
 	 * The server must be able to accept TCP connections.
 	 */
+	@Deprecated
 	TCP_CHANNEL,
 	/**
 	 * Uses a {@link DatagramSocket} to establish a UDP connection to the server.
 	 * The used server {@link NetworkID} must implement {@link NetworkIDFunction#NETWORK}.<br>
 	 * The server must be able to accept UDP connections.
 	 */
-	UDP_SOCKET,
+	UDP,
 	/**
 	 * Uses a {@link DatagramChannel} to establish a UDP connection to the server.
 	 * The used server {@link NetworkID} must implement {@link NetworkIDFunction#NETWORK}.<br>
 	 * The server must be able to accept UDP connections.
 	 */
+	@Deprecated
 	UDP_CHANNEL;
 	
 	
-	private static final ConnectionType NET_DEFAULT = TCP_SOCKET; //Change javadoc if changing this value
+	private static final ConnectionType NET_DEFAULT = TCP; //Change javadoc if changing this value
 	
 	/**
 	 * Resolves the actual connection type to use depending on

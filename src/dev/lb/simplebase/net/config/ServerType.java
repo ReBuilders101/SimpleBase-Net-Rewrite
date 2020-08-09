@@ -38,7 +38,7 @@ public enum ServerType {
 	 * The server will bind to a UDP port if {@link ServerConfig#getAllowDetection()} if {@code true},
 	 * but no UDP connections can be established.
 	 */
-	TCP_SOCKET(true, false, true),
+	TCP_IO(true, false, true),
 	/**
 	 * The server supports TCP ({@link SocketChannel}/{@link ServerSocketChannel}) connections, and not UDP
 	 * connections.<p>
@@ -48,7 +48,7 @@ public enum ServerType {
 	 * The server will bind to a UDP port if {@link ServerConfig#getAllowDetection()} if {@code true},
 	 * but no UDP connections can be established.
 	 */
-	TCP_CHANNEL(false, false, true),
+	TCP_NIO(false, false, true),
 	/**
 	 * The server will support UDP ({@link DatagramSocket}) connections, and not TCP connections.<p>
 	 * The server will also support internal connections if
@@ -57,7 +57,7 @@ public enum ServerType {
 	 * Because UDP connections are unmanaged, it is recommended to enable {@link CommonConfig#getGlobalConnectionCheck()}
 	 * to periodically check connection state.
 	 */
-	UDP_SOCKET(true, true, false),
+	UDP_IO(true, true, false),
 	/**
 	 * The server will support UDP ({@link DatagramChannel}) connections, and not TCP connections.<p>
 	 * The server will also support internal connections if
@@ -66,15 +66,15 @@ public enum ServerType {
 	 * Because UDP connections are unmanaged, it is recommended to enable {@link CommonConfig#getGlobalConnectionCheck()}
 	 * to periodically check connection state.
 	 */
-	UDP_CHANNEL(false, true, false),
+	UDP_NIO(false, true, false),
 	/**
 	 * The server will support both UDP and TCP connections (See {@link #TCP_SOCKET} and {@link #UDP_SOCKET}) at the same time.
 	 */
-	COMBINED_SOCKET(true, true, true),
+	COMBINED_IO(true, true, true),
 	/**
 	 * The server will support both UDP and TCP connections (See {@link #TCP_CHANNEL} and {@link #UDP_CHANNEL}) at the same time.
 	 */
-	COMBINED_CHANNEL(false, true, true);
+	COMBINED_NIO(false, true, true);
 	
 	private final boolean useSockets;
 	private final boolean udp;
@@ -110,7 +110,7 @@ public enum ServerType {
 		return tcp;
 	}
 	
-	private static final ServerType NET_DEFAULT = TCP_SOCKET;
+	private static final ServerType NET_DEFAULT = TCP_IO;
 	public static ServerType resolve(ServerType type, NetworkID id) {
 		Objects.requireNonNull(type, "'type' parameter must not be null");
 		Objects.requireNonNull(id, "'id' parameter must not be null");
