@@ -96,9 +96,9 @@ public interface Task {
 	 * Adds a {@link Runnable} that will be run when the action associated with this task completes.<br>
 	 * If this task is already done, the {@code Runnable} will run immediately.
 	 * <p>
-	 * This method makes no guarantees on what thread the supplied {@code Runnable} will be executed.
-	 * Implementation may run the {@code Runnable} on the calling thread if this task is already done,
-	 * on the thread that marks this task as done, or on any other thread.
+	 * The {@code Runnable} will run on the calling thread if this task is already done,
+	 * on the thread that marks this task as done. In that case, the {@code Runnable} will run completely
+	 * before the waiting threads are released.
 	 * @param chainTask The {@link Runnable} to run when this task completes
 	 * @return This task
 	 * @see #thenAsync(Runnable)
@@ -109,9 +109,9 @@ public interface Task {
 	 * Adds a {@link Runnable} that will be run when the action associated with this task completes.<br>
 	 * If this task is already done, the {@code Runnable} will run immediately.
 	 * <p>
-	 * Unlike {@link #then(Runnable)}, this method makes stronger guarantees on what thread the supplied
-	 * {@code Runnable} will be executed: It will always use the {@link ForkJoinPool#commonPool()} to
-	 * run, even if this task is already done.
+	 * The supplied {@code Runnable} will always use the {@link ForkJoinPool#commonPool()} to
+	 * run, even if this task is already done. The {@code Runnable} will be added to the thread pool
+	 * before the waiting threads are released, but might execute at any later time.
 	 * @param chainTask The {@link Runnable} to run when this task completes
 	 * @return This task
 	 * @see #then(Runnable)

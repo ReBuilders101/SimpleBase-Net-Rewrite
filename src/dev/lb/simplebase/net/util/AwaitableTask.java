@@ -63,8 +63,8 @@ public class AwaitableTask implements Task {
 	}
 	
 	public synchronized void release() {
-		waiter.countDown();
 		completeTasks.forEach(Runnable::run);
+		waiter.countDown();
 	}
 	
 }

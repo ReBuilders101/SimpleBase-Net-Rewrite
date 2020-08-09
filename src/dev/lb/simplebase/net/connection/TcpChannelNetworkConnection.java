@@ -19,23 +19,6 @@ public class TcpChannelNetworkConnection extends ConvertingNetworkConnection imp
 	private final SelectorManager selectorManager;
 	private final ByteBuffer receiveBuffer;
 	
-	/**
-	 * Client also needs a selector / blocking I/O
-	 */
-	@Deprecated
-	public TcpChannelNetworkConnection(NetworkManagerCommon networkManager, SelectorManager selctorManager, NetworkID remoteID,
-			Object customObject) throws IOException {
-		super(networkManager, remoteID, NetworkConnectionState.INITIALIZED,
-				networkManager.getConfig().getConnectionCheckTimeout(), false, customObject, true);
-		
-		
-		this.channel = SocketChannel.open();
-		this.channel.configureBlocking(false);
-		this.selectionKey = null;
-		this.selectorManager = selctorManager;
-		this.receiveBuffer = ByteBuffer.allocate(networkManager.getConfig().getPacketBufferInitialSize());
-	}
-	
 	public TcpChannelNetworkConnection(NetworkManagerCommon networkManager, SelectorManager selctorManager, NetworkID remoteID,
 			SocketChannel channel, Object customObject) throws IOException {
 		super(networkManager, remoteID, NetworkConnectionState.OPEN,
@@ -108,10 +91,17 @@ public class TcpChannelNetworkConnection extends ConvertingNetworkConnection imp
 	@Override
 	public void readNow() {
 		receiveBuffer.clear();
-		try {
-			channel.read(receiveBuffer);
-		} catch (IOException e) {
-			RECEIVE_LOGGER.error("Error while reading from socket channel", e);
+		synchronized (currentState) {
+			if(currentState.canSendData()) { //SEND and READ require the same states
+				try {
+					channel.read(receiveBuffer);
+				} catch (IOException e) {
+					RECEIVE_LOGGER.error("Error while reading from socket channel", e);
+					return;
+				}
+			} else {
+				RECEIVE_LOGGER.warning("Cannot read data: Channel was closed");
+			}
 		}
 		receiveBuffer.flip();
 		byteToPacketConverter.acceptBytes(receiveBuffer);
