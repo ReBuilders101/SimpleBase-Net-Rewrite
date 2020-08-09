@@ -1,10 +1,6 @@
 package dev.lb.simplebase.net.manager;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
@@ -18,12 +14,9 @@ import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.config.ServerConfig;
 import dev.lb.simplebase.net.config.ServerType;
 import dev.lb.simplebase.net.connection.ChannelConnection;
-import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.connection.TcpChannelNetworkConnection;
-import dev.lb.simplebase.net.connection.TcpSocketNetworkConnection;
-import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
-import dev.lb.simplebase.net.events.FilterRawConnectionEvent;
 import dev.lb.simplebase.net.id.NetworkID;
+import dev.lb.simplebase.net.id.NetworkIDFunction;
 
 public class ChannelNetworkManagerServer extends NetworkManagerServer implements SelectorManager {
 
@@ -51,20 +44,38 @@ public class ChannelNetworkManagerServer extends NetworkManagerServer implements
 		} else {
 			tcpModule = null;
 		}
-
-		//		this.serverSelector = Selector.open();
 	}
 
 	@Override
 	protected ServerManagerState startServerImpl() {
-		// TODO Auto-generated method stub
-		return null;
+		if(tcpModule != null) {
+			try {
+				tcpModule.start();
+			} catch (IOException e) {
+				LOGGER.error("Cannot start ChannelNetworkManagerServer.TcpModule", e);
+				return ServerManagerState.STOPPED;
+			}
+		}
+		
+		//TODO UdpModule
+		
+		selectorThread.start();
+		return ServerManagerState.RUNNING;
 	}
 
 	@Override
 	protected void stopServerImpl() {
-		// TODO Auto-generated method stub
-
+		if(tcpModule != null) {
+			try {
+				tcpModule.stop();
+			} catch (IOException e) {
+				LOGGER.error("Cannot stop ChannelNetworkManagerServer.TcpModule", e);
+			}
+		}
+		
+		//TODO UdpModule
+		
+		LOGGER.info("... Server stopped (%s)", getLocalID().getDescription());
 	}
 
 	@Override
@@ -84,11 +95,21 @@ public class ChannelNetworkManagerServer extends NetworkManagerServer implements
 
 	private class TcpModule {
 		private final ServerSocketChannel serverChannel;
-
+		private SelectionKey selectionKey;
+		
 		public TcpModule() throws IOException {
 			this.serverChannel = ServerSocketChannel.open();
 			this.serverChannel.configureBlocking(false);
-			this.serverChannel.register(selectorThread.selector, SelectionKey.OP_ACCEPT);
+		}
+		
+		public void start() throws IOException {
+			serverChannel.bind(getLocalID().getFunction(NetworkIDFunction.BIND));
+			selectionKey = serverChannel.register(selectorThread.selector, SelectionKey.OP_ACCEPT);
+		}
+		
+		public void stop() throws IOException {
+			if(selectionKey != null) selectionKey.cancel();
+			serverChannel.close();
 		}
 		
 		public void acceptNow() {
@@ -109,11 +130,18 @@ public class ChannelNetworkManagerServer extends NetworkManagerServer implements
 		
 	}
 
-	private class UdpModule {
+	private class UdpModule implements ChannelConnection {
 		private final DatagramChannel channel;
 
-		public UdpModule(boolean lan, boolean udp) {
-			channel = null;
+		public UdpModule(boolean lan, boolean udp) throws IOException {
+			this.channel = DatagramChannel.open();
+			this.channel.configureBlocking(false);
+			this.channel.register(selectorThread.selector, SelectionKey.OP_READ, this);
+		}
+
+		@Override
+		public void readNow() {
+			
 		}
 	}
 

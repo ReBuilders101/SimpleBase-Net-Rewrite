@@ -90,7 +90,7 @@ public class TcpChannelNetworkConnection extends ConvertingNetworkConnection imp
 	@Override
 	protected Task closeConnectionImpl(ConnectionCloseReason reason) {
 		openCompleted.release(); //Don't wait for open when the connection is closed
-		selectionKey.cancel();
+		if(selectionKey != null) selectionKey.cancel();
 		try {
 			channel.close();
 		} catch (IOException e) {
