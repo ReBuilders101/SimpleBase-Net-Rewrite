@@ -19,6 +19,10 @@ public class TcpChannelNetworkConnection extends ConvertingNetworkConnection imp
 	private final SelectorManager selectorManager;
 	private final ByteBuffer receiveBuffer;
 	
+	/**
+	 * Client also needs a selector / blocking I/O
+	 */
+	@Deprecated
 	public TcpChannelNetworkConnection(NetworkManagerCommon networkManager, SelectorManager selctorManager, NetworkID remoteID,
 			Object customObject) throws IOException {
 		super(networkManager, remoteID, NetworkConnectionState.INITIALIZED,
@@ -109,6 +113,7 @@ public class TcpChannelNetworkConnection extends ConvertingNetworkConnection imp
 		} catch (IOException e) {
 			RECEIVE_LOGGER.error("Error while reading from socket channel", e);
 		}
+		receiveBuffer.flip();
 		byteToPacketConverter.acceptBytes(receiveBuffer);
 	}
 	

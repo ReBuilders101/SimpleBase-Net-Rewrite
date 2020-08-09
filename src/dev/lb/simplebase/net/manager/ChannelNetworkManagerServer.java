@@ -27,7 +27,7 @@ public class ChannelNetworkManagerServer extends NetworkManagerServer implements
 	protected ChannelNetworkManagerServer(NetworkID local, ServerConfig config) throws IOException {
 		super(local, config);
 		final ServerType actualType = ServerType.resolve(config.getServerType(), local);
-		if(!actualType.useSockets()) throw new IllegalArgumentException("Invalid ServerConfig: ServerType must use Sockets");
+		if(actualType.useSockets()) throw new IllegalArgumentException("Invalid ServerConfig: ServerType must not use Sockets");
 
 		this.selectorThread = new SelectorThread();
 		
@@ -65,6 +65,13 @@ public class ChannelNetworkManagerServer extends NetworkManagerServer implements
 
 	@Override
 	protected void stopServerImpl() {
+		selectorThread.interrupt();
+		try {
+			selectorThread.selector.close();
+		} catch (IOException e) {
+			LOGGER.error("Cannot close selector", e);
+		}
+		
 		if(tcpModule != null) {
 			try {
 				tcpModule.stop();
@@ -90,7 +97,7 @@ public class ChannelNetworkManagerServer extends NetworkManagerServer implements
 	
 	@Internal
 	void acceptIncomingRawTcpConnection(SocketChannel connectedChannel) {
-		postIncomingTcpConnection(connectedChannel.socket(), (id, data) -> new TcpChannelNetworkConnection(this, this, id, connectedChannel));
+		postIncomingTcpConnection(connectedChannel.socket(), (id, data) -> new TcpChannelNetworkConnection(this, this, id, connectedChannel, data));
 	}
 
 	private class TcpModule {
@@ -164,12 +171,12 @@ public class ChannelNetworkManagerServer extends NetworkManagerServer implements
 						Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
 						while(keys.hasNext()) {
 							SelectionKey current = keys.next();
-							if(current.isReadable()) {
+							if(current.isValid() && current.isReadable()) {
 								ChannelConnection connection = (ChannelConnection) current.attachment();
 								connection.readNow();
 							}
 
-							if(current.isAcceptable()) {
+							if(current.isValid() && current.isAcceptable()) {
 								if(tcpModule == null) {
 									LOGGER.warning("TcpModule not present, but channel %s is listening for OP_ACCEPT", current.channel());
 								} else {

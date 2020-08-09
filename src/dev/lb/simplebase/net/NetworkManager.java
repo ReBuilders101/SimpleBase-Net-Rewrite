@@ -84,17 +84,14 @@ public final class NetworkManager {
 	private static final List<Runnable> cleanUpTasks = new ArrayList<>();
 	
 	static {
-		Runtime.getRuntime().addShutdownHook(new Thread("Net-Simplebase-Cleanup") {
-			@Override
-			public void run() {
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 				synchronized (cleanUpTasks) {
 					if(cleanUpTasks.size() > 0) {
 						LOGGER.warning("Cleanup tasks have not been run. Please call NetworkManager.cleanUp() before exiting the program");
 						cleanUp();
 					}
 				}
-			}
-		});
+		}, "Net-Simplebase-Cleanup"));
 	}
 	
 	public static void addCleanUpTask(Runnable task) {
@@ -133,6 +130,7 @@ public final class NetworkManager {
 	//MANAGER FACTORIES #######################################################################
 	
 	private static <T extends NetworkManagerCommon> T register(T instance) {
+		if(instance == null) return null;
 		addCleanUpTask(instance::cleanUp);
 		return instance;
 	}
@@ -165,6 +163,10 @@ public final class NetworkManager {
 		case UDP_SOCKET:
 		case COMBINED_SOCKET:
 			return register(PROVIDER.createSocketServer(serverLocal, config));
+		case TCP_CHANNEL:
+		case UDP_CHANNEL:
+		case COMBINED_CHANNEL:
+			return register(PROVIDER.createChannelServer(serverLocal, config));
 		default:
 			throw new IllegalArgumentException("Invalid server type: " + actualType);
 		}

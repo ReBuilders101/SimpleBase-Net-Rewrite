@@ -31,6 +31,15 @@ public final class ManagerInstanceProvider {
 		}
 	}
 	
+	public ChannelNetworkManagerServer createChannelServer(NetworkID local, ServerConfig config) {
+		try {
+			return new ChannelNetworkManagerServer(local, config);
+		} catch (IOException e) {
+			LOGGER.error("Could not create ChannelNetworkManagerServer", e);
+			return null;
+		}
+	}
+	
 	/**
 	 * Gives access to {@link NetworkManagerCommon} implementation constructors.<p>
 	 * <b>Caller-Sensitive:</b> will throw a {@link RuntimeException} unless the caller is
