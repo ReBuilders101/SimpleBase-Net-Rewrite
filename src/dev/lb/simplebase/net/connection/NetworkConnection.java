@@ -98,7 +98,7 @@ public abstract class NetworkConnection {
 	/**
 	 * Will be called when opening. State is already checked and synced.
 	 */
-	protected abstract Task openConnectionImpl(); //TODO implement CONNECT_ACK packet and wait for that
+	protected abstract Task openConnectionImpl();
 	
 	/**
 	 * Closes the connection to the remote partner, or marks this connection as closed if the

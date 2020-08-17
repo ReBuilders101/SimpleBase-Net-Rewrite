@@ -21,7 +21,7 @@ public class DatagramSocketReceiverThread extends Thread {
 	private final DatagramSocket socket;
 	private final Consumer<AcceptorThreadDeathReason> deathReasonHandler;
 	private final BiConsumer<InetSocketAddress, ByteBuffer> dataHandler;
-	private final int bufferSize;
+	private final ByteBuffer receiveBuffer;
 
 	public DatagramSocketReceiverThread(DatagramSocket socket, BiConsumer<InetSocketAddress, ByteBuffer> receiveData,
 			Consumer<AcceptorThreadDeathReason> deathReasonHandler, int bufferSize) {
@@ -29,20 +29,19 @@ public class DatagramSocketReceiverThread extends Thread {
 		this.socket = socket;
 		this.dataHandler = receiveData;
 		this.deathReasonHandler = deathReasonHandler;
-		this.bufferSize = bufferSize;
+		this.receiveBuffer = ByteBuffer.allocate(bufferSize);
 	}
 
 	@Override
 	public void run() {
-		final ByteBuffer receiveBuffer = ByteBuffer.allocate(bufferSize);
 		final DatagramPacket receivePacket = new DatagramPacket(receiveBuffer.array(), receiveBuffer.capacity());
 		AcceptorThreadDeathReason deathReason = AcceptorThreadDeathReason.UNKNOWN;
 		LOGGER.info("UDP server socket listener thread started");;
 		try {
 			while(!this.isInterrupted()) {
 				try {
-					socket.receive(receivePacket); //SocketException on close
-					receiveBuffer.limit(receivePacket.getLength());
+					socket.receive(receivePacket); //Actually reads into the backing array and not the buffer...
+					receiveBuffer.limit(receivePacket.getLength());//...so the limit must be adjusted manually
 					receiveBuffer.rewind();
 					dataHandler.accept(getAddress(receivePacket), receiveBuffer);
 					receiveBuffer.clear();

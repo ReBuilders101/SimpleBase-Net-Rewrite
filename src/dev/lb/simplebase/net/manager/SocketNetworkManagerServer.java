@@ -88,6 +88,7 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 			}
 		}
 
+		LOGGER.info("...Server started");
 		return ServerManagerState.RUNNING;
 	}
 
@@ -114,9 +115,10 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 	}
 
 	void acceptIncomingRawUdpConnection(InetSocketAddress remoteAddress) {
+		LOGGER.debug("Handling incoming UDP connection");
 		final ServerManagerState stateSnapshot = getCurrentState(); //We are not synced here, but if it is STOPPING or STOPPED it can never be RUNNING again
 		if(stateSnapshot.ordinal() > ServerManagerState.RUNNING.ordinal()) {
-			LOGGER.warning("Declining incoming TCP socket connection because server is already %s", stateSnapshot);
+			LOGGER.warning("Declining incoming UDP socket connection because server is already %s", stateSnapshot);
 			//Disconnect
 			udpModule.sendRawByteData(remoteAddress, udpModule.toByteConverter.convert(NetworkPacketFormats.LOGOUT, null));
 			return;
@@ -137,7 +139,7 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 			getEventDispatcher().post(ConfigureConnection, event2);
 
 			final NetworkConnection udpConnection = new UdpServerSocketNetworkConnection(this,
-					networkId, event2.getCustomObject(), this::sendRawUdpByteData);
+					networkId, event2.getCustomObject());
 
 			//This will start the sync. An exclusive lock for this whole method would be too expensive
 			if(!addInitializedConnection(udpConnection)) {

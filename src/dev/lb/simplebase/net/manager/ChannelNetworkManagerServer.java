@@ -1,8 +1,12 @@
 package dev.lb.simplebase.net.manager;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.DatagramChannel;
+import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -14,9 +18,19 @@ import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.config.ServerConfig;
 import dev.lb.simplebase.net.config.ServerType;
 import dev.lb.simplebase.net.connection.ChannelConnection;
+import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.connection.TcpChannelNetworkConnection;
+import dev.lb.simplebase.net.connection.UdpServerChannelNetworkConnection;
+import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
+import dev.lb.simplebase.net.events.FilterRawConnectionEvent;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFunction;
+import dev.lb.simplebase.net.packet.Packet;
+import dev.lb.simplebase.net.packet.converter.AddressBasedDecoderPool;
+import dev.lb.simplebase.net.packet.converter.AnonymousServerConnectionAdapter;
+import dev.lb.simplebase.net.packet.converter.MutableAddressConnectionAdapter;
+import dev.lb.simplebase.net.packet.converter.PacketToByteConverter;
+import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
 
 public class ChannelNetworkManagerServer extends NetworkManagerServer implements SelectorManager {
 
@@ -57,9 +71,24 @@ public class ChannelNetworkManagerServer extends NetworkManagerServer implements
 			}
 		}
 		
-		//TODO UdpModule
+		if(udpModule != null) {
+			try {
+				udpModule.start();
+			} catch (IOException e) {
+				LOGGER.error("Cannot start ChannelNetworkManagerServer.UdpModule", e);
+				
+				try {
+					tcpModule.stop();
+				} catch (IOException e1) {
+					LOGGER.error("Unable to stop ChannelNetworkManagerServer.TcpModule after server start failed");
+				}
+				
+				return ServerManagerState.STOPPED;
+			}
+		}
 		
 		selectorThread.start();
+		LOGGER.info("...Server started");
 		return ServerManagerState.RUNNING;
 	}
 
@@ -80,13 +109,27 @@ public class ChannelNetworkManagerServer extends NetworkManagerServer implements
 			}
 		}
 		
-		//TODO UdpModule
+		if(udpModule != null) {
+			try {
+				udpModule.stop();
+			} catch (IOException e) {
+				LOGGER.error("Cannot stop ChannelNetworkManagerServer.UdpModule", e);
+			}
+		}
 		
 		LOGGER.info("... Server stopped (%s)", getLocalID().getDescription());
 	}
 
+	public void sendRawUdpByteData(SocketAddress address, ByteBuffer buffer) {
+		if(udpModule != null) {
+			udpModule.sendRawByteData(address, buffer);
+		} else {
+			LOGGER.warning("Cannot send raw UDP byte data: No UdpModule");
+		}
+	}
+	
 	@Override
-	public SelectionKey registerConnection(SocketChannel channel, int ops, ChannelConnection connection) {
+	public SelectionKey registerConnection(SelectableChannel channel, int ops, ChannelConnection connection) {
 		try {
 			return channel.register(selectorThread.selector, ops, connection);
 		} catch (ClosedChannelException e) {
@@ -100,6 +143,42 @@ public class ChannelNetworkManagerServer extends NetworkManagerServer implements
 		postIncomingTcpConnection(connectedChannel.socket(), (id, data) -> new TcpChannelNetworkConnection(this, this, id, connectedChannel, data));
 	}
 
+	private void acceptIncomingRawUdpConnection(InetSocketAddress remoteAddress) {
+		LOGGER.debug("Handling incoming UDP connection");
+		final ServerManagerState stateSnapshot = getCurrentState(); //We are not synced here, but if it is STOPPING or STOPPED it can never be RUNNING again
+		if(stateSnapshot.ordinal() > ServerManagerState.RUNNING.ordinal()) {
+			LOGGER.warning("Declining incoming UDP channel connection because server is already %s", stateSnapshot);
+			//Disconnect
+			udpModule.sendRawByteData(remoteAddress, udpModule.toByteConverter.convert(NetworkPacketFormats.LOGOUT, null));
+			return;
+		}
+		
+		
+		final FilterRawConnectionEvent event1 = new FilterRawConnectionEvent(remoteAddress, 
+				ManagerInstanceProvider.generateNetworkIdName("RemoteId-"));
+		getEventDispatcher().post(FilterRawConnection, event1);
+		if(event1.isCancelled()) {
+			//Disconnect
+			udpModule.sendRawByteData(remoteAddress, udpModule.toByteConverter.convert(NetworkPacketFormats.LOGOUT, null));
+		} else {
+			final NetworkID networkId = NetworkID.createID(event1.getNetworkIdName(), remoteAddress);
+
+			//Next event
+			final ConfigureConnectionEvent event2 = new ConfigureConnectionEvent(this, networkId);
+			getEventDispatcher().post(ConfigureConnection, event2);
+
+			final NetworkConnection udpConnection = new UdpServerChannelNetworkConnection(this,
+					networkId, event2.getCustomObject());
+
+			//This will start the sync. An exclusive lock for this whole method would be too expensive
+			if(!addInitializedConnection(udpConnection)) {
+				//Can't connect after all, maybe the server was stopped in the time we created the connection
+				LOGGER.warning("Re-Closed an initialized connection: Server was stopped during connection init");
+				udpConnection.closeConnection();
+			}
+		}
+	}
+	
 	private class TcpModule {
 		private final ServerSocketChannel serverChannel;
 		private SelectionKey selectionKey;
@@ -139,16 +218,107 @@ public class ChannelNetworkManagerServer extends NetworkManagerServer implements
 
 	private class UdpModule implements ChannelConnection {
 		private final DatagramChannel channel;
-
+		private final ByteBuffer receiveBuffer;
+		private final AddressBasedDecoderPool pooledDecoders;
+		private final PacketToByteConverter toByteConverter;
+		private SelectionKey selectionKey;
+		
+		private final boolean lan;
+		private final boolean udp;
+		
 		public UdpModule(boolean lan, boolean udp) throws IOException {
+			this.lan = lan;
+			this.udp = udp;
 			this.channel = DatagramChannel.open();
+			this.receiveBuffer = ByteBuffer.allocate(getConfig().getPacketBufferInitialSize());
 			this.channel.configureBlocking(false);
-			this.channel.register(selectorThread.selector, SelectionKey.OP_READ, this);
+			this.toByteConverter = lan ? new PacketToByteConverter(getMappingContainer(), null, getConfig().getPacketBufferInitialSize()) : null;
+			this.pooledDecoders = new AddressBasedDecoderPool(UdpAnonymousConnectionAdapter::new,
+					getMappingContainer(), getConfig().getPacketBufferInitialSize());
+//			this.channel.register(selectorThread.selector, SelectionKey.OP_READ, this);
+		}
+
+		public void start() throws IOException {
+			channel.bind(getLocalID().getFunction(NetworkIDFunction.BIND));
+			selectionKey = registerConnection(channel, SelectionKey.OP_READ, this);
+		}
+		
+		public void stop() throws IOException {
+			if(selectionKey != null) selectionKey.cancel();
+			channel.close();
 		}
 
 		@Override
 		public void readNow() {
-			
+			receiveBuffer.clear();
+			try {
+				SocketAddress source = channel.receive(receiveBuffer);
+				if(source == null) {
+					LOGGER.warning("No Datagram packet available when reading");
+					return;
+				}
+				if(!(source instanceof InetSocketAddress)) {
+					LOGGER.warning("Datagram channel source address is not an InetSocketAddress");
+					return;
+				}
+				final InetSocketAddress address = (InetSocketAddress) source;
+				receiveBuffer.flip();
+				
+				//Who will decode???
+				final UdpServerChannelNetworkConnection connection = getUdpConnectionObject(address);
+				if(connection != null) { //Yes, this is not locked: Exclusive locks are too expensive for any packet
+					connection.decode(receiveBuffer);
+				} else {
+					pooledDecoders.decode(address, receiveBuffer);
+				}
+
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		private UdpServerChannelNetworkConnection getUdpConnectionObject(InetSocketAddress address) {
+			return readOnlyThreadsafe().actionReturn((server) -> {
+				for(NetworkConnection connection : server.getConnectionsFast())
+					if(connection instanceof UdpServerChannelNetworkConnection) {
+						final NetworkID id = connection.getRemoteID();
+						if(id.hasFunction(NetworkIDFunction.CONNECT)) {
+							if(id.getFunction(NetworkIDFunction.CONNECT).equals(address)) {
+								return (UdpServerChannelNetworkConnection) connection;
+							}
+						}
+					}
+				return null;
+			});
+		}
+		
+		public void receiveUdpLogin(InetSocketAddress address) {
+			if(udp) {
+				acceptIncomingRawUdpConnection(address);
+			} else {
+				LOGGER.debug("Received a UDP-Login for server %s, but UDP module is disabled", getLocalID().getDescription());
+			}
+		}
+
+		public void receiveServerInfoRequest(InetSocketAddress address) {
+			if(lan) {
+				Packet serverInfoPacket = getConfig().createServerInfoPacket(address);
+				if(serverInfoPacket == null) {
+					LOGGER.debug("No server info reply packet could be generated (To: %s)", address);
+				} else {
+					sendRawByteData(address, toByteConverter.convert(NetworkPacketFormats.SERVERINFOAN, serverInfoPacket));
+				}
+			} else {
+				LOGGER.debug("Received a Server-Info-Request for server %s, but LAN module is disabled", getLocalID().getDescription());
+			}
+		}
+		
+		public void sendRawByteData(SocketAddress address, ByteBuffer buffer) {
+			try {
+				channel.send(buffer, address);
+			} catch (IOException e) {
+				LOGGER.warning("Cannot send raw byte message with UDP socket", e);
+			}
 		}
 	}
 
@@ -163,6 +333,7 @@ public class ChannelNetworkManagerServer extends NetworkManagerServer implements
 
 		@Override
 		public void run() {
+			LOGGER.info("Selector handler thread started");
 			try {
 				while(!isInterrupted()) {
 					int amount = selector.select(); //Interrupt cancels this
@@ -193,6 +364,38 @@ public class ChannelNetworkManagerServer extends NetworkManagerServer implements
 			} finally {
 				LOGGER.info("Selector handler thread stopped.");
 			}
+		}
+
+	}
+	
+	private class UdpAnonymousConnectionAdapter implements AnonymousServerConnectionAdapter, MutableAddressConnectionAdapter {
+
+		private final ReferenceCounter counter;
+		private volatile InetSocketAddress address;
+
+		public UdpAnonymousConnectionAdapter(InetSocketAddress address) {
+			this.address = address;
+			this.counter = new ReferenceCounter();
+		}
+
+		@Override
+		public void receiveUdpLogin() {
+			udpModule.receiveUdpLogin(address);
+		}
+
+		@Override
+		public void receiveServerInfoRequest() {
+			udpModule.receiveServerInfoRequest(address);
+		}
+
+		@Override
+		public void setAddress(InetSocketAddress address) {
+			this.address = address;
+		}
+
+		@Override
+		public ReferenceCounter getUseCountManager() {
+			return counter;
 		}
 
 	}

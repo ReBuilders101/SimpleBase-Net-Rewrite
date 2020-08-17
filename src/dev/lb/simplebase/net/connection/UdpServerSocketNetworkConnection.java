@@ -1,10 +1,7 @@
 package dev.lb.simplebase.net.connection;
 
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
-import java.util.function.BiConsumer;
-
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFunction;
@@ -29,7 +26,7 @@ public class UdpServerSocketNetworkConnection extends ConvertingNetworkConnectio
 	 * @param dataSender
 	 */
 	public UdpServerSocketNetworkConnection(SocketNetworkManagerServer networkManager, NetworkID remoteID,
-			Object customObject, BiConsumer<InetSocketAddress, ByteBuffer> dataSender) {
+			Object customObject) {
 		super(networkManager, remoteID, NetworkConnectionState.OPEN,
 				networkManager.getConfig().getConnectionCheckTimeout(), true, customObject, false);
 		if(!networkManager.supportsUdp()) throw new IllegalArgumentException("Managers for UdpServerSocketNetworkConnections must have a UdpModule");

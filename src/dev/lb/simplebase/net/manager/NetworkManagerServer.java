@@ -308,6 +308,7 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 	
 	@Internal
 	protected final void postIncomingTcpConnection(Socket connectedSocket, ConnectionConstructor ctor) {
+		LOGGER.debug("Handling incoming TCP connection");
 		//Immediately cancel the connection
 		final ServerManagerState stateSnapshot = getCurrentState(); //We are not synced here, but if it is STOPPING or STOPPED it can never be RUNNING again
 		if(stateSnapshot.ordinal() > ServerManagerState.RUNNING.ordinal()) {
