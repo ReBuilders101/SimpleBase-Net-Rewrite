@@ -1,6 +1,6 @@
 package dev.lb.simplebase.net.id;
 
-import java.net.SocketAddress;
+import java.net.InetSocketAddress;
 import java.util.Objects;
 
 /**
@@ -28,7 +28,7 @@ public final class NetworkIDFunction<E> {
 	 * Its parameter is the {@link NetworkIDFunction} it is combined with, either {@link #CONNECT} or
 	 * {@link #BIND}.
 	 */
-	public static final NetworkIDFunction<NetworkIDFunction<SocketAddress>> NETWORK = new NetworkIDFunction<>("NETWORK");
+	public static final NetworkIDFunction<NetworkIDFunction<InetSocketAddress>> NETWORK = new NetworkIDFunction<>("NETWORK");
 	
 	/**
 	 * The NetworkID contains all networking information necessary to connect a socket to a remote endpoint.
@@ -36,14 +36,14 @@ public final class NetworkIDFunction<E> {
 	 * <p>
 	 * Its parameter is the the address that the socket should be connected to.
 	 */
-	public static final NetworkIDFunction<SocketAddress> CONNECT = new NetworkIDFunction<>("CONNECT");
+	public static final NetworkIDFunction<InetSocketAddress> CONNECT = new NetworkIDFunction<>("CONNECT");
 	
 	/**
 	 * The NetworkID contains all networking information necessary to bind a server socket to a local endpoint.
 	 * <p>
 	 * Its parameter is the address that the socket should be bound to.
 	 */
-	public static final NetworkIDFunction<SocketAddress> BIND = new NetworkIDFunction<>("BIND");
+	public static final NetworkIDFunction<InetSocketAddress> BIND = new NetworkIDFunction<>("BIND");
 	
 	private final String textDescription;
 	

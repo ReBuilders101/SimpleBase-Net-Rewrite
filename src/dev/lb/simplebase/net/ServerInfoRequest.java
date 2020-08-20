@@ -16,6 +16,8 @@ import java.util.Set;
 import java.util.function.Consumer;
 import dev.lb.simplebase.net.config.CommonConfig;
 import dev.lb.simplebase.net.connection.DatagramSocketReceiverThread;
+import dev.lb.simplebase.net.id.NetworkID;
+import dev.lb.simplebase.net.id.NetworkIDFunction;
 import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.manager.AcceptorThreadDeathReason;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
@@ -63,6 +65,7 @@ public final class ServerInfoRequest {
 		this.channel.socket().setBroadcast(true);
 		//This one shouldn't prevent shutdown, since it is not an established connection or a running server
 		this.thread.setDaemon(true);
+		this.thread.start();
 	}
 	
 	public RequestToken startRequest(InetSocketAddress remote) {
@@ -71,6 +74,18 @@ public final class ServerInfoRequest {
 	
 	public MultiRequestToken startLanRequest(int port) {
 		return startLanRequest(port, null);
+	}
+	
+	public RequestToken startRequest(NetworkID remote) {
+		return startRequest(remote, null);
+	}
+	
+	public RequestToken startRequest(NetworkID remote, Consumer<Packet> callback) {
+		if(remote.hasFunction(NetworkIDFunction.CONNECT)) {
+			return startRequest(remote.getFunction(NetworkIDFunction.CONNECT), callback);
+		} else {
+			throw new IllegalArgumentException("NetworkID must implement CONNECT function");
+		}
 	}
 	
 	public MultiRequestToken startLanRequest(int port, Consumer<Packet> callback) {
