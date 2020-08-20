@@ -1,7 +1,8 @@
 package dev.lb.simplebase.net.config;
 
 import java.net.InetSocketAddress;
-import java.util.function.Function;
+import java.util.function.BiFunction;
+import dev.lb.simplebase.net.manager.NetworkManagerServer;
 import dev.lb.simplebase.net.packet.Packet;
 
 public class ServerConfig extends CommonConfig<ServerConfig> {
@@ -13,7 +14,7 @@ public class ServerConfig extends CommonConfig<ServerConfig> {
 	private boolean registerInternalServer;
 	private boolean allowDetection;
 	private ServerType serverType;
-	private Function<InetSocketAddress, ? extends Packet> serverInfoFactory;
+	private BiFunction<NetworkManagerServer, InetSocketAddress, ? extends Packet> serverInfoFactory;
 	
 	public ServerConfig() {
 		this.registerInternalServer = REGISTER_INTERNAL_DEFAULT;
@@ -51,16 +52,16 @@ public class ServerConfig extends CommonConfig<ServerConfig> {
 		return this;
 	}
 	
-	public ServerConfig setServerInfoPacket(Function<InetSocketAddress, ? extends Packet> factory) {
+	public ServerConfig setServerInfoPacket(BiFunction<NetworkManagerServer, InetSocketAddress, ? extends Packet> factory) {
 		this.serverInfoFactory = factory;
 		return this;
 	}
 	
-	public Packet createServerInfoPacket(InetSocketAddress address) {
+	public Packet createServerInfoPacket(NetworkManagerServer server, InetSocketAddress address) {
 		if(serverInfoFactory == null) {
 			return null;
 		} else {
-			return serverInfoFactory.apply(address);
+			return serverInfoFactory.apply(server, address);
 		}
 	}
 }

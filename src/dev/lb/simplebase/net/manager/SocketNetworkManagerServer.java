@@ -233,7 +233,7 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 
 		public void receiveServerInfoRequest(InetSocketAddress address) {
 			if(lan) {
-				Packet serverInfoPacket = getConfig().createServerInfoPacket(address);
+				Packet serverInfoPacket = getConfig().createServerInfoPacket(SocketNetworkManagerServer.this, address);
 				if(serverInfoPacket == null) {
 					LOGGER.debug("No server info reply packet could be generated (To: %s)", address);
 				} else {
