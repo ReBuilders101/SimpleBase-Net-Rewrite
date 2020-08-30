@@ -2,8 +2,6 @@ package dev.lb.simplebase.net.config;
 
 import java.net.DatagramSocket;
 import java.net.Socket;
-import java.nio.channels.DatagramChannel;
-import java.nio.channels.SocketChannel;
 import java.util.Objects;
 
 import dev.lb.simplebase.net.id.NetworkID;
@@ -31,25 +29,11 @@ public enum ConnectionType {
 	 */
 	TCP,
 	/**
-	 * Uses a {@link SocketChannel} to establish a TCP connection to the server.
-	 * The used server {@link NetworkID} must implement {@link NetworkIDFunction#NETWORK}.<br>
-	 * The server must be able to accept TCP connections.
-	 */
-	@Deprecated
-	TCP_CHANNEL,
-	/**
 	 * Uses a {@link DatagramSocket} to establish a UDP connection to the server.
 	 * The used server {@link NetworkID} must implement {@link NetworkIDFunction#NETWORK}.<br>
 	 * The server must be able to accept UDP connections.
 	 */
-	UDP,
-	/**
-	 * Uses a {@link DatagramChannel} to establish a UDP connection to the server.
-	 * The used server {@link NetworkID} must implement {@link NetworkIDFunction#NETWORK}.<br>
-	 * The server must be able to accept UDP connections.
-	 */
-	@Deprecated
-	UDP_CHANNEL;
+	UDP;
 	
 	
 	private static final ConnectionType NET_DEFAULT = TCP; //Change javadoc if changing this value

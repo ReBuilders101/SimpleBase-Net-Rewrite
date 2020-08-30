@@ -38,8 +38,4 @@ public class UdpServerChannelNetworkConnection extends ExternalNetworkConnection
 		currentState = NetworkConnectionState.CLOSED;
 		return Task.completed();
 	}
-
-	public void decode(ByteBuffer buffer) {
-		byteToPacketConverter.acceptBytes(buffer);
-	}
 }

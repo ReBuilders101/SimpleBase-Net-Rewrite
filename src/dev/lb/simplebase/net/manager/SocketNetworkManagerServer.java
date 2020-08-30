@@ -16,7 +16,6 @@ import java.util.function.BiPredicate;
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.config.ServerConfig;
-import dev.lb.simplebase.net.config.ServerType;
 import dev.lb.simplebase.net.connection.DatagramSocketReceiverThread;
 import dev.lb.simplebase.net.connection.TcpSocketNetworkConnection;
 import dev.lb.simplebase.net.connection.UdpServerSocketNetworkConnection;
@@ -32,11 +31,6 @@ import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
 import dev.lb.simplebase.net.util.Task;
 
 public class SocketNetworkManagerServer extends ExternalNetworkManagerServer {
-
-	//NEW STATES//
-	private final boolean hasTcp;
-	private final boolean hasUdp;
-	private final boolean hasLan;
 	
 	//NEW TCP SECTION//
 	private final ServerSocket tcp_serverSocket;
@@ -52,13 +46,7 @@ public class SocketNetworkManagerServer extends ExternalNetworkManagerServer {
 		n.ifFunction(NetworkIDFunction.CONNECT, r -> r.equals(i), false);
 	
 	protected SocketNetworkManagerServer(NetworkID local, ServerConfig config) throws IOException {
-		super(local, config);
-		final ServerType actualType = ServerType.resolve(config.getServerType(), local);
-		if(!actualType.useSockets()) throw new IllegalArgumentException("Invalid ServerConfig: ServerType must use Sockets");
-
-		hasTcp = actualType.supportsTcp();
-		hasUdp = actualType.supportsUdp();
-		hasLan = config.getAllowDetection();
+		super(local, config, true);
 		
 		if(hasTcp) {
 			tcp_serverSocket = new ServerSocket();
@@ -185,6 +173,7 @@ public class SocketNetworkManagerServer extends ExternalNetworkManagerServer {
 		}
 	}
 	
+	@Internal
 	public void sendRawUdpByteData(SocketAddress address, ByteBuffer buffer) {
 		if(hasUdp || hasLan) {
 			final byte[] array =new byte[buffer.remaining()];
@@ -200,13 +189,7 @@ public class SocketNetworkManagerServer extends ExternalNetworkManagerServer {
 	}
 	
 	private void decideUdpDataDestination(InetSocketAddress address, ByteBuffer buffer) {
-		final UdpServerSocketNetworkConnection connection = getConnectionImplementation(UdpServerSocketNetworkConnection.class, 
-				n -> n.ifFunction(NetworkIDFunction.CONNECT, i -> i.equals(address), null));
-		if(connection != null) { //Yes, this is not locked: Exclusive locks are too expensive for all packets
-			connection.decode(buffer);
-		} else {
-			udp_decoderPool.decode(address, buffer);
-		}
+		decideUdpDataDestination(address, udp_decoderPool, buffer);
 	}
 	
 	@Override

@@ -4,20 +4,37 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.nio.ByteBuffer;
 
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.config.ServerConfig;
+import dev.lb.simplebase.net.config.ServerType;
 import dev.lb.simplebase.net.connection.ConnectionConstructor;
+import dev.lb.simplebase.net.connection.ExternalNetworkConnection;
 import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
 import dev.lb.simplebase.net.events.FilterRawConnectionEvent;
 import dev.lb.simplebase.net.id.NetworkID;
+import dev.lb.simplebase.net.id.NetworkIDFunction;
+import dev.lb.simplebase.net.packet.converter.AddressBasedDecoderPool;
 
 @Internal
 abstract class ExternalNetworkManagerServer extends NetworkManagerServer {
 
-	protected ExternalNetworkManagerServer(NetworkID local, ServerConfig config) {
+	//NEW STATES//
+	protected final boolean hasTcp;
+	protected final boolean hasUdp;
+	protected final boolean hasLan;
+	
+	protected ExternalNetworkManagerServer(NetworkID local, ServerConfig config, boolean requireSockets) {
 		super(local, config);
+		
+		final ServerType actualType = ServerType.resolve(config.getServerType(), local);
+		if(actualType.useSockets() != requireSockets) throw new IllegalArgumentException("Invalid ServerConfig");
+
+		hasTcp = actualType.supportsTcp();
+		hasUdp = actualType.supportsUdp();
+		hasLan = config.getAllowDetection();
 	}
 
 	protected void acceptIncomingRawTcpConnection(Socket connectedSocket, ConnectionConstructor ctor) {
@@ -113,6 +130,16 @@ abstract class ExternalNetworkManagerServer extends NetworkManagerServer {
 			} catch (IOException e) {
 				LOGGER.error("Connection moved to an invalid state while creating connection object", e);
 			} 
+		}
+	}
+	
+	protected void decideUdpDataDestination(InetSocketAddress address, AddressBasedDecoderPool pool, ByteBuffer buffer) {
+		final ExternalNetworkConnection connection = getConnectionImplementation(ExternalNetworkConnection.class, 
+				n -> n.ifFunction(NetworkIDFunction.CONNECT, i -> i.equals(address), null));
+		if(connection != null) { //Yes, this is not locked: Exclusive locks are too expensive for all packets
+			connection.decode(buffer);
+		} else {
+			pool.decode(address, buffer);
 		}
 	}
 	

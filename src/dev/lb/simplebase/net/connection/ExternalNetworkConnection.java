@@ -57,6 +57,10 @@ public abstract class ExternalNetworkConnection extends NetworkConnection {
 		packetToByteConverter.convertAndPublish(NetworkPacketFormats.CONNECTED, null);
 	}
 	
+	public void decode(ByteBuffer data) {
+		byteToPacketConverter.acceptBytes(data);
+	}
+	
 	protected class Adapter implements SingleConnectionAdapter {
 
 		private final boolean udpWarning;
