@@ -16,14 +16,14 @@ import dev.lb.simplebase.net.util.AwaitableTask;
 /**
  * A network connection that converts packets to/from bytes when sending them
  */
-public abstract class ConvertingNetworkConnection extends NetworkConnection {
+public abstract class ExternalNetworkConnection extends NetworkConnection {
 
 	protected final ByteToPacketConverter byteToPacketConverter;
 	protected final PacketToByteConverter packetToByteConverter;
 	protected final ConnectionAdapter connectionAdapter;
 	protected final AwaitableTask openCompleted;
 	
-	protected ConvertingNetworkConnection(NetworkManagerCommon networkManager, NetworkID remoteID,
+	protected ExternalNetworkConnection(NetworkManagerCommon networkManager, NetworkID remoteID,
 			NetworkConnectionState initialState, int checkTimeoutMS, boolean serverSide, Object customObject, boolean udpWarning) {
 		super(networkManager, remoteID, initialState, checkTimeoutMS, serverSide, customObject);
 		
@@ -67,12 +67,12 @@ public abstract class ConvertingNetworkConnection extends NetworkConnection {
 		
 		@Override
 		public void receivePacket(Packet packet) {
-			ConvertingNetworkConnection.this.receivePacket(packet);
+			ExternalNetworkConnection.this.receivePacket(packet);
 		}
 
 		@Override
 		public void receiveCheck(int uuid) {
-			ConvertingNetworkConnection.this.receiveConnectionCheck(uuid);
+			ExternalNetworkConnection.this.receiveConnectionCheck(uuid);
 		}
 
 		@Override
@@ -90,7 +90,7 @@ public abstract class ConvertingNetworkConnection extends NetworkConnection {
 		public void receiveConnectionAccepted() {
 			synchronized (lockCurrentState) {
 				currentState = NetworkConnectionState.OPEN;
-				ConvertingNetworkConnection.this.openCompleted.release();
+				ExternalNetworkConnection.this.openCompleted.release();
 			}
 		}
 		

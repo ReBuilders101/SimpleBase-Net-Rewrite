@@ -12,7 +12,7 @@ import dev.lb.simplebase.net.id.NetworkIDFunction;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.util.Task;
 
-public class TcpSocketNetworkConnection extends ConvertingNetworkConnection {
+public class TcpSocketNetworkConnection extends ExternalNetworkConnection {
 
 	private final DataReceiverThread thread;
 	private final Socket socket;

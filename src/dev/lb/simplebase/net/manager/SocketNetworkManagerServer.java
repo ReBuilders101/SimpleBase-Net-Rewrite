@@ -8,277 +8,274 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiPredicate;
+
+import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.config.ServerConfig;
 import dev.lb.simplebase.net.config.ServerType;
 import dev.lb.simplebase.net.connection.DatagramSocketReceiverThread;
-import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.connection.TcpSocketNetworkConnection;
 import dev.lb.simplebase.net.connection.UdpServerSocketNetworkConnection;
-import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
-import dev.lb.simplebase.net.events.FilterRawConnectionEvent;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFunction;
+import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.converter.AddressBasedDecoderPool;
 import dev.lb.simplebase.net.packet.converter.AnonymousServerConnectionAdapter;
 import dev.lb.simplebase.net.packet.converter.MutableAddressConnectionAdapter;
 import dev.lb.simplebase.net.packet.converter.PacketToByteConverter;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
+import dev.lb.simplebase.net.util.Task;
 
-public class SocketNetworkManagerServer extends NetworkManagerServer {
+public class SocketNetworkManagerServer extends ExternalNetworkManagerServer {
 
-	private final TcpModule tcpModule;
-	private final UdpModule udpModule;
-
+	//NEW STATES//
+	private final boolean hasTcp;
+	private final boolean hasUdp;
+	private final boolean hasLan;
+	
+	//NEW TCP SECTION//
+	private final ServerSocket tcp_serverSocket;
+	private final ServerSocketAcceptorThread tcp_acceptorThread; 
+	
+	//NEW UDP SECTION//
+	private final DatagramSocket udp_serverSocket;
+	private final DatagramSocketReceiverThread udp_receiverThread;
+	private final AddressBasedDecoderPool udp_decoderPool;
+	private final PacketToByteConverter udp_toByteConverter;
+	
+	public static final BiPredicate<NetworkID, InetSocketAddress> matchRemoteAddress = (n, i) -> 
+		n.ifFunction(NetworkIDFunction.CONNECT, r -> r.equals(i), false);
+	
 	protected SocketNetworkManagerServer(NetworkID local, ServerConfig config) throws IOException {
 		super(local, config);
 		final ServerType actualType = ServerType.resolve(config.getServerType(), local);
 		if(!actualType.useSockets()) throw new IllegalArgumentException("Invalid ServerConfig: ServerType must use Sockets");
 
-		//Module setup
-		final boolean detection = config.getAllowDetection();
-		final boolean udpConnect = actualType.supportsUdp();
-		if(detection || udpConnect) {
-			udpModule = new UdpModule(detection, udpConnect);
+		hasTcp = actualType.supportsTcp();
+		hasUdp = actualType.supportsUdp();
+		hasLan = config.getAllowDetection();
+		
+		if(hasTcp) {
+			tcp_serverSocket = new ServerSocket();
+			tcp_acceptorThread = new ServerSocketAcceptorThread();
 		} else {
-			udpModule = null;
+			tcp_serverSocket = null;
+			tcp_acceptorThread = null;
 		}
-		if(actualType.supportsTcp()) {
-			tcpModule = new TcpModule();
+		
+		if(hasUdp || hasLan) {
+			udp_serverSocket = new DatagramSocket(null);
+			udp_decoderPool = new AddressBasedDecoderPool(UdpAnonymousConnectionAdapter::new, getMappingContainer(),
+					getConfig().getPacketBufferInitialSize());
+			udp_receiverThread = new DatagramSocketReceiverThread(udp_serverSocket, this::decideUdpDataDestination,
+					this::notifyUdpReceiverThreadClosure, getConfig().getPacketBufferInitialSize());
+			udp_toByteConverter = new PacketToByteConverter(getMappingContainer(), null, getConfig().getPacketBufferInitialSize());
 		} else {
-			tcpModule = null;
-		}
+			udp_serverSocket = null;
+			udp_decoderPool = null;
+			udp_receiverThread = null;
+			udp_toByteConverter = null;
+		}	
 	}
 
-
+	//STATE GET//
+	
 	public boolean supportsUdp() {
-		return udpModule != null && udpModule.udp;
+		return hasUdp;
 	}
 
 	public boolean supportsTcp() {
-		return tcpModule != null;
+		return hasTcp;
 	}
 
 	public boolean supportsDetection() {
-		return udpModule != null && udpModule.lan;
+		return hasLan;
 	}
+	
+	//SERVER STARTUP IMPLEMENTATION//
+	
+	private void startTcpImpl() throws IOException {
+		tcp_serverSocket.bind(getLocalID().getFunction(NetworkIDFunction.BIND)); //Exception Here -> thread not yet started
+		tcp_acceptorThread.start();
+	}
+	
+	private void startUdpLanImpl() throws IOException {
+		udp_serverSocket.bind(getLocalID().getFunction(NetworkIDFunction.BIND));
+		udp_receiverThread.start();
+	}
+	
 
 	@Override
-	protected ServerManagerState startServerImpl() {
-		if(tcpModule != null) {
+	protected Task startServerImpl() {
+		if(hasTcp) {
 			try {
-				tcpModule.start();
+				startTcpImpl();
 			} catch (IOException e) {
-				LOGGER.error("Cannot start SocketNetworkManagerServer.TcpModule", e);
+				LOGGER.error("Cannot start SocketNetworkManagerServer TCP module", e);
 				//Short-circuit return: No other components have been started yet
-				return ServerManagerState.STOPPED;
+				currentState = ServerManagerState.STOPPED;
+				return Task.completed();
 			}
 		}
 
-		if(udpModule != null) {
+		if(hasUdp || hasLan) {
 			try {
-				udpModule.start();
-			} catch (SocketException e) {
-				LOGGER.error("Cannot start SocketNetworkManagerServer.UdpModule", e);
+				startUdpLanImpl();
+			} catch (IOException e) {
+				LOGGER.error("Cannot start SocketNetworkManagerServer UDP module", e);
 				//Also disable the tcp module that was started before
-				if(tcpModule != null) tcpModule.stop();
-				return ServerManagerState.STOPPED;
+				if(hasTcp) stopTcpImpl();
+				currentState = ServerManagerState.STOPPED;
+				return Task.completed();
 			}
 		}
 
 		LOGGER.info("...Server started");
-		return ServerManagerState.RUNNING;
+		currentState = ServerManagerState.RUNNING;
+		return Task.completed();
 	}
 
-
+	
+	//SERVER SHUTDOWN IMPLEMENTATIONS//
+	
+	private void stopTcpImpl() {
+		//this also closes the socket
+		tcp_acceptorThread.interrupt();
+	}
+	
+	private void stopUdpLanImpl() {
+		//Will also close the associated socket
+		udp_receiverThread.interrupt();
+	}
+	
 	@Override
-	protected void stopServerImpl() {
-		if(tcpModule != null) {
-			tcpModule.stop();
+	protected Task stopServerImpl() {
+		if(hasTcp) {
+			stopTcpImpl();
 		}
 
-		if(udpModule != null) {
-			udpModule.stop();
+		if(hasUdp || hasLan) {
+			stopUdpLanImpl();
 		}
+		currentState = ServerManagerState.STOPPED;
 		LOGGER.info("... Server stopped (%s)", getLocalID().getDescription());
+		return Task.completed();
 	}
 
 	@Internal
-	void notifyTCPAcceptorThreadClosure(AcceptorThreadDeathReason reason) {
-		if(tcpModule != null) {
-			tcpModule.notifyAcceptorThreadDeath(reason);
+	void notifyTcpAcceptorThreadClosure(AcceptorThreadDeathReason reason) {
+		if(hasTcp) {
+			LOGGER.debug("Ignoring TCP thread death notification %s: No cleanup required, server keeps running for other modules", reason);
 		} else {
 			LOGGER.warning("SocketNetworkManagerServer was notified of acceptor thread death despite not managing a TCP module");
 		}
 	}
 
-	void acceptIncomingRawUdpConnection(InetSocketAddress remoteAddress) {
-		LOGGER.debug("Handling incoming UDP connection");
-		final ServerManagerState stateSnapshot = getCurrentState(); //We are not synced here, but if it is STOPPING or STOPPED it can never be RUNNING again
-		if(stateSnapshot.ordinal() > ServerManagerState.RUNNING.ordinal()) {
-			LOGGER.warning("Declining incoming UDP socket connection because server is already %s", stateSnapshot);
-			//Disconnect
-			udpModule.sendRawByteData(remoteAddress, udpModule.toByteConverter.convert(NetworkPacketFormats.LOGOUT, null));
-			return;
-		}
-		
-		
-		final FilterRawConnectionEvent event1 = new FilterRawConnectionEvent(remoteAddress, 
-				ManagerInstanceProvider.generateNetworkIdName("RemoteId-"));
-		getEventDispatcher().post(FilterRawConnection, event1);
-		if(event1.isCancelled()) {
-			//Disconnect
-			udpModule.sendRawByteData(remoteAddress, udpModule.toByteConverter.convert(NetworkPacketFormats.LOGOUT, null));
+	@Internal
+	void notifyUdpReceiverThreadClosure(AcceptorThreadDeathReason reason) {
+		if(hasTcp) {
+			LOGGER.debug("Ignoring UDP thread death notification %s: No cleanup required, server keeps running for other modules", reason);
 		} else {
-			final NetworkID networkId = NetworkID.createID(event1.getNetworkIdName(), remoteAddress);
-
-			//Next event
-			final ConfigureConnectionEvent event2 = new ConfigureConnectionEvent(this, networkId);
-			getEventDispatcher().post(ConfigureConnection, event2);
-
-			final NetworkConnection udpConnection = new UdpServerSocketNetworkConnection(this,
-					networkId, event2.getCustomObject());
-
-			//This will start the sync. An exclusive lock for this whole method would be too expensive
-			if(!addInitializedConnection(udpConnection)) {
-				//Can't connect after all, maybe the server was stopped in the time we created the connection
-				LOGGER.warning("Re-Closed an initialized connection: Server was stopped during connection init");
-				udpConnection.closeConnection();
-			}
+			LOGGER.warning("SocketNetworkManagerServer was notified of receiver thread death despite not managing a UDP module");
 		}
 	}
 	
-	@Internal
-	void acceptIncomingRawTcpConnection(Socket connectedSocket) {
-		postIncomingTcpConnection(connectedSocket, (id, data) -> new TcpSocketNetworkConnection(this, id, connectedSocket, data));
-	}
-
 	public void sendRawUdpByteData(SocketAddress address, ByteBuffer buffer) {
-		if(udpModule != null) {
-			udpModule.sendRawByteData(address, buffer);
+		if(hasUdp || hasLan) {
+			final byte[] array =new byte[buffer.remaining()];
+			buffer.get(array);
+			try {
+				udp_serverSocket.send(new DatagramPacket(array, array.length, address));
+			} catch (IOException e) {
+				LOGGER.warning("Cannot send raw byte message with UDP socket", e);
+			}
 		} else {
 			LOGGER.warning("Cannot send raw UDP byte data: No UdpModule");
 		}
 	}
 	
-	private final class TcpModule {
-		private final ServerSocket serverSocket;
-		private final ServerSocketAcceptorThread acceptorThread;
-
-		public TcpModule() throws IOException {
-			this.serverSocket = new ServerSocket();
-			this.acceptorThread = new ServerSocketAcceptorThread(SocketNetworkManagerServer.this, serverSocket);
+	private void decideUdpDataDestination(InetSocketAddress address, ByteBuffer buffer) {
+		final UdpServerSocketNetworkConnection connection = getConnectionImplementation(UdpServerSocketNetworkConnection.class, 
+				n -> n.ifFunction(NetworkIDFunction.CONNECT, i -> i.equals(address), null));
+		if(connection != null) { //Yes, this is not locked: Exclusive locks are too expensive for all packets
+			connection.decode(buffer);
+		} else {
+			udp_decoderPool.decode(address, buffer);
 		}
-
-		public void start() throws IOException {
-			serverSocket.bind(getLocalID().getFunction(NetworkIDFunction.BIND)); //Exception Here -> thread not yet started
-			acceptorThread.start();
-		}
-
-		public void stop() {
-			//this also closes the socket
-			acceptorThread.interrupt();
-		}
-
-		public void notifyAcceptorThreadDeath(AcceptorThreadDeathReason reason) {
-			LOGGER.debug("Ignoring TCP thread death notification %s: No cleanup required, server keeps running for other modules", reason);
-		}
-
 	}
+	
+	@Override
+	protected void sendUdpLogout(SocketAddress remoteAddress) {
+		sendRawUdpByteData(remoteAddress, udp_toByteConverter.convert(NetworkPacketFormats.LOGOUT, null));
+	}
+	
+	static final AbstractLogger SAT_LOGGER = NetworkManager.getModuleLogger("server-accept");
+	private static final AtomicInteger SAT_THREAD_ID = new AtomicInteger(0);
+	
+	/**
+	 * Listens for incoming socket connections for a server.<p>
+	 * End the thread by interrupting it ({@link #interrupt()}).
+	 */
+	private class ServerSocketAcceptorThread extends Thread {
 
-	private class UdpModule {
-		protected final DatagramSocket serverSocket;
-		protected final AddressBasedDecoderPool pooledDecoders;
-		protected final DatagramSocketReceiverThread receiverThread;
-		protected final PacketToByteConverter toByteConverter;
-
-		private final boolean lan;
-		private final boolean udp;
-
-		public UdpModule(boolean lan, boolean udp) throws SocketException {
-			if(!(lan || udp)) throw new IllegalArgumentException("UdpModule must support either LAN or UDP connections");
-			this.lan = lan;
-			this.udp = udp;
-
-			this.serverSocket = new DatagramSocket(null);
-			this.pooledDecoders = new AddressBasedDecoderPool(UdpAnonymousConnectionAdapter::new, getMappingContainer(),
-					getConfig().getPacketBufferInitialSize());
-			this.receiverThread = new DatagramSocketReceiverThread(serverSocket, this::receiveRawByteData,
-					this::notifyAcceptorThreadDeath, getConfig().getPacketBufferInitialSize());
-			this.toByteConverter = lan ? new PacketToByteConverter(getMappingContainer(), null, getConfig().getPacketBufferInitialSize()) : null;
+		public ServerSocketAcceptorThread() {
+			super("ServerSocketAcceptorThread-" + SAT_THREAD_ID.getAndIncrement());
 		}
 
-		public void notifyAcceptorThreadDeath(AcceptorThreadDeathReason reason) {
-			LOGGER.debug("Ignoring UDP thread death notification %s: No cleanup required, server keeps running for other modules", reason);
-		}
-
-		public void start() throws SocketException {
-			serverSocket.bind(getLocalID().getFunction(NetworkIDFunction.BIND));
-			receiverThread.start();
-		}
-
-		public void stop() {
-			receiverThread.interrupt();
-		}
-
-		public void receiveUdpLogin(InetSocketAddress address) {
-			if(udp) {
-				acceptIncomingRawUdpConnection(address);
-			} else {
-				LOGGER.debug("Received a UDP-Login for server %s, but UDP module is disabled", getLocalID().getDescription());
-			}
-		}
-
-		public void receiveServerInfoRequest(InetSocketAddress address) {
-			if(lan) {
-				Packet serverInfoPacket = getConfig().createServerInfoPacket(SocketNetworkManagerServer.this, address);
-				if(serverInfoPacket == null) {
-					LOGGER.debug("No server info reply packet could be generated (To: %s)", address);
-				} else {
-					sendRawByteData(address, toByteConverter.convert(NetworkPacketFormats.SERVERINFOAN, serverInfoPacket));
-				}
-			} else {
-				LOGGER.debug("Received a Server-Info-Request for server %s, but LAN module is disabled", getLocalID().getDescription());
-			}
-		}
-
-		public void sendRawByteData(SocketAddress address, ByteBuffer buffer) {
-			final byte[] array = new byte[buffer.remaining()];
-			buffer.get(array);
+		@Override
+		public void run() {
+			AcceptorThreadDeathReason deathReason = AcceptorThreadDeathReason.UNKNOWN;
 			try {
-				serverSocket.send(new DatagramPacket(array, array.length, address));
-			} catch (IOException e) {
-				LOGGER.warning("Cannot send raw byte message with UDP socket", e);
-			}
-		}
-
-		public void receiveRawByteData(InetSocketAddress address, ByteBuffer buffer) {
-			final UdpServerSocketNetworkConnection connection = getUdpConnectionObject(address);
-			if(connection != null) { //Yes, this is not locked: Exclusive locks are too expensive for any packet
-				connection.decode(buffer);
-			} else {
-				pooledDecoders.decode(address, buffer);
-			}
-		}
-
-		private UdpServerSocketNetworkConnection getUdpConnectionObject(InetSocketAddress address) {
-			return readOnlyThreadsafe().actionReturn((server) -> {
-				for(NetworkConnection connection : server.getConnectionsFast())
-					if(connection instanceof UdpServerSocketNetworkConnection) {
-						final NetworkID id = connection.getRemoteID();
-						if(id.hasFunction(NetworkIDFunction.CONNECT)) {
-							if(id.getFunction(NetworkIDFunction.CONNECT).equals(address)) {
-								return (UdpServerSocketNetworkConnection) connection;
-							}
+				SAT_LOGGER.info("TCP ServerSocket listener thread started");
+				while(!this.isInterrupted()) {
+					try {
+						final Socket socket = tcp_serverSocket.accept();
+						acceptIncomingRawTcpConnection(socket, (id, data) ->
+							new TcpSocketNetworkConnection(SocketNetworkManagerServer.this, id, socket, data));
+					} catch (SocketException e) {
+						if(this.isInterrupted()) {
+							deathReason = AcceptorThreadDeathReason.INTERRUPTED;
+						} else {
+							deathReason = AcceptorThreadDeathReason.EXTERNAL;
+							SAT_LOGGER.error("TCP ServerSocket listener thread: Unexpected error", e);
 						}
+						return;
+					} catch (SocketTimeoutException e) {
+						deathReason = AcceptorThreadDeathReason.TIMEOUT;
+						SAT_LOGGER.error("TCP ServerSocket listener thread: Unexpected error", e);
+						return;
+					} catch (IOException e) {
+						deathReason = AcceptorThreadDeathReason.IOEXCEPTION;
+						SAT_LOGGER.error("TCP ServerSocket listener thread: Unexpected error", e);
+						return;
 					}
-				return null;
-			});
+				}
+			} finally {
+				//Always run these, however the thread ends
+				notifyTcpAcceptorThreadClosure(deathReason);
+				SAT_LOGGER.info("TCP ServerSocket listener thread ended with reason %s", deathReason);
+			}
+		}
+
+		@Override
+		public void interrupt() {
+			super.interrupt();
+			//This will produce a SocketException in the accept() method, ending the loop
+			if(isInterrupted() && !tcp_serverSocket.isClosed()) {
+				try {
+					tcp_serverSocket.close();
+				} catch (IOException e) {
+					LOGGER.error("Cannot close the server socket for listener thread interrupt");
+				}
+			}
 		}
 	}
-
+	
 	private class UdpAnonymousConnectionAdapter implements AnonymousServerConnectionAdapter, MutableAddressConnectionAdapter {
 
 		private final ReferenceCounter counter;
@@ -291,12 +288,26 @@ public class SocketNetworkManagerServer extends NetworkManagerServer {
 
 		@Override
 		public void receiveUdpLogin() {
-			udpModule.receiveUdpLogin(address);
+			if(hasUdp) {
+				acceptIncomingRawUdpConnection(address, (id, data) ->
+					new UdpServerSocketNetworkConnection(SocketNetworkManagerServer.this, id, data));
+			} else {
+				LOGGER.debug("Received a UDP-Login for server %s, but UDP module is disabled", getLocalID().getDescription());
+			}
 		}
 
 		@Override
 		public void receiveServerInfoRequest() {
-			udpModule.receiveServerInfoRequest(address);
+			if(hasLan) {
+				Packet serverInfoPacket = getConfig().createServerInfoPacket(SocketNetworkManagerServer.this, address);
+				if(serverInfoPacket == null) {
+					LOGGER.debug("No server info reply packet could be generated (To: %s)", address);
+				} else {
+					sendRawUdpByteData(address, udp_toByteConverter.convert(NetworkPacketFormats.SERVERINFOAN, serverInfoPacket));
+				}
+			} else {
+				LOGGER.debug("Received a Server-Info-Request for server %s, but LAN module is disabled", getLocalID().getDescription());
+			}
 		}
 
 		@Override

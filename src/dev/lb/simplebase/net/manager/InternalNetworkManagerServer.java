@@ -4,6 +4,7 @@ import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.config.ServerConfig;
 import dev.lb.simplebase.net.config.ServerType;
 import dev.lb.simplebase.net.id.NetworkID;
+import dev.lb.simplebase.net.util.Task;
 
 public class InternalNetworkManagerServer extends NetworkManagerServer {
 
@@ -16,16 +17,19 @@ public class InternalNetworkManagerServer extends NetworkManagerServer {
 	}
 
 	@Override
-	protected ServerManagerState startServerImpl() {
+	protected Task startServerImpl() {
 		NetworkManager.InternalAccess.INSTANCE.registerServerManagerForInternalConnections(this);
+		currentState = ServerManagerState.RUNNING;
 		LOGGER.info("... Sever start successful (%s)", getLocalID().getDescription());
-		return ServerManagerState.RUNNING;
+		return Task.completed();
 	}
 
 	@Override
-	protected void stopServerImpl() {
+	protected Task stopServerImpl() {
 		NetworkManager.InternalAccess.INSTANCE.unregisterServerManagerForInternalConnections(this);
+		currentState = ServerManagerState.STOPPED;
 		LOGGER.info("... Server stopped (%s)", getLocalID().getDescription());
+		return Task.completed();
 	}
 	
 }

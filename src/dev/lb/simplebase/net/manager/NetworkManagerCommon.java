@@ -15,7 +15,6 @@ import dev.lb.simplebase.net.event.EventDispatcher;
 import dev.lb.simplebase.net.events.ConnectionClosedEvent;
 import dev.lb.simplebase.net.events.PacketSendingFailedEvent;
 import dev.lb.simplebase.net.events.PacketReceiveRejectedEvent;
-import dev.lb.simplebase.net.events.UnknownConnectionlessPacketEvent;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
@@ -60,13 +59,6 @@ public abstract class NetworkManagerCommon {
 	 */
 	public final EventAccessor<PacketReceiveRejectedEvent> PacketReceiveRejected;
 	
-	/**
-	 * The {@link UnknownConnectionlessPacketEvent} will be posted when a packet over a UDP connection
-	 * or a similar protocol that doesn't maintain a stable connection was received from a source
-	 * that didn't register with a login packet before
-	 */
-	public final EventAccessor<UnknownConnectionlessPacketEvent> UnknownConnectionlessPacket;
-	
 	
 	
 	private final NetworkID local;
@@ -95,7 +87,6 @@ public abstract class NetworkManagerCommon {
 		ConnectionClosed = new EventAccessor<>(ConnectionClosedEvent.class);
 		PacketSendingFailed = new EventAccessor<>(PacketSendingFailedEvent.class);
 		PacketReceiveRejected = new EventAccessor<>(PacketReceiveRejectedEvent.class);
-		UnknownConnectionlessPacket = new EventAccessor<>(UnknownConnectionlessPacketEvent.class);
 		
 		dispatcher = new EventDispatcher(() -> getLocalID().getDescription());
 		singleThreadHandler = new AtomicReference<>(new EmptyPacketHandler());
@@ -185,16 +176,6 @@ public abstract class NetworkManagerCommon {
 	}
 	
 	/**
-	 * Returns the PacketSource matching the source ID for connectionless
-	 * protocols like UDP that don't know their own PacketSource when received
-	 * @param source The source ID of the packet
-	 * @return The corresponding context, or {@code null} if the source is not registered
-	 */
-	@Internal
-	@Deprecated
-	protected abstract PacketContext getConnectionlessPacketContext(NetworkID source);
-	
-	/**
 	 * <b>Internal only.</b> Using this can leave connections in a broken state where 
 	 * handler threads might not be closed.
 	 * Removes the connection with the proper synchronization, without causing any other
@@ -240,8 +221,8 @@ public abstract class NetworkManagerCommon {
 	}
 	
 	/**
-	 * Updates the status of all connections in this manager. Pings the remote partner and removes the connection if
-	 * the partner does not respond
+	 * Updates the status of all connections in this manager. Checks the ping timer and removes the connection if
+	 * the partner did not respond in time
 	 */
 	public abstract void updateConnectionStatus();
 	

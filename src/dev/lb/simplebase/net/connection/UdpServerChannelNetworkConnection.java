@@ -8,7 +8,7 @@ import dev.lb.simplebase.net.id.NetworkIDFunction;
 import dev.lb.simplebase.net.manager.ChannelNetworkManagerServer;
 import dev.lb.simplebase.net.util.Task;
 
-public class UdpServerChannelNetworkConnection extends ConvertingNetworkConnection {
+public class UdpServerChannelNetworkConnection extends ExternalNetworkConnection {
 
 	private final ChannelNetworkManagerServer server;
 	private final SocketAddress remoteAddress;

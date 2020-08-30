@@ -52,6 +52,23 @@ public abstract class NetworkID implements Cloneable {
 	public abstract <E> E getFunction(NetworkIDFunction<E> function);
 	
 	/**
+	 * Runs the action only if the requested optional function is present for this {@link NetworkID}.
+	 * @param <E> The type of the functionality parameter value
+	 * @param <R> The return type of the action
+	 * @param function The functionality that contains the value
+	 * @param action The action to run if the function is present
+	 * @param otherwise The value to return if the function is not present
+	 * @return
+	 */
+	public <E, R> R ifFunction(NetworkIDFunction<E> function, Function<E, R> action, R otherwise) {
+		if(hasFunction(function)) {
+			return action.apply(getFunction(function));
+		} else {
+			return otherwise;
+		}
+	}
+	
+	/**
 	 * An alternate {@link #toString()} implementation. While the normal {@code toString} method lists all member values
 	 * and the implementation type for debugging, this method can be used to generate more human-readable descriptions.
 	 * It will always contain the NetworkID's description string, and if the parameter {@code includeDetails} is true,

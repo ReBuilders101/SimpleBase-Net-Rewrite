@@ -11,7 +11,7 @@ import dev.lb.simplebase.net.util.Task;
 /**
  * From Server-Side
  */
-public class UdpServerSocketNetworkConnection extends ConvertingNetworkConnection {
+public class UdpServerSocketNetworkConnection extends ExternalNetworkConnection {
 	
 	private final SocketAddress remoteAddress;
 	private final SocketNetworkManagerServer socketServer;

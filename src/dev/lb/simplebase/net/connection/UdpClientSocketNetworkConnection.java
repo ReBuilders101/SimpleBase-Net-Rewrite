@@ -16,7 +16,7 @@ import dev.lb.simplebase.net.manager.NetworkManagerClient;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
 import dev.lb.simplebase.net.util.Task;
 
-public class UdpClientSocketNetworkConnection extends ConvertingNetworkConnection {
+public class UdpClientSocketNetworkConnection extends ExternalNetworkConnection {
 
 	private final DatagramSocket socket;
 	private final DatagramSocketReceiverThread thread;

@@ -15,7 +15,6 @@ import dev.lb.simplebase.net.event.EventAccessor;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.packet.Packet;
-import dev.lb.simplebase.net.packet.PacketContext;
 import dev.lb.simplebase.net.util.Task;
 import dev.lb.simplebase.net.util.ThreadsafeAction;
 
@@ -73,15 +72,6 @@ public final class NetworkManagerClient extends NetworkManagerCommon {
 	}
 
 	@Override
-	protected PacketContext getConnectionlessPacketContext(NetworkID source) {
-		if(remoteID.equals(source)) { //Even connectionless packets must come from the server
-			return connection.getPacketContext();
-		} else {
-			return null;
-		}
-	}
-
-	@Override
 	public void removeConnectionSilently(NetworkConnection connection) {
 		//Don't actually do anything, it is closed now anyways
 		LOGGER.debug("Server connection closed (removal from client %s requested)", getLocalID().getDescription());
@@ -113,8 +103,7 @@ public final class NetworkManagerClient extends NetworkManagerCommon {
 		return new EventAccessor<?>[] {
 			ConnectionClosed,
 			PacketSendingFailed,
-			PacketReceiveRejected,
-			UnknownConnectionlessPacket
+			PacketReceiveRejected
 		};
 	}
 

@@ -12,7 +12,7 @@ import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.manager.SelectorManager;
 import dev.lb.simplebase.net.util.Task;
 
-public class TcpChannelNetworkConnection extends ConvertingNetworkConnection implements ChannelConnection {
+public class TcpChannelNetworkConnection extends ExternalNetworkConnection implements ChannelConnection {
 	
 	private final SocketChannel channel;
 	private SelectionKey selectionKey; //Not final - only set while holding lock
