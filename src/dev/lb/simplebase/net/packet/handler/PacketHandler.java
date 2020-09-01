@@ -28,6 +28,14 @@ public interface PacketHandler {
 	}
 	
 	/**
+	 * Creates a new {@link PacketHandler} that replies the packet back to the sender
+	 * @return The echo packet handler
+	 */
+	public static PacketHandler createEcho() {
+		return (p, c) -> c.replyPacket(p);
+	}
+	
+	/**
 	 * Creates a new {@link PacketHandler} that calls both handlers in the parameters, with
 	 * the goal to avoid nested handler chains by checking special implementation.
 	 * @param first The existing {@link PacketHandler}

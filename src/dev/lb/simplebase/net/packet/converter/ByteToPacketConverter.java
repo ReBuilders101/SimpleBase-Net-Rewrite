@@ -104,7 +104,7 @@ public final class ByteToPacketConverter {
 	public void acceptBytes(byte[] data) {
 		final int bulkLength = data.length;
 		int pointer = 0;
-		while(pointer != data.length) {
+		while(pointer < data.length) {
 			//Only put the required amount. Will update requiredBytes.
 			final int amount = Math.min(bulkLength - pointer, requiredBytes);
 			acceptBytesUnchecked(data, pointer, amount);
@@ -113,9 +113,9 @@ public final class ByteToPacketConverter {
 	}
 
 	private void acceptBytesUnchecked(byte[] data, int source, int length) {
-		ensureCapacity(data.length);
-		buffer.put(data);
-		updateAccumulationState(data.length);
+		ensureCapacity(length);
+		buffer.put(data, source, length);
+		updateAccumulationState(length);
 	}
 
 	/**
