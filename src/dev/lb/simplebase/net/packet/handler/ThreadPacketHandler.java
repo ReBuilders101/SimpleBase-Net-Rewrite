@@ -20,7 +20,7 @@ import dev.lb.simplebase.net.packet.PacketContext;
 @Threadsafe
 public class ThreadPacketHandler implements PacketHandler {
 
-	private volatile AtomicReference<PacketHandler> delegate;
+	private final AtomicReference<PacketHandler> delegate;
 	private final LinkedBlockingQueue<Runnable> threadTasks; //this implementation is threadsafe
 	private final EventDispatchChain.P2<Packet, PacketContext, ?> rejectedDispatcher;
 	private final int maxSize;
