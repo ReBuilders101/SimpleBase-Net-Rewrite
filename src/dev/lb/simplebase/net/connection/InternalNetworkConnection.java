@@ -67,7 +67,7 @@ public class InternalNetworkConnection extends NetworkConnection {
 	@Override
 	protected void sendPacketImpl(Packet packet) {
 		requirePeer();
-		peer.receivePacket(packet);
+		peer.receivePacket(packet.copy());
 	}
 
 	@Override

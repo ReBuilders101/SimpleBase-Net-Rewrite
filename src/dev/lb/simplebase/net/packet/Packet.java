@@ -52,4 +52,15 @@ public interface Packet {
 	public default int getByteSize() {
 		return -1;
 	}
+	
+	/**
+	 * Copies the packet when no serialization is used. A copy should be deep, as copying and serializing+deserializing
+	 * should result in the same behavior.
+	 * <p>
+	 * Returns {@code this} by default, which is fine for immutable packets.
+	 * @return A deep copy of the packet
+	 */
+	public default Packet copy() {
+		return this;
+	}
 }
