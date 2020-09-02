@@ -137,4 +137,9 @@ public interface Task {
 	public static Task requireAll(Task...tasks) {
 		return new CombinedTask(tasks);
 	}
+	
+	public static Pair<Task, Runnable> completable() {
+		final AwaitableTask task = new AwaitableTask();
+		return new Pair<>(task, task::release);
+	}
 }

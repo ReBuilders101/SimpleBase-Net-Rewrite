@@ -11,6 +11,7 @@ import dev.lb.simplebase.net.event.EventDispatcher;
 import dev.lb.simplebase.net.log.LogLevel;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
+import dev.lb.simplebase.net.util.Pair;
 
 
 /**
@@ -21,7 +22,7 @@ import dev.lb.simplebase.net.packet.PacketContext;
 public class ThreadPacketHandler implements PacketHandler {
 
 	private final AtomicReference<PacketHandler> delegate;
-	private final LinkedBlockingQueue<Runnable> threadTasks; //this implementation is threadsafe
+	private final LinkedBlockingQueue<Pair<Packet, PacketContext>> threadPackets; //this implementation is threadsafe
 	private final EventDispatchChain.P2<Packet, PacketContext, ?> rejectedDispatcher;
 	private final int maxSize;
 	private final DelegateThread thread;
@@ -47,7 +48,7 @@ public class ThreadPacketHandler implements PacketHandler {
 			EventDispatchChain.P2<Packet, PacketContext, ?> dispatcher, int maxQueueSize) {
 		this.rejectedDispatcher = dispatcher;
 		this.delegate = delegate;
-		this.threadTasks = new LinkedBlockingQueue<>(maxQueueSize);
+		this.threadPackets = new LinkedBlockingQueue<>(maxQueueSize);
 		this.maxSize = maxQueueSize;
 		this.thread = new DelegateThread();
 		
@@ -79,7 +80,7 @@ public class ThreadPacketHandler implements PacketHandler {
 	 * @return The amount of packets in the queue
 	 */
 	public int getQueueCurrentSize() {
-		return threadTasks.size();
+		return threadPackets.size();
 	}
 	
 	/**
@@ -93,8 +94,8 @@ public class ThreadPacketHandler implements PacketHandler {
 	@Override
 	public void handlePacket(Packet packet, PacketContext context) {
 		//Generate the task that calls the delegate
-		final Runnable postTask = () -> delegate.get().handlePacket(packet, context);
-		boolean success = threadTasks.offer(postTask);
+//		final Runnable postTask = () -> delegate.get().handlePacket(packet, context);
+		boolean success = threadPackets.offer(new Pair<>(packet, context));
 		if(!success) {
 			//This seems like some overhead for the connection thread, but the queue is full anyways, so we take our time
 			
@@ -118,8 +119,8 @@ public class ThreadPacketHandler implements PacketHandler {
 		public void run() {
 			while(!Thread.interrupted()) { //End the thread on interrupt
 				try {
-					final Runnable nextTask = threadTasks.take();
-					nextTask.run();
+					final Pair<Packet, PacketContext> nextPacket = threadPackets.take();
+					delegate.get().handlePacket(nextPacket.getLeft(), nextPacket.getRight());
 				} catch (InterruptedException e) {
 					break;
 				}
