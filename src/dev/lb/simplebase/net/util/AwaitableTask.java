@@ -7,6 +7,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 
@@ -17,6 +18,7 @@ public class AwaitableTask implements Task {
 
 	private final CountDownLatch waiter;
 	private final List<Runnable> completeTasks;
+	private final long startTimeStamp;
 	
 	public AwaitableTask() {
 		this(1);
@@ -25,6 +27,7 @@ public class AwaitableTask implements Task {
 	protected AwaitableTask(int counter) {
 		this.waiter = new CountDownLatch(counter);
 		this.completeTasks = new ArrayList<>();
+		this.startTimeStamp = NetworkManager.getClockMillis();
 	}
 	
 	@Override
@@ -69,6 +72,13 @@ public class AwaitableTask implements Task {
 	public synchronized void release() {
 		completeTasks.forEach(Runnable::run);
 		waiter.countDown();
+	}
+
+	@Override
+	public boolean asyncAwait(long timeout, TimeUnit unit) {
+		if(isDone()) return true;
+		long timeoutMs = unit.toMillis(timeout);
+		return NetworkManager.getClockMillis() > startTimeStamp + timeoutMs;
 	}
 	
 }

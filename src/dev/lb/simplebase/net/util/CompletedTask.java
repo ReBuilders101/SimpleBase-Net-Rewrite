@@ -40,4 +40,9 @@ class CompletedTask implements Task {
 		return this;
 	}
 
+	@Override
+	public boolean asyncAwait(long timeout, TimeUnit unit) {
+		return true;
+	}
+
 }

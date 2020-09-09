@@ -93,6 +93,15 @@ public interface Task {
 	public void tryAwait(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException;
 	
 	/**
+	 * A non-blocking way to check whether a task has timed out
+	 * @param timeout The amount of time that must have passed for this method to succeed in the specified time unit
+	 * @param unit The unit of time for the timeout value
+	 * @return {@code True} if the specified amount of time has passed since the task was created <b>OR the task has completed</b>,
+	 *  {@code false} if the task is still running and the timespan has not passed.
+	 */
+	public boolean asyncAwait(long timeout, TimeUnit unit);
+	
+	/**
 	 * Adds a {@link Runnable} that will be run when the action associated with this task completes.<br>
 	 * If this task is already done, the {@code Runnable} will run immediately.
 	 * <p>
