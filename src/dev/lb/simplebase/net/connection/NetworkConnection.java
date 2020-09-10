@@ -347,7 +347,7 @@ public abstract class NetworkConnection {
 	 */
 	protected void postEventAndRemoveConnection(ConnectionCloseReason reason, Exception exception) {
 		getNetworkManager().getEventDispatcher().post(getNetworkManager().ConnectionClosed,
-				new ConnectionClosedEvent(reason, exception));
+				new ConnectionClosedEvent(reason, exception, this));
 		getNetworkManager().removeConnectionSilently(this);
 	}
 	
