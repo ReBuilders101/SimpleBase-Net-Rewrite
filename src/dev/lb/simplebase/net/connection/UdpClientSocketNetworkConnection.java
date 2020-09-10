@@ -64,7 +64,7 @@ public class UdpClientSocketNetworkConnection extends ExternalNetworkConnection 
 			currentState = NetworkConnectionState.CLOSED;
 		}
 		thread.start();
-		packetToByteConverter.convertAndPublish(NetworkPacketFormats.LOGIN, null);
+		sendRawByteData(packetToByteConverter.convert(NetworkPacketFormats.LOGIN, null));
 //		currentState = NetworkConnectionState.OPEN; //When ACK comes
 		return openCompleted;
 	}

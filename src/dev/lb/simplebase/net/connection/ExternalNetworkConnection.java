@@ -29,7 +29,7 @@ public abstract class ExternalNetworkConnection extends NetworkConnection {
 		
 		this.openCompleted = new AwaitableTask();
 		this.connectionAdapter = new Adapter(udpWarning);
-		this.packetToByteConverter = new PacketToByteConverter(networkManager.getMappingContainer(), this::sendRawByteData,
+		this.packetToByteConverter = new PacketToByteConverter(networkManager.getMappingContainer(),
 				networkManager.getConfig().getPacketBufferInitialSize());
 		this.byteToPacketConverter = new ByteToPacketConverter(connectionAdapter, networkManager.getMappingContainer(),
 				networkManager.getConfig().getPacketBufferInitialSize());
@@ -39,22 +39,22 @@ public abstract class ExternalNetworkConnection extends NetworkConnection {
 	
 	@Override
 	protected boolean checkConnectionImpl(int uuid) {
-		packetToByteConverter.convertAndPublish(NetworkPacketFormats.CHECK, uuid);
+		sendRawByteData(packetToByteConverter.convert(NetworkPacketFormats.CHECK, uuid));
 		return true;
 	}
 
 	@Override
 	protected void sendPacketImpl(Packet packet) {
-		packetToByteConverter.convertAndPublish(NetworkPacketFormats.PACKET, packet);
+		sendRawByteData(packetToByteConverter.convert(NetworkPacketFormats.PACKET, packet));
 	}
 
 	@Override
 	public void receiveConnectionCheck(int uuid) {
-		packetToByteConverter.convertAndPublish(NetworkPacketFormats.CHECKREPLY, uuid);
+		sendRawByteData(packetToByteConverter.convert(NetworkPacketFormats.CHECKREPLY, uuid));
 	}
 	
 	public void sendConnectionAcceptedMessage() {
-		packetToByteConverter.convertAndPublish(NetworkPacketFormats.CONNECTED, null);
+		sendRawByteData(packetToByteConverter.convert(NetworkPacketFormats.CONNECTED, null));
 	}
 	
 	public void decode(ByteBuffer data) {

@@ -1,8 +1,6 @@
 package dev.lb.simplebase.net.packet.converter;
 
 import java.nio.ByteBuffer;
-import java.util.function.Consumer;
-
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.io.ByteDataHelper;
 import dev.lb.simplebase.net.log.AbstractLogger;
@@ -17,7 +15,6 @@ public final class PacketToByteConverter {
 	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("packet-encode");
 	
 	private final PacketIDMappingProvider provider;
-	private final Consumer<ByteBuffer> destination;
 	private final int bufferSize;
 	
 	/**
@@ -25,21 +22,9 @@ public final class PacketToByteConverter {
 	 * @param provider Provides {@link PacketIDMapping}s to look up numerical packet IDs
 	 * @param destination The next stage that sends bytes through a connection
 	 */
-	public PacketToByteConverter(PacketIDMappingProvider provider, Consumer<ByteBuffer> destination, int bufferSize) {
+	public PacketToByteConverter(PacketIDMappingProvider provider, int bufferSize) {
 		this.provider = provider;
-		this.destination = destination;
 		this.bufferSize = bufferSize;
-	}
-
-	/**
-	 * Converts the data into bytes using the provided format and sends the bytes to the next stage
-	 * @param <Data> The type of data
-	 * @param format The encoding format
-	 * @param data The data to encode
-	 */
-	public <Data> void convertAndPublish(NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider, Data> format, Data data) {
-		final ByteBuffer buffer = convert(format, data);
-		if(buffer != null) destination.accept(buffer);
 	}
 	
 	public <Data> ByteBuffer convert(NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider, Data> format, Data data) {
