@@ -22,7 +22,10 @@ public class EncoderThreadPool {
 		this.rejectedHandler = rejectedHandler;
 	}
 	
-	public boolean isPooledThreadFor(NetworkManagerCommon manager) {
+	public boolean isValidEncoderThread(NetworkManagerCommon manager) {
+		//If no pool is used, we can encode on any thread
+		if(!manager.getConfig().getUseEncoderThreadPool()) return true;
+		
 		final Thread thread = Thread.currentThread();
 		if(thread instanceof MarkedThread) {
 			final MarkedThread mth = (MarkedThread) thread;
@@ -50,10 +53,11 @@ public class EncoderThreadPool {
 	private static final AtomicInteger threadId = new AtomicInteger();
 	
 	private final class MarkedThreadFactory implements ThreadFactory {
-
+		private final int localPoolId = poolId.getAndIncrement();
+		
 		@Override
 		public Thread newThread(Runnable r) {
-			return new MarkedThread(r, poolId.getAndIncrement());
+			return new MarkedThread(r, localPoolId);
 		}
 		
 	}

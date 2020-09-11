@@ -28,6 +28,7 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 	protected static final boolean USE_MANAGED_DEFAULT = true;
 	protected static final boolean GLOBAL_CHECK_DEFAULT = false;
 	protected static final int COMPRESSION_SIZE_DEFAULT = DISABLE_COMPRESSION;
+	protected static final boolean USE_ENCODER_POOL_DEFAULT = true;
 	
 	//Only this one needs to be up-to-date everywhere immediately
 	private volatile boolean locked;
@@ -37,6 +38,7 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 	private int connectionCheckTimeout;
 	private boolean globalConnectionCheck;
 	private int compressionSize;
+	private boolean useEncoderPool;
 	
 	/**
 	 * Creates a new CommonConfig instance. Instance will not be locked
@@ -49,6 +51,7 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 	 * <tr><td>{@link #getConnectionCheckTimeout()}</td><td>{@value #CONNECTION_CHECK_DEFAULT}</td></tr>
 	 * <tr><td>{@link #getGlobalConnectionCheck()}</td><td>{@value #GLOBAL_CHECK_DEFAULT}</td></tr>
 	 * <tr><td>{@link #getCompressionSize()}</td><td>{@value #COMPRESSION_SIZE_DEFAULT}</td></tr>
+	 * <tr><Td>{@link #getUseEncoderThreadPool()}</td><td>{@value #USE_ENCODER_POOL_DEFAULT}</td></tr>
 	 * </table>
 	 */
 	public CommonConfig() {
@@ -56,7 +59,19 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 		this.encodeBufferInitialSize = BUFFER_INITIAL_DEFAULT;
 		this.connectionCheckTimeout = CONNECTION_CHECK_DEFAULT;
 		this.compressionSize = COMPRESSION_SIZE_DEFAULT;
+		this.useEncoderPool = USE_ENCODER_POOL_DEFAULT;
 		this.locked = false;
+	}
+	
+	public synchronized boolean getUseEncoderThreadPool() {
+		return useEncoderPool;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public synchronized T setUseEncoderThreadPool(boolean value) {
+		checkLocked();
+		this.useEncoderPool = value;
+		return (T) this;
 	}
 	
 	public synchronized int getCompressionSize() {
