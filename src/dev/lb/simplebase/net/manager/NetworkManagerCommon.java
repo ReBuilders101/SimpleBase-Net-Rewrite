@@ -220,6 +220,7 @@ public abstract class NetworkManagerCommon {
 	 */
 	public void cleanUp() {
 		managedThread.ifPresent(Thread::interrupt);
+		encoderPool.shutdown();
 		NetworkManager.InternalAccess.INSTANCE.unregisterManagerForConnectionStatusCheck(this);
 	}
 	
