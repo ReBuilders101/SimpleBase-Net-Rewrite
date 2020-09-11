@@ -91,4 +91,9 @@ class NetworkPacketFormat1Packet<Connection> extends NetworkPacketFormat<Connect
 		completeData.flip(); //prepare for read
 		return completeData;
 	}
+
+	@Override
+	public boolean supportsCompression() {
+		return true;
+	}
 }

@@ -1,7 +1,6 @@
 package dev.lb.simplebase.net.connection;
 
 import java.nio.ByteBuffer;
-
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
@@ -23,6 +22,7 @@ public abstract class ExternalNetworkConnection extends NetworkConnection {
 	protected final ConnectionAdapter connectionAdapter;
 	protected final AwaitableTask openCompleted;
 	
+	
 	protected ExternalNetworkConnection(NetworkManagerCommon networkManager, NetworkID remoteID,
 			NetworkConnectionState initialState, int checkTimeoutMS, boolean serverSide, Object customObject, boolean udpWarning) {
 		super(networkManager, remoteID, initialState, checkTimeoutMS, serverSide, customObject);
@@ -30,11 +30,11 @@ public abstract class ExternalNetworkConnection extends NetworkConnection {
 		this.openCompleted = new AwaitableTask();
 		this.connectionAdapter = new Adapter(udpWarning);
 		this.packetToByteConverter = new PacketToByteConverter(networkManager.getMappingContainer(),
-				networkManager.getConfig().getPacketBufferInitialSize());
+				networkManager.getConfig().getPacketBufferInitialSize(), networkManager.getConfig().getCompressionSize());
 		this.byteToPacketConverter = new ByteToPacketConverter(connectionAdapter, networkManager.getMappingContainer(),
 				networkManager.getConfig().getPacketBufferInitialSize());
 	}
-
+	
 	protected abstract void sendRawByteData(ByteBuffer buffer);
 	
 	@Override
@@ -45,7 +45,11 @@ public abstract class ExternalNetworkConnection extends NetworkConnection {
 
 	@Override
 	protected void sendPacketImpl(Packet packet) {
-		sendRawByteData(packetToByteConverter.convert(NetworkPacketFormats.PACKET, packet));
+		if(networkManager.getEncoderPool().isPooledThreadFor(networkManager)) {
+			sendRawByteData(packetToByteConverter.convert(NetworkPacketFormats.PACKET, packet));
+		} else {
+			networkManager.getEncoderPool().encodeAndSendPacket(this, packet);
+		}
 	}
 
 	@Override

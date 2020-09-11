@@ -8,6 +8,7 @@ import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.config.CommonConfig;
+import dev.lb.simplebase.net.connection.EncoderThreadPool;
 import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.event.EventAccessor;
 import dev.lb.simplebase.net.event.EventDispatchChain;
@@ -68,6 +69,7 @@ public abstract class NetworkManagerCommon {
 	private final ThreadPacketHandler multiThreadHandler;
 	private final EventDispatcher dispatcher;
 	private final Optional<Thread> managedThread;
+	private final EncoderThreadPool encoderPool;
 	
 	/**
 	 * Constructor that initializes {@link NetworkManagerCommon} base features
@@ -89,6 +91,7 @@ public abstract class NetworkManagerCommon {
 		PacketReceiveRejected = new EventAccessor<>(PacketReceiveRejectedEvent.class);
 		
 		dispatcher = new EventDispatcher(() -> getLocalID().getDescription());
+		encoderPool = new EncoderThreadPool(this, EventDispatchChain.P1(dispatcher, PacketSendingFailed, PacketSendingFailedEvent::new));
 		singleThreadHandler = new AtomicReference<>(new EmptyPacketHandler());
 		if(config.getUseManagedThread()) {
 			multiThreadHandler = new ThreadPacketHandler(singleThreadHandler, 
@@ -225,5 +228,10 @@ public abstract class NetworkManagerCommon {
 	 * the partner did not respond in time
 	 */
 	public abstract void updateConnectionStatus();
+	
+	
+	public EncoderThreadPool getEncoderPool() {
+		return encoderPool;
+	}
 	
 }

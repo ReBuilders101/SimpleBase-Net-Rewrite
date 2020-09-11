@@ -26,6 +26,8 @@ import dev.lb.simplebase.net.manager.ManagerInstanceProvider;
 import dev.lb.simplebase.net.manager.NetworkManagerClient;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.manager.NetworkManagerServer;
+import dev.lb.simplebase.net.packet.converter.ByteDeflater;
+import dev.lb.simplebase.net.packet.converter.ByteInflater;
 
 @StaticType
 public final class NetworkManager {
@@ -103,6 +105,10 @@ public final class NetworkManager {
 	public static void cleanUp() {
 		synchronized (cleanUpTasks) {
 			LOGGER.info("Cleanup: running %d tasks", cleanUpTasks.size());
+			//There are some fixed static tasks
+			ByteInflater.ZIP_COMPRESSION_PREFIXED.close();
+			ByteDeflater.ZIP_COMPRESSION_PREFIXED.close();
+			
 			cleanUpTasks.forEach(Runnable::run);
 			cleanUpTasks.clear();
 			LOGGER.info("Cleanup: completed; task list cleared");

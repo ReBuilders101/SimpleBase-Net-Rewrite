@@ -39,4 +39,9 @@ class NetworkPacketFormat4Bytes<Connection> extends NetworkPacketFormat<Connecti
 		buffer.flip();
 		return buffer;
 	}
+
+	@Override
+	public boolean supportsCompression() {
+		return false;
+	}
 }

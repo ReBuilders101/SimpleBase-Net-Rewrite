@@ -40,6 +40,12 @@ public abstract class NetworkPacketFormat<Connection, DecodeContext, Data> {
 	}
 	
 	/**
+	 * If {@code true}, data can be optionally compressed before sending
+	 * @return
+	 */
+	public abstract boolean supportsCompression();
+	
+	/**
 	 * Queries how many more bytes have to be read, depending on the currently read bytes.
 	 * <p>
 	 * If the return value is negative, the packet is considered invalid and will be discarded.<br>

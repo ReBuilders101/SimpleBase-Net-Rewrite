@@ -20,12 +20,14 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 	 * Can be used in {@link #setConnectionCheckTimeout(int)} to disable
 	 * the timeout (makes connections wait indefinitely).
 	 */
-	public static int DISABLE_CONNECTION_TIMEOUT = -1;
+	public static final int DISABLE_CONNECTION_TIMEOUT = -1;
+	public static final int DISABLE_COMPRESSION = -1;
 	
 	protected static final int BUFFER_INITIAL_DEFAULT = 512;
 	protected static final int CONNECTION_CHECK_DEFAULT = 1000;
 	protected static final boolean USE_MANAGED_DEFAULT = true;
 	protected static final boolean GLOBAL_CHECK_DEFAULT = false;
+	protected static final int COMPRESSION_SIZE_DEFAULT = DISABLE_COMPRESSION;
 	
 	//Only this one needs to be up-to-date everywhere immediately
 	private volatile boolean locked;
@@ -34,6 +36,7 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 	private int encodeBufferInitialSize;
 	private int connectionCheckTimeout;
 	private boolean globalConnectionCheck;
+	private int compressionSize;
 	
 	/**
 	 * Creates a new CommonConfig instance. Instance will not be locked
@@ -45,13 +48,26 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 	 * <tr><td>{@link #getPacketBufferInitialSize()}</td><td>{@value #BUFFER_INITIAL_DEFAULT}</td></tr>
 	 * <tr><td>{@link #getConnectionCheckTimeout()}</td><td>{@value #CONNECTION_CHECK_DEFAULT}</td></tr>
 	 * <tr><td>{@link #getGlobalConnectionCheck()}</td><td>{@value #GLOBAL_CHECK_DEFAULT}</td></tr>
+	 * <tr><td>{@link #getCompressionSize()}</td><td>{@value #COMPRESSION_SIZE_DEFAULT}</td></tr>
 	 * </table>
 	 */
 	public CommonConfig() {
 		this.useManagedThread = USE_MANAGED_DEFAULT;
 		this.encodeBufferInitialSize = BUFFER_INITIAL_DEFAULT;
 		this.connectionCheckTimeout = CONNECTION_CHECK_DEFAULT;
+		this.compressionSize = COMPRESSION_SIZE_DEFAULT;
 		this.locked = false;
+	}
+	
+	public synchronized int getCompressionSize() {
+		return compressionSize;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public synchronized T setCompressionSize(int minPacketSize) {
+		checkLocked();
+		this.compressionSize = minPacketSize;
+		return (T) this;
 	}
 	
 	/**

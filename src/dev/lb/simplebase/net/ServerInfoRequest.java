@@ -52,12 +52,12 @@ public final class ServerInfoRequest {
 	private final AddressBasedDecoderPool pooledDecoders;
 	private final Map<InetSocketAddress, CompletableToken> activeRequests;
 	
-	private ServerInfoRequest(PacketIDMappingProvider mappings, int bufferSize) throws IOException {
+	private ServerInfoRequest(PacketIDMappingProvider mappings, int bufferSize, int compressionLimit) throws IOException {
 		if(broadcastAddress == null) throw new IllegalStateException("Broadcast address not initialized");
 		
 		this.channel = DatagramChannel.open();
 		this.activeRequests = new HashMap<>();
-		this.encoder = new PacketToByteConverter(mappings, null, bufferSize);
+		this.encoder = new PacketToByteConverter(mappings, bufferSize, compressionLimit);
 		this.pooledDecoders = new AddressBasedDecoderPool(Adapter::new, mappings, bufferSize);
 		this.thread = new DatagramSocketReceiverThread(channel.socket(), pooledDecoders::decode, this::notifyAcceptorThreadDeath, bufferSize);
 		//Just to be sure. Use it like a socket that accepts byte buffers
@@ -318,9 +318,9 @@ public final class ServerInfoRequest {
 		}
 	}
 	
-	public static ServerInfoRequest create(PacketIDMappingProvider mappings, int packetBufferSize) {
+	public static ServerInfoRequest create(PacketIDMappingProvider mappings, int packetBufferSize, int compressionLimit) {
 		try {
-			ServerInfoRequest req = new ServerInfoRequest(mappings, packetBufferSize);
+			ServerInfoRequest req = new ServerInfoRequest(mappings, packetBufferSize, compressionLimit);
 			return req;
 		} catch (IOException e) {
 			LOGGER.error("Cannot create channel", e);
@@ -329,10 +329,11 @@ public final class ServerInfoRequest {
 	}
 	
 	public static ServerInfoRequest create(PacketIDMappingProvider mappings, CommonConfig<?> anyConfig) {
-		return create(mappings, anyConfig.getPacketBufferInitialSize());
+		return create(mappings, anyConfig.getPacketBufferInitialSize(), anyConfig.getCompressionSize());
 	}
 	
 	public static ServerInfoRequest create(NetworkManagerCommon template) {
-		return create(template.getMappingContainer(), template.getConfig().getPacketBufferInitialSize());
+		return create(template.getMappingContainer(), template.getConfig().getPacketBufferInitialSize(),
+				template.getConfig().getCompressionSize());
 	}
 }

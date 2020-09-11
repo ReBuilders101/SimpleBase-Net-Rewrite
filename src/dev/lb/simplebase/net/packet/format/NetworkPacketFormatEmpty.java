@@ -34,5 +34,10 @@ class NetworkPacketFormatEmpty<Connection> extends NetworkPacketFormat<Connectio
 	public ByteBuffer encode(Object context, Object data, int bufferSize) {
 		return ByteBuffer.allocate(0);
 	}
+
+	@Override
+	public boolean supportsCompression() {
+		return false;
+	}
 	
 }
