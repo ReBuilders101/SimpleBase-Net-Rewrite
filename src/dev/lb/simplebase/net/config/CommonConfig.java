@@ -30,6 +30,7 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 	protected static final int COMPRESSION_SIZE_DEFAULT = DISABLE_COMPRESSION;
 	protected static final boolean USE_ENCODER_POOL_DEFAULT = true;
 	protected static final int DATAGRAM_PACKET_SIZE_DEFAULT = 2048;
+	protected static final boolean USE_DECODER_POOL_DEFAULT = true;
 	
 	//Only this one needs to be up-to-date everywhere immediately
 	private volatile boolean locked;
@@ -41,6 +42,7 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 	private int compressionSize;
 	private boolean useEncoderPool;
 	private int datagramPacketSize;
+	private boolean useDecoderPool;
 	
 	/**
 	 * Creates a new CommonConfig instance. Instance will not be locked
@@ -55,6 +57,7 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 	 * <tr><td>{@link #getCompressionSize()}</td><td>{@value #COMPRESSION_SIZE_DEFAULT}</td></tr>
 	 * <tr><td>{@link #getUseEncoderThreadPool()}</td><td>{@value #USE_ENCODER_POOL_DEFAULT}</td></tr>
 	 * <tr><td>{@link #getDatagramPacketMaxSize()}</td><td>{@value #DATAGRAM_PACKET_SIZE_DEFAULT}</td></tr>
+	 * <tr><td>{@link #getUseDecoderThreadPool()}</td><td>{@value #USE_DECODER_POOL_DEFAULT}</td></tr>
 	 * </table>
 	 */
 	public CommonConfig() {
@@ -64,6 +67,7 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 		this.compressionSize = COMPRESSION_SIZE_DEFAULT;
 		this.useEncoderPool = USE_ENCODER_POOL_DEFAULT;
 		this.datagramPacketSize = DATAGRAM_PACKET_SIZE_DEFAULT;
+		this.useDecoderPool = USE_DECODER_POOL_DEFAULT;
 		this.locked = false;
 	}
 	
@@ -86,6 +90,25 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 	public synchronized T setUseEncoderThreadPool(boolean value) {
 		checkLocked();
 		this.useEncoderPool = value;
+		return (T) this;
+	}
+	
+	public synchronized boolean getUseDecoderThreadPool() {
+		return useDecoderPool;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public synchronized T setUseDecoderThreadPool(boolean value) {
+		checkLocked();
+		this.useDecoderPool = value;
+		return (T) this;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public synchronized T setUseThreadPools(boolean encoder, boolean decoder) {
+		checkLocked();
+		this.useEncoderPool = encoder;
+		this.useDecoderPool = decoder;
 		return (T) this;
 	}
 	
@@ -229,7 +252,8 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 			.setGlobalConnectionCheck(getGlobalConnectionCheck())
 			.setCompressionSize(getCompressionSize())
 			.setUseEncoderThreadPool(getUseEncoderThreadPool())
-			.setDatagramPacketMaxSize(getDatagramPacketMaxSize());
+			.setDatagramPacketMaxSize(getDatagramPacketMaxSize())
+			.setUseDecoderThreadPool(getUseDecoderThreadPool());
 	}
 	
 	public ServerConfig deriveServer() {
@@ -240,7 +264,8 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 			.setGlobalConnectionCheck(getGlobalConnectionCheck())
 			.setCompressionSize(getCompressionSize())
 			.setUseEncoderThreadPool(getUseEncoderThreadPool())
-			.setDatagramPacketMaxSize(getDatagramPacketMaxSize());
+			.setDatagramPacketMaxSize(getDatagramPacketMaxSize())
+			.setUseDecoderThreadPool(getUseDecoderThreadPool());
 	}
 
 	@Override
