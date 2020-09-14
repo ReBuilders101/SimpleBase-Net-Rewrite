@@ -61,7 +61,7 @@ public class SocketNetworkManagerServer extends ExternalNetworkManagerServer {
 			udp_decoderPool = new AddressBasedDecoderPool(UdpAnonymousConnectionAdapter::new, getMappingContainer(),
 					getConfig().getPacketBufferInitialSize());
 			udp_receiverThread = new DatagramSocketReceiverThread(udp_serverSocket, this::decideUdpDataDestination,
-					this::notifyUdpReceiverThreadClosure, getConfig().getPacketBufferInitialSize());
+					this::notifyUdpReceiverThreadClosure, getConfig().getDatagramPacketMaxSize());
 			udp_toByteConverter = new PacketToByteConverter(getMappingContainer(), getConfig().getPacketBufferInitialSize(), config.getCompressionSize());
 		} else {
 			udp_serverSocket = null;
@@ -166,26 +166,18 @@ public class SocketNetworkManagerServer extends ExternalNetworkManagerServer {
 
 	@Internal
 	void notifyUdpReceiverThreadClosure(AcceptorThreadDeathReason reason) {
-		if(hasTcp) {
+		if(hasUdp) {
 			LOGGER.debug("Ignoring UDP thread death notification %s: No cleanup required, server keeps running for other modules", reason);
 		} else {
 			LOGGER.warning("SocketNetworkManagerServer was notified of receiver thread death despite not managing a UDP module");
 		}
 	}
 	
-	@Internal
-	public void sendRawUdpByteData(SocketAddress address, ByteBuffer buffer) {
-		if(hasUdp || hasLan) {
-			final byte[] array =new byte[buffer.remaining()];
-			buffer.get(array);
-			try {
-				udp_serverSocket.send(new DatagramPacket(array, array.length, address));
-			} catch (IOException e) {
-				LOGGER.warning("Cannot send raw byte message with UDP socket", e);
-			}
-		} else {
-			LOGGER.warning("Cannot send raw UDP byte data: No UdpModule");
-		}
+	@Override
+	protected void sendDatagram(SocketAddress address, ByteBuffer buffer) throws IOException {
+		final byte[] array = new byte[buffer.remaining()];
+		buffer.get(array);
+		udp_serverSocket.send(new DatagramPacket(array, array.length, address));
 	}
 	
 	private void decideUdpDataDestination(InetSocketAddress address, ByteBuffer buffer) {

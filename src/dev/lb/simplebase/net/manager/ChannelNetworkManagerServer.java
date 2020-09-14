@@ -62,7 +62,7 @@ public class ChannelNetworkManagerServer extends ExternalNetworkManagerServer im
 		if(hasUdp || hasLan) {
 			udp_serverChannel = DatagramChannel.open();
 			udp_serverChannel.configureBlocking(false);
-			udp_receiveBuffer = ByteBuffer.allocate(config.getPacketBufferInitialSize());
+			udp_receiveBuffer = ByteBuffer.allocate(config.getDatagramPacketMaxSize());
 			udp_toByteConverter = new PacketToByteConverter(getMappingContainer(), config.getPacketBufferInitialSize(), config.getCompressionSize());
 			udp_decoderPool = new AddressBasedDecoderPool(UdpAnonymousConnectionAdapter::new,
 					getMappingContainer(), getConfig().getPacketBufferInitialSize());
@@ -200,16 +200,9 @@ public class ChannelNetworkManagerServer extends ExternalNetworkManagerServer im
 		}
 	}
 	
-	public void sendRawUdpByteData(SocketAddress address, ByteBuffer buffer) {
-		if(hasUdp || hasLan) {
-			try {
-				udp_serverChannel.send(buffer, address);
-			} catch (IOException e) {
-				LOGGER.warning("Cannot send raw byte message with UDP socket", e);
-			}
-		} else {
-			LOGGER.warning("Cannot send raw UDP byte data: No UdpModule");
-		}
+	@Override
+	protected void sendDatagram(SocketAddress address, ByteBuffer buffer) throws IOException {
+		udp_serverChannel.send(buffer, address);
 	}
 	
 	@Override

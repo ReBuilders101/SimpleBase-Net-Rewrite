@@ -98,6 +98,11 @@ public class TypeBasedPacketHandler implements PacketHandler {
 		}
 	}
 	
+	public void registerDefault(PacketHandler defaultHandler) {
+		Objects.requireNonNull(defaultHandler, "'defaultHandler' parameter must not be null");
+	    this.defaultHandler.set(defaultHandler);
+	}
+	
 	/**
 	 * Only call this when synchronized on lockSync
 	 * @param packetType not null

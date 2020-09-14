@@ -52,14 +52,14 @@ public final class ServerInfoRequest {
 	private final AddressBasedDecoderPool pooledDecoders;
 	private final Map<InetSocketAddress, CompletableToken> activeRequests;
 	
-	private ServerInfoRequest(PacketIDMappingProvider mappings, int bufferSize, int compressionLimit) throws IOException {
+	private ServerInfoRequest(PacketIDMappingProvider mappings, CommonConfig<?> config) throws IOException {
 		if(broadcastAddress == null) throw new IllegalStateException("Broadcast address not initialized");
 		
 		this.channel = DatagramChannel.open();
 		this.activeRequests = new HashMap<>();
-		this.encoder = new PacketToByteConverter(mappings, bufferSize, compressionLimit);
-		this.pooledDecoders = new AddressBasedDecoderPool(Adapter::new, mappings, bufferSize);
-		this.thread = new DatagramSocketReceiverThread(channel.socket(), pooledDecoders::decode, this::notifyAcceptorThreadDeath, bufferSize);
+		this.encoder = new PacketToByteConverter(mappings, config.getPacketBufferInitialSize(), config.getCompressionSize());
+		this.pooledDecoders = new AddressBasedDecoderPool(Adapter::new, mappings, config.getPacketBufferInitialSize());
+		this.thread = new DatagramSocketReceiverThread(channel.socket(), pooledDecoders::decode, this::notifyAcceptorThreadDeath, config.getDatagramPacketMaxSize());
 		//Just to be sure. Use it like a socket that accepts byte buffers
 		this.channel.configureBlocking(true);
 		this.channel.socket().setBroadcast(true);
@@ -318,9 +318,9 @@ public final class ServerInfoRequest {
 		}
 	}
 	
-	public static ServerInfoRequest create(PacketIDMappingProvider mappings, int packetBufferSize, int compressionLimit) {
+	public static ServerInfoRequest create(PacketIDMappingProvider mappings, CommonConfig<?> config) {
 		try {
-			ServerInfoRequest req = new ServerInfoRequest(mappings, packetBufferSize, compressionLimit);
+			ServerInfoRequest req = new ServerInfoRequest(mappings, config);
 			return req;
 		} catch (IOException e) {
 			LOGGER.error("Cannot create channel", e);
@@ -328,12 +328,7 @@ public final class ServerInfoRequest {
 		}
 	}
 	
-	public static ServerInfoRequest create(PacketIDMappingProvider mappings, CommonConfig<?> anyConfig) {
-		return create(mappings, anyConfig.getPacketBufferInitialSize(), anyConfig.getCompressionSize());
-	}
-	
 	public static ServerInfoRequest create(NetworkManagerCommon template) {
-		return create(template.getMappingContainer(), template.getConfig().getPacketBufferInitialSize(),
-				template.getConfig().getCompressionSize());
+		return create(template.getMappingContainer(), template.getConfig());
 	}
 }

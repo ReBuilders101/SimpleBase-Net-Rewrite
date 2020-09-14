@@ -145,4 +145,26 @@ abstract class ExternalNetworkManagerServer extends NetworkManagerServer {
 	
 	protected abstract void sendUdpLogout(SocketAddress remoteAddress);
 
+	@Internal
+	public void sendRawUdpByteData(SocketAddress address, ByteBuffer buffer) {
+		if(hasUdp || hasLan) {
+			final int datagramSize = getConfig().getDatagramPacketMaxSize();
+			while(buffer.hasRemaining()) {
+				final int toSlice = Math.min(datagramSize, buffer.remaining());
+				final ByteBuffer slice = (ByteBuffer) buffer.slice().limit(toSlice);
+				//Also skip this part in the main buffer
+				buffer.position(buffer.position() + toSlice);
+				
+				try {
+					sendDatagram(address, slice);
+				} catch (IOException e) {
+					LOGGER.warning("Cannot send raw byte message with UDP socket", e);
+				}
+			}
+		} else {
+			LOGGER.warning("Cannot send raw UDP byte data: No UdpModule");
+		}
+	}
+	
+	protected abstract void sendDatagram(SocketAddress address, ByteBuffer buffer) throws IOException;
 }

@@ -74,7 +74,7 @@ public final class NetworkManagerClient extends NetworkManagerCommon {
 	@Override
 	public void removeConnectionSilently(NetworkConnection connection) {
 		//Don't actually do anything, it is closed now anyways
-		LOGGER.debug("Server connection closed (removal from client %s requested)", getLocalID().getDescription());
+		LOGGER.debug("Server connection closed (removal from client '%s' requested)", getLocalID().getDescription());
 	}
 
 	@Override

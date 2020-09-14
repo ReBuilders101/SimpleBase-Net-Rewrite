@@ -29,6 +29,7 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 	protected static final boolean GLOBAL_CHECK_DEFAULT = false;
 	protected static final int COMPRESSION_SIZE_DEFAULT = DISABLE_COMPRESSION;
 	protected static final boolean USE_ENCODER_POOL_DEFAULT = true;
+	protected static final int DATAGRAM_PACKET_SIZE_DEFAULT = 2048;
 	
 	//Only this one needs to be up-to-date everywhere immediately
 	private volatile boolean locked;
@@ -39,6 +40,7 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 	private boolean globalConnectionCheck;
 	private int compressionSize;
 	private boolean useEncoderPool;
+	private int datagramPacketSize;
 	
 	/**
 	 * Creates a new CommonConfig instance. Instance will not be locked
@@ -51,7 +53,8 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 	 * <tr><td>{@link #getConnectionCheckTimeout()}</td><td>{@value #CONNECTION_CHECK_DEFAULT}</td></tr>
 	 * <tr><td>{@link #getGlobalConnectionCheck()}</td><td>{@value #GLOBAL_CHECK_DEFAULT}</td></tr>
 	 * <tr><td>{@link #getCompressionSize()}</td><td>{@value #COMPRESSION_SIZE_DEFAULT}</td></tr>
-	 * <tr><Td>{@link #getUseEncoderThreadPool()}</td><td>{@value #USE_ENCODER_POOL_DEFAULT}</td></tr>
+	 * <tr><td>{@link #getUseEncoderThreadPool()}</td><td>{@value #USE_ENCODER_POOL_DEFAULT}</td></tr>
+	 * <tr><td>{@link #getDatagramPacketMaxSize()}</td><td>{@value #DATAGRAM_PACKET_SIZE_DEFAULT}</td></tr>
 	 * </table>
 	 */
 	public CommonConfig() {
@@ -60,7 +63,19 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 		this.connectionCheckTimeout = CONNECTION_CHECK_DEFAULT;
 		this.compressionSize = COMPRESSION_SIZE_DEFAULT;
 		this.useEncoderPool = USE_ENCODER_POOL_DEFAULT;
+		this.datagramPacketSize = DATAGRAM_PACKET_SIZE_DEFAULT;
 		this.locked = false;
+	}
+	
+	public synchronized int getDatagramPacketMaxSize() {
+		return datagramPacketSize;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public synchronized T setDatagramPacketMaxSize(int size) {
+		checkLocked();
+		this.datagramPacketSize = size;
+		return (T) this;
 	}
 	
 	public synchronized boolean getUseEncoderThreadPool() {
@@ -211,7 +226,10 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 			.setUseManagedThread(getUseManagedThread())
 			.setConnectionCheckTimeout(getConnectionCheckTimeout())
 			.setPacketBufferInitialSize(getPacketBufferInitialSize())
-			.setGlobalConnectionCheck(getGlobalConnectionCheck());
+			.setGlobalConnectionCheck(getGlobalConnectionCheck())
+			.setCompressionSize(getCompressionSize())
+			.setUseEncoderThreadPool(getUseEncoderThreadPool())
+			.setDatagramPacketMaxSize(getDatagramPacketMaxSize());
 	}
 	
 	public ServerConfig deriveServer() {
@@ -219,7 +237,10 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 			.setUseManagedThread(getUseManagedThread())
 			.setConnectionCheckTimeout(getConnectionCheckTimeout())
 			.setPacketBufferInitialSize(getPacketBufferInitialSize())
-			.setGlobalConnectionCheck(getGlobalConnectionCheck());
+			.setGlobalConnectionCheck(getGlobalConnectionCheck())
+			.setCompressionSize(getCompressionSize())
+			.setUseEncoderThreadPool(getUseEncoderThreadPool())
+			.setDatagramPacketMaxSize(getDatagramPacketMaxSize());
 	}
 
 	@Override

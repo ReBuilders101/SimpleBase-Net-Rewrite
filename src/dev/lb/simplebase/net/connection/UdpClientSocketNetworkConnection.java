@@ -32,18 +32,23 @@ public class UdpClientSocketNetworkConnection extends ExternalNetworkConnection 
 			throw new RuntimeException(e);
 		}
 		this.thread = new DatagramSocketReceiverThread(socket, this::receiveRawByteData,
-				this::notifyReceiverThreadDeath, networkManager.getConfig().getPacketBufferInitialSize());
+				this::notifyReceiverThreadDeath, networkManager.getConfig().getDatagramPacketMaxSize());
 		this.remoteAddress = remoteID.getFunction(NetworkIDFunction.CONNECT);
 	}
 
 	@Override
 	protected void sendRawByteData(ByteBuffer buffer) {
-		final byte[] array = new byte[buffer.remaining()];
-		buffer.get(array);
-		try {
-			socket.send(new DatagramPacket(array, array.length, remoteAddress));
-		} catch (IOException e) {
-			SEND_LOGGER.warning("Cannot send raw byte message with UDP socket", e);
+		final int datagramSize = networkManager.getConfig().getDatagramPacketMaxSize();
+		while(buffer.hasRemaining()) {
+			final int toCopy = Math.min(datagramSize, buffer.remaining());
+			final byte[] array = new byte[toCopy];
+			
+			buffer.get(array);
+			try {
+				socket.send(new DatagramPacket(array, array.length, remoteAddress));
+			} catch (IOException e) {
+				SEND_LOGGER.warning("Cannot send raw byte message with UDP socket", e);
+			}
 		}
 	}
 	

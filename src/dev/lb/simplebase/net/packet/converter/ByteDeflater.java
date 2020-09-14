@@ -42,7 +42,7 @@ public abstract class ByteDeflater implements AutoCloseable {
 			int compressedSize = 4;
 			
 			//4 bytes to prefix the length later
-			while(!def.finished()) {
+			while(!def.needsInput()) {
 				compressedData = expand(compressedData, compressedSize, uncompressedSize);
 				int lastCompressed = def.deflate(compressedData, compressedSize, compressedData.length - compressedSize);
 				compressedSize += lastCompressed;
