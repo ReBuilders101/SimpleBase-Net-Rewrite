@@ -20,8 +20,8 @@ import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFunction;
 import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.manager.AcceptorThreadDeathReason;
-import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.manager.NetworkManagerProperties;
+import dev.lb.simplebase.net.manager.NetworkManagerServer;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
 import dev.lb.simplebase.net.packet.converter.AddressBasedDecoderPool;
@@ -85,9 +85,14 @@ public final class ServerInfoRequest {
 	
 	public RequestToken startRequest(NetworkID remote, Consumer<Packet> callback) {
 		if(remote.hasFunction(NetworkIDFunction.CONNECT)) {
-			return startRequest(remote.getFunction(NetworkIDFunction.CONNECT), callback);
+			return startRequest(remote.getFunction(NetworkIDFunction.CONNECT), remote.getDescription(), callback);
+		} else if(remote.hasFunction(NetworkIDFunction.INTERNAL)) {
+			final NetworkManagerServer server = InternalServerProvider.getServer(remote);
+			final RequestToken token = new RequestToken(null, remote.getDescription(), callback);
+			token.completeRequest(server.getConfig().createServerInfoPacket(server, null));
+			return token;
 		} else {
-			throw new IllegalArgumentException("NetworkID must implement CONNECT function");
+			throw new IllegalArgumentException("NetworkID must implement CONNECT or INTERNAL function");
 		}
 	}
 	
@@ -113,6 +118,10 @@ public final class ServerInfoRequest {
 	}
 	
 	public RequestToken startRequest(InetSocketAddress remote, Consumer<Packet> callback) {
+		return startRequest(remote, null, callback);
+	}
+	
+	private RequestToken startRequest(InetSocketAddress remote, String name, Consumer<Packet> callback) {
 		final ByteBuffer data = encoder.convert(NetworkPacketFormats.SERVERINFORQ, null);
 		try {
 			synchronized (activeRequests) {
@@ -121,7 +130,7 @@ public final class ServerInfoRequest {
 					return null;
 				} else {
 					channel.send(data, remote);
-					final RequestToken token = new RequestToken(remote, callback);
+					final RequestToken token = new RequestToken(remote, name, callback);
 					activeRequests.put(remote, token);
 					return token;
 				}
@@ -207,16 +216,30 @@ public final class ServerInfoRequest {
 	
 	private static abstract class CompletableToken {
 		protected final InetSocketAddress address;
+		protected final String targetName;
 		
 		/**
 		 * @return Should the token be removed?
 		 */
 		protected abstract boolean completeRequest(Packet packet);
 		
-		public abstract boolean wasCanecelled();
+		public abstract boolean wasCancelled();
 		
-		protected CompletableToken(InetSocketAddress address) {
+		public InetSocketAddress getRequestAddress() {
+			return address;
+		}
+		
+		public String getRequestTargetName() {
+			return targetName;
+		}
+		
+		public boolean isInternal() {
+			return address == null;
+		}
+		
+		protected CompletableToken(InetSocketAddress address, String targetName) {
 			this.address = address;
+			this.targetName = targetName;
 		}
 	}
 	
@@ -252,8 +275,8 @@ public final class ServerInfoRequest {
 		private final AwaitableTask task;
 		private volatile Packet currentResult;
 		
-		private RequestToken(InetSocketAddress address, Consumer<Packet> callback) {
-			super(address);
+		private RequestToken(InetSocketAddress address, String name, Consumer<Packet> callback) {
+			super(address, name);
 			this.task = new AwaitableTask();
 			this.currentResult = null;
 			if(callback != null) task.then(() -> callback.accept(currentResult));
@@ -261,10 +284,6 @@ public final class ServerInfoRequest {
 		
 		public Task getTask() {
 			return task;
-		}
-		
-		public InetSocketAddress getRequestAddress() {
-			return address;
 		}
 		
 		public Packet getResult() throws NoSuchElementException {
@@ -283,7 +302,7 @@ public final class ServerInfoRequest {
 		}
 		
 		@Override
-		public boolean wasCanecelled() {
+		public boolean wasCancelled() {
 			return task.isDone() && currentResult == null;
 		}
 	}
@@ -295,7 +314,7 @@ public final class ServerInfoRequest {
 		private volatile boolean cancelled;
 		
 		protected MultiRequestToken(InetSocketAddress address, Consumer<Packet> callback) {
-			super(address);
+			super(address, null);
 			this.callback = callback;
 			this.packets = Collections.synchronizedSet(new HashSet<>());
 		}
@@ -316,7 +335,7 @@ public final class ServerInfoRequest {
 		}
 
 		@Override
-		public boolean wasCanecelled() {
+		public boolean wasCancelled() {
 			return cancelled;
 		}
 	}
@@ -333,7 +352,12 @@ public final class ServerInfoRequest {
 		}
 	}
 	
-	public static ServerInfoRequest create(NetworkManagerCommon template) {
-		return create(template.getMappingContainer(), template.getConfig());
+	public static ServerInfoRequest create(NetworkManagerProperties template) {
+		try {
+			return new ServerInfoRequest(template);
+		} catch (IOException e) {
+			LOGGER.error("Cannot create channel", e);
+			return null;
+		}
 	}
 }

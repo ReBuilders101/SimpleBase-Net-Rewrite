@@ -63,6 +63,14 @@ class InternalServerProvider {
 		}
 	}
 	
+	protected static synchronized NetworkManagerServer getServer(NetworkID serverId) {
+		if(serverList.containsKey(serverId)) {
+			return serverList.get(serverId);
+		} else {
+			return null;
+		}
+	}
+	
 	protected static synchronized Stream<NetworkManagerServer> getInternalServers() {
 		return serverList.values().stream();
 	}

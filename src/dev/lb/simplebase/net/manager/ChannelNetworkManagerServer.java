@@ -21,7 +21,6 @@ import dev.lb.simplebase.net.connection.TcpChannelNetworkConnection;
 import dev.lb.simplebase.net.connection.UdpServerChannelNetworkConnection;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFunction;
-import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.converter.AddressBasedDecoderPool;
 import dev.lb.simplebase.net.packet.converter.AnonymousServerConnectionAdapter;
 import dev.lb.simplebase.net.packet.converter.MutableAddressConnectionAdapter;
@@ -287,16 +286,7 @@ public class ChannelNetworkManagerServer extends ExternalNetworkManagerServer im
 
 		@Override
 		public void receiveServerInfoRequest() {
-			if(hasLan) {
-				Packet serverInfoPacket = getConfig().createServerInfoPacket(ChannelNetworkManagerServer.this, address);
-				if(serverInfoPacket == null) {
-					LOGGER.debug("No server info reply packet could be generated (To: %s)", address);
-				} else {
-					sendRawUdpByteData(address, udp_toByteConverter.convert(NetworkPacketFormats.SERVERINFOAN, serverInfoPacket));
-				}
-			} else {
-				LOGGER.debug("Received a Server-Info-Request for server %s, but LAN module is disabled", getLocalID().getDescription());
-			}
+			ChannelNetworkManagerServer.this.receiveServerInfoRequest(address);
 		}
 
 		@Override

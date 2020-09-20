@@ -16,10 +16,12 @@ import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
 import dev.lb.simplebase.net.events.FilterRawConnectionEvent;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFunction;
+import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.converter.AddressBasedDecoderPool;
+import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
 
 @Internal
-abstract class ExternalNetworkManagerServer extends NetworkManagerServer {
+public abstract class ExternalNetworkManagerServer extends NetworkManagerServer {
 
 	//NEW STATES//
 	protected final boolean hasTcp;
@@ -163,6 +165,20 @@ abstract class ExternalNetworkManagerServer extends NetworkManagerServer {
 			}
 		} else {
 			LOGGER.warning("Cannot send raw UDP byte data: No UdpModule");
+		}
+	}
+	
+	@Internal
+	public void receiveServerInfoRequest(InetSocketAddress from) {
+		if(hasLan) {
+			Packet serverInfoPacket = getConfig().createServerInfoPacket(this, from);
+			if(serverInfoPacket == null) {
+				LOGGER.debug("No server info reply packet could be generated (To: %s)", from);
+			} else {
+				sendRawUdpByteData(from, createToByteConverter().convert(NetworkPacketFormats.SERVERINFOAN, serverInfoPacket));
+			}
+		} else {
+			LOGGER.debug("Received a Server-Info-Request for server %s, but LAN module is disabled", getLocalID().getDescription());
 		}
 	}
 	

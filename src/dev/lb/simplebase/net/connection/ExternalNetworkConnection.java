@@ -3,6 +3,8 @@ package dev.lb.simplebase.net.connection;
 import java.nio.ByteBuffer;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
+import dev.lb.simplebase.net.id.NetworkIDFunction;
+import dev.lb.simplebase.net.manager.ExternalNetworkManagerServer;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.converter.ByteAccumulator;
@@ -63,6 +65,14 @@ public abstract class ExternalNetworkConnection extends NetworkConnection {
 		byteToPacketConverter.acceptBytes(data);
 	}
 	
+	private void forwardServerInfoRequest() {
+		if(networkManager instanceof ExternalNetworkManagerServer && remoteID.hasFunction(NetworkIDFunction.CONNECT)) {
+			((ExternalNetworkManagerServer) networkManager).receiveServerInfoRequest(remoteID.getFunction(NetworkIDFunction.CONNECT));
+		} else {
+			RECEIVE_LOGGER.warning("Unexpected packet: Received ServerInfoRequest for an invalid manager type");
+		}
+	}
+	
 	protected class Adapter implements SingleConnectionAdapter {
 
 		private final boolean udpWarning;
@@ -98,6 +108,11 @@ public abstract class ExternalNetworkConnection extends NetworkConnection {
 				currentState = NetworkConnectionState.OPEN;
 				ExternalNetworkConnection.this.openCompleted.release();
 			}
+		}
+
+		@Override
+		public void receiveServerInfoRequest() {
+			ExternalNetworkConnection.this.forwardServerInfoRequest();
 		}
 		
 	}
