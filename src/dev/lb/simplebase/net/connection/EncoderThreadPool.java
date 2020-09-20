@@ -15,16 +15,18 @@ public class EncoderThreadPool {
 	private final ExecutorService service;
 	private final NetworkManagerCommon manager;
 	private final EventDispatchChain.P1<RejectedExecutionException, ?> rejectedHandler;
+	private final boolean useEncoderPool;
 	
 	public EncoderThreadPool(NetworkManagerCommon manager, EventDispatchChain.P1<RejectedExecutionException, ?> rejectedHandler) {
 		this.service = Executors.newCachedThreadPool(new MarkedThreadFactory());
 		this.manager = manager;
 		this.rejectedHandler = rejectedHandler;
+		this.useEncoderPool = manager.getConfig().getUseEncoderThreadPool();
 	}
 	
 	public boolean isValidEncoderThread(NetworkManagerCommon manager) {
 		//If no pool is used, we can encode on any thread
-		if(!manager.getConfig().getUseEncoderThreadPool()) return true;
+		if(!useEncoderPool) return true;
 		
 		final Thread thread = Thread.currentThread();
 		if(thread instanceof MarkedThread) {

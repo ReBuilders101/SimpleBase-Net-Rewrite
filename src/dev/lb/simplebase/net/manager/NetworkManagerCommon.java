@@ -21,9 +21,11 @@ import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
 import dev.lb.simplebase.net.packet.PacketIDMapping;
 import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
+import dev.lb.simplebase.net.packet.converter.PacketToByteConverter;
 import dev.lb.simplebase.net.packet.handler.EmptyPacketHandler;
 import dev.lb.simplebase.net.packet.handler.PacketHandler;
 import dev.lb.simplebase.net.packet.handler.ThreadPacketHandler;
+import dev.lb.simplebase.net.util.Lazy;
 
 /**
  * The base class for both server and client managers.
@@ -70,6 +72,7 @@ public abstract class NetworkManagerCommon {
 	private final EventDispatcher dispatcher;
 	private final Optional<Thread> managedThread;
 	private final EncoderThreadPool encoderPool;
+	private final Lazy<PacketToByteConverter> commonConverter;
 	
 	/**
 	 * Constructor that initializes {@link NetworkManagerCommon} base features
@@ -105,6 +108,8 @@ public abstract class NetworkManagerCommon {
 		if(config.getGlobalConnectionCheck()) {
 			NetworkManager.InternalAccess.INSTANCE.registerManagerForConnectionStatusCheck(this);
 		}
+		
+		commonConverter = new Lazy<>(() -> new PacketToByteConverter(provider, config.getPacketBufferInitialSize(), config.getCompressionSize()));
 	}
 	
 	/**
@@ -233,6 +238,14 @@ public abstract class NetworkManagerCommon {
 	
 	public EncoderThreadPool getEncoderPool() {
 		return encoderPool;
+	}
+	
+	/**
+	 * A {@link PacketToByteConverter} that is configured with the configs of this manager
+	 */
+	@Internal
+	public PacketToByteConverter createToByteConverter() {
+		return commonConverter.get();
 	}
 	
 }
