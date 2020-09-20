@@ -14,6 +14,7 @@ import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
  * <br><b>Not Threadsafe!</b><br>
  * Call {@code accept...} methods from only one thread.
  */
+@Deprecated
 public final class ByteToPacketConverter {
 	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("packet-decode");
 	

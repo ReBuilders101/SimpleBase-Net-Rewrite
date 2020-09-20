@@ -5,7 +5,7 @@ import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.Packet;
-import dev.lb.simplebase.net.packet.converter.ByteToPacketConverter;
+import dev.lb.simplebase.net.packet.converter.ByteAccumulator;
 import dev.lb.simplebase.net.packet.converter.ConnectionAdapter;
 import dev.lb.simplebase.net.packet.converter.PacketToByteConverter;
 import dev.lb.simplebase.net.packet.converter.SingleConnectionAdapter;
@@ -17,7 +17,7 @@ import dev.lb.simplebase.net.util.AwaitableTask;
  */
 public abstract class ExternalNetworkConnection extends NetworkConnection {
 
-	protected final ByteToPacketConverter byteToPacketConverter;
+	protected final ByteAccumulator byteToPacketConverter;
 	protected final PacketToByteConverter packetToByteConverter;
 	protected final ConnectionAdapter connectionAdapter;
 	protected final AwaitableTask openCompleted;
@@ -30,7 +30,7 @@ public abstract class ExternalNetworkConnection extends NetworkConnection {
 		this.openCompleted = new AwaitableTask();
 		this.connectionAdapter = new Adapter(udpWarning);
 		this.packetToByteConverter = networkManager.createToByteConverter();
-		this.byteToPacketConverter = new ByteToPacketConverter(connectionAdapter, networkManager.getMappingContainer(),
+		this.byteToPacketConverter = new ByteAccumulator(connectionAdapter, networkManager.getMappingContainer(),
 				networkManager.getConfig().getPacketBufferInitialSize());
 	}
 	

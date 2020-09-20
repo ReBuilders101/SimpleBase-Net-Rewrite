@@ -14,8 +14,8 @@ public class AddressBasedDecoderPool {
 	
 	private final Function<InetSocketAddress, ? extends MutableAddressConnectionAdapter> factory;
 	private final PacketIDMappingProvider mappings;
-	private final Set<ByteToPacketConverter> freeAdapters;
-	private final Map<InetSocketAddress, ByteToPacketConverter> usedAdapters;
+	private final Set<ByteAccumulator> freeAdapters;
+	private final Map<InetSocketAddress, ByteAccumulator> usedAdapters;
 	private final Object mapLock;
 	private final int decoderBufferSize;
 	
@@ -29,27 +29,27 @@ public class AddressBasedDecoderPool {
 	}
 	
 	public void decode(InetSocketAddress source, ByteBuffer data) {
-		final ByteToPacketConverter decoder = getAndMoveDecoder(source);
+		final ByteAccumulator decoder = getAndMoveDecoder(source);
 		decoder.acceptBytes(data);
 		freeAndMoveDecoder(source);
 	}
 	
-	private ByteToPacketConverter getAndMoveDecoder(InetSocketAddress address) {
+	private ByteAccumulator getAndMoveDecoder(InetSocketAddress address) {
 		synchronized (mapLock) {
 			if(usedAdapters.containsKey(address)) {
-				final ByteToPacketConverter decoder = usedAdapters.get(address);
+				final ByteAccumulator decoder = usedAdapters.get(address);
 				getCounter(decoder).acquire();
 				return decoder;
 			} else {
 				if(freeAdapters.size() > 0) {
-					final ByteToPacketConverter decoder = freeAdapters.iterator().next();
+					final ByteAccumulator decoder = freeAdapters.iterator().next();
 					freeAdapters.remove(decoder);
 					setAddress(decoder, address);
 					getCounter(decoder).acquire();
 					usedAdapters.put(address, decoder);
 					return decoder;
 				} else {
-					final ByteToPacketConverter decoder = new ByteToPacketConverter(factory.apply(address), mappings, decoderBufferSize);
+					final ByteAccumulator decoder = new ByteAccumulator(factory.apply(address), mappings, decoderBufferSize);
 					getCounter(decoder).acquire();
 					usedAdapters.put(address, decoder);
 					return decoder;
@@ -61,7 +61,7 @@ public class AddressBasedDecoderPool {
 	private void freeAndMoveDecoder(InetSocketAddress address) {
 		synchronized (mapLock) {
 			if(usedAdapters.containsKey(address)) {
-				final ByteToPacketConverter decoder = usedAdapters.get(address);
+				final ByteAccumulator decoder = usedAdapters.get(address);
 				getCounter(decoder).release();
 				if(getCounter(decoder).getCounter() == 0) {
 					usedAdapters.remove(address, decoder);
@@ -74,11 +74,11 @@ public class AddressBasedDecoderPool {
 		}
 	}
 	
-	private MutableAddressConnectionAdapter.ReferenceCounter getCounter(ByteToPacketConverter decoder) {
+	private MutableAddressConnectionAdapter.ReferenceCounter getCounter(ByteAccumulator decoder) {
 		return ((MutableAddressConnectionAdapter) decoder.getConnectionAdapter()).getUseCountManager();
 	}
 	
-	private void setAddress(ByteToPacketConverter decoder, InetSocketAddress address) {
+	private void setAddress(ByteAccumulator decoder, InetSocketAddress address) {
 		((MutableAddressConnectionAdapter) decoder.getConnectionAdapter()).setAddress(address);
 	}
 	

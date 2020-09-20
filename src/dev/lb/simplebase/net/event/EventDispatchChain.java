@@ -28,6 +28,36 @@ public abstract class EventDispatchChain<E extends Event> {
 		return new P0<>(dispatcher, event, eventInstanceBuilder);
 	}
 	
+	public static <E extends Event> EventDispatchChain.PN<?> PN(EventDispatcher dispatcher, EventAccessor<E> event,
+			Function<Object[], E> eventInstanceBuilder) {
+		return new PN<>(dispatcher, event, eventInstanceBuilder);
+	}
+	
+	public static class PN<E extends Event> extends EventDispatchChain<E> {
+		
+		protected PN(EventDispatcher dispatcher, EventAccessor<E> event, Function<Object[], E> builder) {
+			super(dispatcher);
+			this.event = event;
+			this.builder = builder;
+		}
+
+		private final EventAccessor<E> event;
+		private final Function<Object[], E> builder;
+		
+		public boolean post(Object...params) {
+			return dispatcher.post(event, builder.apply(params));
+		}
+		
+		public P0<E> bind(Object...params) {
+			return new P0<>(dispatcher, event, () -> builder.apply(params));
+		}
+
+		@Override
+		public boolean tryPost(Object... params) {
+			return post(params);
+		}
+	}
+	
 	public static class P2<T1, T2, E extends Event> extends EventDispatchChain<E> {
 		
 		protected P2(EventDispatcher dispatcher, EventAccessor<E> event, BiFunction<T1, T2, E> builder) {
