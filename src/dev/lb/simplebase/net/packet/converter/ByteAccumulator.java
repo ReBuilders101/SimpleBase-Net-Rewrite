@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.io.ByteDataHelper;
 import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.manager.NetworkManagerProperties;
 import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormat;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
@@ -12,18 +13,18 @@ import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
 public class ByteAccumulator {
 static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("packet-decode");
 	
-	private final PacketIDMappingProvider provider;
 	private final ConnectionAdapter receiver;
 	private final int bufferSize;
+	private final ByteToPacketConverter converter;
 	
 	private NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider, ?> currentFormat;
 	private ByteBuffer buffer; //Will be ready for put() operations
 	private int requiredBytes;
 
-	public ByteAccumulator(ConnectionAdapter connection, PacketIDMappingProvider provider, int bufferSize) {
+	public ByteAccumulator(NetworkManagerProperties manager, ConnectionAdapter connection) {
 		this.receiver = connection;
-		this.provider = provider;
-		this.bufferSize = bufferSize;
+		this.bufferSize = manager.getConfig().getPacketBufferInitialSize();
+		this.converter = manager.createToPacketConverter();
 		this.currentFormat = null;
 		this.buffer = ByteBuffer.allocate(bufferSize);
 		this.requiredBytes = 4; //Prepare for format id reading
@@ -68,12 +69,15 @@ static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("packet-deco
 					//We need more bytes
 					requiredBytes = required;
 				} else { //Perfect
-					currentFormat.decodeAndPublish(receiver, provider, (ByteBuffer) buffer.asReadOnlyBuffer().flip());
-					//When the packet is done, reset
-					resetToFindFormat();
+					packetReady();
 				}
 			}
 		}
+	}
+	
+	private void packetReady() {
+		converter.convertAndPublish((ByteBuffer) buffer.asReadOnlyBuffer().flip(), currentFormat, receiver);
+		resetToFindFormat();
 	}
 	
 	public void resetToFindFormat() {

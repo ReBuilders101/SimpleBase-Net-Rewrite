@@ -21,6 +21,7 @@ import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
 import dev.lb.simplebase.net.packet.PacketIDMapping;
 import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
+import dev.lb.simplebase.net.packet.converter.ByteToPacketConverter;
 import dev.lb.simplebase.net.packet.converter.PacketToByteConverter;
 import dev.lb.simplebase.net.packet.handler.EmptyPacketHandler;
 import dev.lb.simplebase.net.packet.handler.PacketHandler;
@@ -31,7 +32,7 @@ import dev.lb.simplebase.net.util.Lazy;
  * The base class for both server and client managers.
  */
 @Threadsafe
-public abstract class NetworkManagerCommon {
+public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 	
 	/**
 	 * The {@link ConnectionClosedEvent} will be posted to this accessor when a connection handled by this manager is
@@ -72,7 +73,8 @@ public abstract class NetworkManagerCommon {
 	private final EventDispatcher dispatcher;
 	private final Optional<Thread> managedThread;
 	private final EncoderThreadPool encoderPool;
-	private final Lazy<PacketToByteConverter> commonConverter;
+	private final Lazy<PacketToByteConverter> commonToByteConverter;
+	private final Lazy<ByteToPacketConverter> commonToPacketConverter;
 	
 	/**
 	 * Constructor that initializes {@link NetworkManagerCommon} base features
@@ -109,12 +111,14 @@ public abstract class NetworkManagerCommon {
 			NetworkManager.InternalAccess.INSTANCE.registerManagerForConnectionStatusCheck(this);
 		}
 		
-		commonConverter = new Lazy<>(() -> new PacketToByteConverter(provider, config.getPacketBufferInitialSize(), config.getCompressionSize()));
+		commonToByteConverter = new Lazy<>(() -> new PacketToByteConverter(provider, config.getPacketBufferInitialSize(), config.getCompressionSize()));
+		commonToPacketConverter = new Lazy<>(() -> new ByteToPacketConverter(provider, config.getCompressionSize()));
 	}
 	
 	/**
 	 * The container for {@link PacketIDMapping}s that are used to convert the packets sent form this manager to bytes.
 	 */
+	@Override
 	public final PacketIDMappingProvider getMappingContainer() {
 		return provider;
 	}
@@ -205,6 +209,7 @@ public abstract class NetworkManagerCommon {
 	 * be locked ({@link CommonConfig#isLocked()}) and effectively immutable.
 	 * @return The configuation object for this manager
 	 */
+	@Override
 	public CommonConfig<?> getConfig() {
 		return config;
 	}
@@ -243,9 +248,19 @@ public abstract class NetworkManagerCommon {
 	/**
 	 * A {@link PacketToByteConverter} that is configured with the configs of this manager
 	 */
+	@Override
 	@Internal
 	public PacketToByteConverter createToByteConverter() {
-		return commonConverter.get();
+		return commonToByteConverter.get();
+	}
+	
+	/**
+	 * A {@link ByteToPacketConverter} that is configured with the configs of this manager
+	 */
+	@Override
+	@Internal
+	public ByteToPacketConverter createToPacketConverter() {
+		return commonToPacketConverter.get();
 	}
 	
 }

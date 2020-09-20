@@ -21,10 +21,12 @@ import dev.lb.simplebase.net.id.NetworkIDFunction;
 import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.manager.AcceptorThreadDeathReason;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
+import dev.lb.simplebase.net.manager.NetworkManagerProperties;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
 import dev.lb.simplebase.net.packet.converter.AddressBasedDecoderPool;
 import dev.lb.simplebase.net.packet.converter.AnonymousClientConnectionAdapter;
+import dev.lb.simplebase.net.packet.converter.ByteToPacketConverter;
 import dev.lb.simplebase.net.packet.converter.MutableAddressConnectionAdapter;
 import dev.lb.simplebase.net.packet.converter.PacketToByteConverter;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
@@ -52,13 +54,14 @@ public final class ServerInfoRequest {
 	private final AddressBasedDecoderPool pooledDecoders;
 	private final Map<InetSocketAddress, CompletableToken> activeRequests;
 	
-	private ServerInfoRequest(PacketIDMappingProvider mappings, CommonConfig<?> config) throws IOException {
+	private ServerInfoRequest(NetworkManagerProperties manager) throws IOException {
 		if(broadcastAddress == null) throw new IllegalStateException("Broadcast address not initialized");
 		
+		final CommonConfig<?> config = manager.getConfig();
 		this.channel = DatagramChannel.open();
 		this.activeRequests = new HashMap<>();
-		this.encoder = new PacketToByteConverter(mappings, config.getPacketBufferInitialSize(), config.getCompressionSize());
-		this.pooledDecoders = new AddressBasedDecoderPool(Adapter::new, mappings, config.getPacketBufferInitialSize());
+		this.encoder = new PacketToByteConverter(manager.getMappingContainer(), config.getPacketBufferInitialSize(), config.getCompressionSize());
+		this.pooledDecoders = new AddressBasedDecoderPool(Adapter::new, manager);
 		this.thread = new DatagramSocketReceiverThread(channel.socket(), pooledDecoders::decode, this::notifyAcceptorThreadDeath, config.getDatagramPacketMaxSize());
 		//Just to be sure. Use it like a socket that accepts byte buffers
 		this.channel.configureBlocking(true);
@@ -320,7 +323,9 @@ public final class ServerInfoRequest {
 	
 	public static ServerInfoRequest create(PacketIDMappingProvider mappings, CommonConfig<?> config) {
 		try {
-			ServerInfoRequest req = new ServerInfoRequest(mappings, config);
+			final ByteToPacketConverter singleCon = new ByteToPacketConverter(mappings, config.getCompressionSize());
+			ServerInfoRequest req = new ServerInfoRequest(NetworkManagerProperties.of(config, mappings, null, 
+					() -> singleCon));
 			return req;
 		} catch (IOException e) {
 			LOGGER.error("Cannot create channel", e);

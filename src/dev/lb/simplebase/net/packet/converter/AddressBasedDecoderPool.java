@@ -8,24 +8,22 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
+import dev.lb.simplebase.net.manager.NetworkManagerProperties;
 
 public class AddressBasedDecoderPool {
 	
 	private final Function<InetSocketAddress, ? extends MutableAddressConnectionAdapter> factory;
-	private final PacketIDMappingProvider mappings;
 	private final Set<ByteAccumulator> freeAdapters;
 	private final Map<InetSocketAddress, ByteAccumulator> usedAdapters;
 	private final Object mapLock;
-	private final int decoderBufferSize;
+	private final NetworkManagerProperties manager;
 	
-	public AddressBasedDecoderPool(Function<InetSocketAddress, ? extends MutableAddressConnectionAdapter> newAdapters, PacketIDMappingProvider mappings, int bufferSize) {
+	public AddressBasedDecoderPool(Function<InetSocketAddress, ? extends MutableAddressConnectionAdapter> newAdapters, NetworkManagerProperties manager) {
 		this.factory = newAdapters;
-		this.mappings = mappings;
 		this.mapLock = new Object();
 		this.freeAdapters = new HashSet<>();
 		this.usedAdapters = new HashMap<>();
-		this.decoderBufferSize = bufferSize;
+		this.manager = manager;
 	}
 	
 	public void decode(InetSocketAddress source, ByteBuffer data) {
@@ -49,7 +47,7 @@ public class AddressBasedDecoderPool {
 					usedAdapters.put(address, decoder);
 					return decoder;
 				} else {
-					final ByteAccumulator decoder = new ByteAccumulator(factory.apply(address), mappings, decoderBufferSize);
+					final ByteAccumulator decoder = new ByteAccumulator(manager, factory.apply(address));
 					getCounter(decoder).acquire();
 					usedAdapters.put(address, decoder);
 					return decoder;

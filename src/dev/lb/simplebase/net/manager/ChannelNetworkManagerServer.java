@@ -64,8 +64,7 @@ public class ChannelNetworkManagerServer extends ExternalNetworkManagerServer im
 			udp_serverChannel.configureBlocking(false);
 			udp_receiveBuffer = ByteBuffer.allocate(config.getDatagramPacketMaxSize());
 			udp_toByteConverter = createToByteConverter();
-			udp_decoderPool = new AddressBasedDecoderPool(UdpAnonymousConnectionAdapter::new,
-					getMappingContainer(), getConfig().getPacketBufferInitialSize());
+			udp_decoderPool = new AddressBasedDecoderPool(UdpAnonymousConnectionAdapter::new, this);
 		} else {
 			udp_serverChannel = null;
 			udp_receiveBuffer = null;

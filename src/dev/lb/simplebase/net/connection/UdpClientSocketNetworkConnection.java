@@ -13,6 +13,7 @@ import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFunction;
 import dev.lb.simplebase.net.manager.AcceptorThreadDeathReason;
 import dev.lb.simplebase.net.manager.NetworkManagerClient;
+import dev.lb.simplebase.net.packet.format.NetworkPacketFormat;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
 import dev.lb.simplebase.net.util.Task;
 
@@ -76,6 +77,7 @@ public class UdpClientSocketNetworkConnection extends ExternalNetworkConnection 
 
 	@Override
 	protected Task closeConnectionImpl(ConnectionCloseReason reason) {
+		sendRawByteData(packetToByteConverter.convert(NetworkPacketFormats.LOGOUT, null));
 		openCompleted.release();
 		thread.interrupt(); //Will close the socket
 		postEventAndRemoveConnection(reason, null);

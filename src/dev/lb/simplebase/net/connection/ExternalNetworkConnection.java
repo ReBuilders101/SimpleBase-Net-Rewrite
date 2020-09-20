@@ -30,8 +30,7 @@ public abstract class ExternalNetworkConnection extends NetworkConnection {
 		this.openCompleted = new AwaitableTask();
 		this.connectionAdapter = new Adapter(udpWarning);
 		this.packetToByteConverter = networkManager.createToByteConverter();
-		this.byteToPacketConverter = new ByteAccumulator(connectionAdapter, networkManager.getMappingContainer(),
-				networkManager.getConfig().getPacketBufferInitialSize());
+		this.byteToPacketConverter = new ByteAccumulator(networkManager, connectionAdapter);
 	}
 	
 	protected abstract void sendRawByteData(ByteBuffer buffer);

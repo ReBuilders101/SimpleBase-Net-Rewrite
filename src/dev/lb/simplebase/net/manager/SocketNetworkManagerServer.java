@@ -58,8 +58,7 @@ public class SocketNetworkManagerServer extends ExternalNetworkManagerServer {
 		
 		if(hasUdp || hasLan) {
 			udp_serverSocket = new DatagramSocket(null);
-			udp_decoderPool = new AddressBasedDecoderPool(UdpAnonymousConnectionAdapter::new, getMappingContainer(),
-					getConfig().getPacketBufferInitialSize());
+			udp_decoderPool = new AddressBasedDecoderPool(UdpAnonymousConnectionAdapter::new, this);
 			udp_receiverThread = new DatagramSocketReceiverThread(udp_serverSocket, this::decideUdpDataDestination,
 					this::notifyUdpReceiverThreadClosure, getConfig().getDatagramPacketMaxSize());
 			udp_toByteConverter = createToByteConverter();
