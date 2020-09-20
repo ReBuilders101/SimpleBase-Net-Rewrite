@@ -13,25 +13,23 @@ import dev.lb.simplebase.net.packet.Packet;
 public class EncoderThreadPool {
 
 	private final ExecutorService service;
-	private final NetworkManagerCommon manager;
 	private final EventDispatchChain.P1<RejectedExecutionException, ?> rejectedHandler;
 	private final boolean useEncoderPool;
 	
 	public EncoderThreadPool(NetworkManagerCommon manager, EventDispatchChain.P1<RejectedExecutionException, ?> rejectedHandler) {
 		this.service = Executors.newCachedThreadPool(new MarkedThreadFactory());
-		this.manager = manager;
 		this.rejectedHandler = rejectedHandler;
 		this.useEncoderPool = manager.getConfig().getUseEncoderThreadPool();
 	}
 	
-	public boolean isValidEncoderThread(NetworkManagerCommon manager) {
+	public boolean isValidEncoderThread() {
 		//If no pool is used, we can encode on any thread
 		if(!useEncoderPool) return true;
 		
 		final Thread thread = Thread.currentThread();
 		if(thread instanceof MarkedThread) {
 			final MarkedThread mth = (MarkedThread) thread;
-			return mth.getManager() == manager;
+			return mth.getPool() == this;
 		} else {
 			return false;
 		}
@@ -73,8 +71,8 @@ public class EncoderThreadPool {
             if (getPriority() != Thread.NORM_PRIORITY) setPriority(Thread.NORM_PRIORITY);
 		}
 		
-		private NetworkManagerCommon getManager() {
-			return EncoderThreadPool.this.manager;
+		private EncoderThreadPool getPool() {
+			return EncoderThreadPool.this;
 		}
 	}
 }
