@@ -22,12 +22,20 @@ public abstract class EventDispatchChain<E extends Event> {
 		return new P2<>(EventDispatcher.emptyDispatcher(), null, (a, b) -> null);
 	}
 	
+	public static <T1, T2> EventDispatchChain.P2<T1, T2, ?> P2(Class<T1> castTo1, Class<T2> castTo2) {
+		return new P2<>(EventDispatcher.emptyDispatcher(), null, (a, b) -> null);
+	}
+	
 	public static <T1, E extends Event> EventDispatchChain.P1<T1, ?> P1(EventDispatcher dispatcher, EventAccessor<E> event, 
 			Function<T1, E> eventInstanceBuilder) {
 		return new P1<>(dispatcher, event, eventInstanceBuilder);
 	}
 	
 	public static EventDispatchChain.P1<?, ?> P1() {
+		return new P1<>(EventDispatcher.emptyDispatcher(), null, (a) -> null);
+	}
+	
+	public static <T1> EventDispatchChain.P1<T1, ?> P1(Class<T1> castTo) {
 		return new P1<>(EventDispatcher.emptyDispatcher(), null, (a) -> null);
 	}
 	

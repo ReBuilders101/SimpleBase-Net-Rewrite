@@ -13,9 +13,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Consumer;
 import dev.lb.simplebase.net.config.CommonConfig;
 import dev.lb.simplebase.net.connection.DatagramSocketReceiverThread;
+import dev.lb.simplebase.net.event.EventDispatchChain;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFunction;
 import dev.lb.simplebase.net.log.AbstractLogger;
@@ -26,7 +28,6 @@ import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
 import dev.lb.simplebase.net.packet.converter.AddressBasedDecoderPool;
 import dev.lb.simplebase.net.packet.converter.AnonymousClientConnectionAdapter;
-import dev.lb.simplebase.net.packet.converter.ByteToPacketConverter;
 import dev.lb.simplebase.net.packet.converter.MutableAddressConnectionAdapter;
 import dev.lb.simplebase.net.packet.converter.PacketToByteConverter;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
@@ -60,7 +61,7 @@ public final class ServerInfoRequest {
 		final CommonConfig<?> config = manager.getConfig();
 		this.channel = DatagramChannel.open();
 		this.activeRequests = new HashMap<>();
-		this.encoder = new PacketToByteConverter(manager.getMappingContainer(), config.getPacketBufferInitialSize(), config.getCompressionSize());
+		this.encoder = new PacketToByteConverter(manager);
 		this.pooledDecoders = new AddressBasedDecoderPool(Adapter::new, manager);
 		this.thread = new DatagramSocketReceiverThread(channel.socket(), pooledDecoders::decode, this::notifyAcceptorThreadDeath, config.getDatagramPacketMaxSize());
 		//Just to be sure. Use it like a socket that accepts byte buffers
@@ -341,15 +342,8 @@ public final class ServerInfoRequest {
 	}
 	
 	public static ServerInfoRequest create(PacketIDMappingProvider mappings, CommonConfig<?> config) {
-		try {
-			final ByteToPacketConverter singleCon = new ByteToPacketConverter(mappings, config.getCompressionSize());
-			ServerInfoRequest req = new ServerInfoRequest(NetworkManagerProperties.of(config, mappings, null, 
-					() -> singleCon));
-			return req;
-		} catch (IOException e) {
-			LOGGER.error("Cannot create channel", e);
-			return null;
-		}
+		return create(NetworkManagerProperties.of(config, mappings, EventDispatchChain.P1(RejectedExecutionException.class),
+				EventDispatchChain.P1(RejectedExecutionException.class)));
 	}
 	
 	public static ServerInfoRequest create(NetworkManagerProperties template) {
