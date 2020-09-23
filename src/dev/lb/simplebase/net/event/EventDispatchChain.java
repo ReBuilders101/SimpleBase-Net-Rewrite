@@ -18,9 +18,17 @@ public abstract class EventDispatchChain<E extends Event> {
 		return new P2<>(dispatcher, event, eventInstanceBuilder);
 	}
 	
+	public static EventDispatchChain.P2<?, ?, ?> P2() {
+		return new P2<>(EventDispatcher.emptyDispatcher(), null, (a, b) -> null);
+	}
+	
 	public static <T1, E extends Event> EventDispatchChain.P1<T1, ?> P1(EventDispatcher dispatcher, EventAccessor<E> event, 
 			Function<T1, E> eventInstanceBuilder) {
 		return new P1<>(dispatcher, event, eventInstanceBuilder);
+	}
+	
+	public static EventDispatchChain.P1<?, ?> P1() {
+		return new P1<>(EventDispatcher.emptyDispatcher(), null, (a) -> null);
 	}
 	
 	public static <E extends Event> EventDispatchChain.P0<?> P0(EventDispatcher dispatcher, EventAccessor<E> event, 
@@ -28,9 +36,17 @@ public abstract class EventDispatchChain<E extends Event> {
 		return new P0<>(dispatcher, event, eventInstanceBuilder);
 	}
 	
+	public static EventDispatchChain.P0<?> P0() {
+		return new P0<>(EventDispatcher.emptyDispatcher(), null, () -> null);
+	}
+	
 	public static <E extends Event> EventDispatchChain.PN<?> PN(EventDispatcher dispatcher, EventAccessor<E> event,
 			Function<Object[], E> eventInstanceBuilder) {
 		return new PN<>(dispatcher, event, eventInstanceBuilder);
+	}
+	
+	public static EventDispatchChain.PN<?> PN() {
+		return new PN<>(EventDispatcher.emptyDispatcher(), null, (arr) -> null);
 	}
 	
 	public static class PN<E extends Event> extends EventDispatchChain<E> {

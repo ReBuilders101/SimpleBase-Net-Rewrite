@@ -21,7 +21,7 @@ import dev.lb.simplebase.net.annotation.Threadsafe;
  * @param <E> The event type for this accessor
  */
 @Threadsafe
-public class EventAccessor<E extends Event> { //NOT Iterable on purpose!!
+public final class EventAccessor<E extends Event> { //NOT Iterable on purpose!!
 
 	//Handlers are rarely added, but events can be posted from any amount of threads at a time, requiring iteration
 	private final ReadWriteLock lockHandlers;

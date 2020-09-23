@@ -99,4 +99,33 @@ public class EventDispatcher {
 		return (event) -> post(handler, event);
 	}
 	
+	/**
+	 * A dispatcher that discards all posted events silently
+	 */
+	public static EventDispatcher emptyDispatcher() {
+		return new EventDispatcher(() -> "") {
+
+			@Override
+			public synchronized <E extends Event> boolean post(EventAccessor<E> handler, E event) {
+				return false;
+			}
+
+			@Override
+			public synchronized <E extends Event> void postAndRun(EventAccessor<E> handler, E event,
+					Runnable taskIfCancelled, Runnable taskIfNot) {}
+
+			@Override
+			public synchronized <E extends Event, R> R postAndReturn(EventAccessor<E> handler, E event,
+					R valueIfCancelled, R valueIfNot) {
+				return valueIfNot;
+			}
+
+			@Override
+			public <E extends Event> Consumer<E> postTask(EventAccessor<E> handler) {
+				return (e) -> {};
+			}
+			
+		};
+	}
+	
 }
