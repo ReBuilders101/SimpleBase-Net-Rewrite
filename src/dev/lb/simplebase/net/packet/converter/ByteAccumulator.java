@@ -15,6 +15,7 @@ static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("packet-deco
 	
 	private final ConnectionAdapter receiver;
 	private final int bufferSize;
+	private final NetworkManagerProperties managerLike;
 	private final ByteToPacketConverter converter;
 	
 	private NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider, ?> currentFormat;
@@ -24,8 +25,9 @@ static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("packet-deco
 	public ByteAccumulator(NetworkManagerProperties manager, ConnectionAdapter connection) {
 		this.receiver = connection;
 		this.bufferSize = manager.getConfig().getPacketBufferInitialSize();
-		this.converter = manager.createToPacketConverter();
+		this.managerLike = manager;
 		this.currentFormat = null;
+		this.converter = manager.createToPacketConverter();
 		this.buffer = ByteBuffer.allocate(bufferSize);
 		this.requiredBytes = 4; //Prepare for format id reading
 	}
@@ -76,7 +78,12 @@ static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("packet-deco
 	}
 	
 	private void packetReady() {
-		converter.convertAndPublish((ByteBuffer) buffer.asReadOnlyBuffer().flip(), currentFormat, receiver);
+		final ByteBuffer readOnly = (ByteBuffer) buffer.asReadOnlyBuffer().flip();
+		if(managerLike.getDecoderPool().isValidEncoderThread()) {
+			converter.convertAndPublish(readOnly, currentFormat, receiver);
+		} else {
+			managerLike.getDecoderPool().decodeAndSendPacket(receiver, converter, currentFormat, readOnly);
+		}
 		resetToFindFormat();
 	}
 	

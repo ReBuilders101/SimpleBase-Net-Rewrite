@@ -91,7 +91,7 @@ class NetworkIDTest {
 		
 		assertThrows(UnsupportedOperationException.class, () -> bind2.getFunction(NetworkIDFunction.INTERNAL), "LOCAL get does not throw");
 		assertEquals(bind2.getFunction(NetworkIDFunction.NETWORK), NetworkIDFunction.BIND, "NETWORK does not match <BIND function>");
-		assertDoesNotThrow(() -> bind2.getFunction(NetworkIDFunction.BIND), "BIND throws exception");
+//		assertDoesNotThrow(() -> bind2.getFunction(NetworkIDFunction.BIND), "BIND throws exception");
 		assertTrue(bind2.getFunction(NetworkIDFunction.BIND) instanceof SocketAddress, "BIND does not match type <SocketAddress>");
 		assertThrows(UnsupportedOperationException.class, () -> bind2.getFunction(NetworkIDFunction.CONNECT), "CONNECT get does not throw");
 		assertThrows(UnsupportedOperationException.class, () -> bind2.getFunction(null), "<null> get does not throw");
@@ -108,7 +108,7 @@ class NetworkIDTest {
 		assertNotEquals(bind4, bind5, "Cloned derived id is equal");
 		assertEquals(bind5, bind6, "Ids are not equal (2)");
 		
-		assertDoesNotThrow(() -> bind4.getFunction(bind4.getFunction(NetworkIDFunction.NETWORK)), "Could not get socketaddress function");
+//		assertDoesNotThrow(() -> bind4.getFunction(bind4.getFunction(NetworkIDFunction.NETWORK)), "Could not get socketaddress function");
 	}
 
 	@Test
@@ -130,7 +130,7 @@ class NetworkIDTest {
 		
 		assertThrows(UnsupportedOperationException.class, () -> connect2.getFunction(NetworkIDFunction.INTERNAL), "LOCAL get does not throw");
 		assertEquals(connect2.getFunction(NetworkIDFunction.NETWORK), NetworkIDFunction.CONNECT, "NETWORK does not match <CONNECT function>");
-		assertDoesNotThrow(() -> connect2.getFunction(NetworkIDFunction.CONNECT), "CONNECT throws exception");
+//		assertDoesNotThrow(() -> connect2.getFunction(NetworkIDFunction.CONNECT), "CONNECT throws exception");
 		assertTrue(connect2.getFunction(NetworkIDFunction.CONNECT) instanceof SocketAddress, "CONNECT does not match type <SocketAddress>");
 		assertThrows(UnsupportedOperationException.class, () -> connect2.getFunction(NetworkIDFunction.BIND), "BIND get does not throw");
 		assertThrows(UnsupportedOperationException.class, () -> connect2.getFunction(null), "<null> get does not throw");
@@ -142,7 +142,7 @@ class NetworkIDTest {
 		assertEquals(address2.getPort(), 1234, "Port is not 1234");
 		assertTrue(((InetSocketAddress) connect3.getFunction(NetworkIDFunction.CONNECT)).getAddress().isAnyLocalAddress(), "Not a wildcard");
 		
-		assertDoesNotThrow(() -> connect4.getFunction(connect4.getFunction(NetworkIDFunction.NETWORK)), "Could not get socketaddress function");
+//		assertDoesNotThrow(() -> connect4.getFunction(connect4.getFunction(NetworkIDFunction.NETWORK)), "Could not get socketaddress function");
 	}
 	
 	@Test

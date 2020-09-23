@@ -1,10 +1,12 @@
 package dev.lb.simplebase.net.packet.converter;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.function.IntFunction;
 
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.manager.NetworkManagerProperties;
 import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormat;
 
@@ -19,9 +21,9 @@ public final class ByteToPacketConverter {
 	private final PacketIDMappingProvider provider;
 	private final IntFunction<ByteInflater> chooseInflater;
 
-	public ByteToPacketConverter(PacketIDMappingProvider provider, int compressionSize) {
-		this.provider = provider;
-		this.chooseInflater = makeFunction(compressionSize);
+	public ByteToPacketConverter(NetworkManagerProperties managerLike) {
+		this.provider = managerLike.getMappingContainer();
+		this.chooseInflater = makeFunction(managerLike.getConfig().getCompressionSize());
 	}
 	
 	private static IntFunction<ByteInflater> makeFunction(int minSize) {
@@ -33,7 +35,20 @@ public final class ByteToPacketConverter {
 	}
 	
 	public void convertAndPublish(ByteBuffer data, NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider, ?> format, ConnectionAdapter adapter) {
-		//TODO threading / inflate
-		format.decodeAndPublish(adapter, provider, data);
+		try {
+			ByteBuffer uncompressed = decompress(data, format);
+			format.decodeAndPublish(adapter, provider, uncompressed);
+		} catch (IOException e) {
+			LOGGER.error("cannot inflate packet data", e);
+		}
+	}
+	
+	private ByteBuffer decompress(ByteBuffer raw, NetworkPacketFormat<?, ?, ?> format) throws IOException {
+		if(format.supportsCompression()) {
+			ByteInflater decompressor = chooseInflater.apply(raw.remaining());
+			return decompressor.inflate(raw);
+		} else {
+			return raw;
+		}
 	}
 }

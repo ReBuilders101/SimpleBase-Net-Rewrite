@@ -1,5 +1,7 @@
 package dev.lb.simplebase.net.events;
 
+import java.util.concurrent.RejectedExecutionException;
+
 import dev.lb.simplebase.net.annotation.Immutable;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.event.Event;
@@ -21,6 +23,7 @@ public class PacketReceiveRejectedEvent extends Event {
 
 	private final NetworkID source;
 	private final Class<? extends Packet> packetType;
+	private final RejectedExecutionException exception;
 	
 	//Deliberately don't include the packet data, the event handler should not receive the packet
 	/**
@@ -31,6 +34,15 @@ public class PacketReceiveRejectedEvent extends Event {
 		super(true, false);
 		this.source = source;
 		this.packetType = packetType;
+		this.exception = null;
+	}
+	
+	@Internal
+	public PacketReceiveRejectedEvent(RejectedExecutionException reject) {
+		super(true, false);
+		this.source = null;
+		this.packetType = null;
+		this.exception = reject;
 	}
 
 	/**
@@ -47,6 +59,14 @@ public class PacketReceiveRejectedEvent extends Event {
 	 */
 	public Class<? extends Packet> getPacketType() {
 		return packetType;
+	}
+	
+	public RejectedExecutionException getException() {
+		return exception;
+	}
+	
+	public boolean hasDetails() {
+		return exception == null;
 	}
 	
 }

@@ -6,6 +6,7 @@ import java.util.function.IntFunction;
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.io.ByteDataHelper;
 import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.manager.NetworkManagerProperties;
 import dev.lb.simplebase.net.packet.PacketIDMapping;
 import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormat;
@@ -16,7 +17,7 @@ import dev.lb.simplebase.net.packet.format.NetworkPacketFormat;
 public final class PacketToByteConverter {
 	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("packet-encode");
 	
-	private final PacketIDMappingProvider provider;
+	private final NetworkManagerProperties managerLike;
 	private final int bufferSize;
 	private final IntFunction<ByteDeflater> chooseDeflater;
 	
@@ -25,10 +26,10 @@ public final class PacketToByteConverter {
 	 * @param provider Provides {@link PacketIDMapping}s to look up numerical packet IDs
 	 * @param destination The next stage that sends bytes through a connection
 	 */
-	public PacketToByteConverter(PacketIDMappingProvider provider, int bufferSize, int compressionSize) {
-		this.provider = provider;
-		this.bufferSize = bufferSize;
-		this.chooseDeflater = makeFunction(compressionSize);
+	public PacketToByteConverter(NetworkManagerProperties managerLike) {
+		this.managerLike = managerLike;
+		this.bufferSize = managerLike.getConfig().getPacketBufferInitialSize();
+		this.chooseDeflater = makeFunction(managerLike.getConfig().getCompressionSize());
 	}
 	
 	private static IntFunction<ByteDeflater> makeFunction(int minSize) {
@@ -39,8 +40,9 @@ public final class PacketToByteConverter {
 		}
 	}
 	
-	public <Data> ByteBuffer convert(NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider, Data> format, Data data) {
-		final ByteBuffer rawPacketData = format.encode(provider, data, bufferSize);
+	public final <Data> ByteBuffer convert(NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider, Data> format, Data data) {
+		
+		final ByteBuffer rawPacketData = format.encode(managerLike.getMappingContainer(), data, bufferSize);
 		if(rawPacketData != null) {
 			ByteBuffer compressedPacketData = compress(rawPacketData, format);
 			
@@ -55,7 +57,7 @@ public final class PacketToByteConverter {
 		}
 	}
 	
-	private ByteBuffer compress(ByteBuffer raw, NetworkPacketFormat<?, ? , ?> format) {
+	private ByteBuffer compress(ByteBuffer raw, NetworkPacketFormat<?, ?, ?> format) {
 		if(format.supportsCompression()) {
 			ByteDeflater compressor = chooseDeflater.apply(raw.remaining());
 			return compressor.deflate(raw);

@@ -8,6 +8,7 @@ import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.config.CommonConfig;
+import dev.lb.simplebase.net.connection.DecoderThreadPool;
 import dev.lb.simplebase.net.connection.EncoderThreadPool;
 import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.event.EventAccessor;
@@ -73,6 +74,7 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 	private final EventDispatcher dispatcher;
 	private final Optional<Thread> managedThread;
 	private final EncoderThreadPool encoderPool;
+	private final DecoderThreadPool decoderPool;
 	private final Lazy<PacketToByteConverter> commonToByteConverter;
 	private final Lazy<ByteToPacketConverter> commonToPacketConverter;
 	
@@ -97,6 +99,7 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 		
 		dispatcher = new EventDispatcher(() -> getLocalID().getDescription());
 		encoderPool = new EncoderThreadPool(this, EventDispatchChain.P1(dispatcher, PacketSendingFailed, PacketSendingFailedEvent::new));
+		decoderPool = new DecoderThreadPool(this, EventDispatchChain.P1(dispatcher, PacketReceiveRejected, PacketReceiveRejectedEvent::new));
 		singleThreadHandler = new AtomicReference<>(new EmptyPacketHandler());
 		if(config.getUseManagedThread()) {
 			multiThreadHandler = new ThreadPacketHandler(singleThreadHandler, 
@@ -111,10 +114,10 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 			NetworkManager.InternalAccess.INSTANCE.registerManagerForConnectionStatusCheck(this);
 		}
 		
-		commonToByteConverter = new Lazy<>(() -> new PacketToByteConverter(provider, config.getPacketBufferInitialSize(), config.getCompressionSize()));
-		commonToPacketConverter = new Lazy<>(() -> new ByteToPacketConverter(provider, config.getCompressionSize()));
+		commonToByteConverter = new Lazy<>(() -> new PacketToByteConverter(this));
+		commonToPacketConverter = new Lazy<>(() -> new ByteToPacketConverter(this));
 	}
-	
+
 	/**
 	 * The container for {@link PacketIDMapping}s that are used to convert the packets sent form this manager to bytes.
 	 */
@@ -240,9 +243,15 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 	 */
 	public abstract void updateConnectionStatus();
 	
-	
+	@Override
 	public EncoderThreadPool getEncoderPool() {
 		return encoderPool;
+	}
+	
+	
+	@Override
+	public DecoderThreadPool getDecoderPool() {
+		return decoderPool;
 	}
 	
 	/**
