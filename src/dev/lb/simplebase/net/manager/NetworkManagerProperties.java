@@ -2,8 +2,7 @@ package dev.lb.simplebase.net.manager;
 
 import java.util.concurrent.RejectedExecutionException;
 import dev.lb.simplebase.net.config.CommonConfig;
-import dev.lb.simplebase.net.connection.DecoderThreadPool;
-import dev.lb.simplebase.net.connection.EncoderThreadPool;
+import dev.lb.simplebase.net.connection.CoderThreadPool;
 import dev.lb.simplebase.net.event.EventDispatchChain;
 import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
 import dev.lb.simplebase.net.packet.converter.ByteToPacketConverter;
@@ -21,8 +20,8 @@ public interface NetworkManagerProperties {
 	public PacketToByteConverter createToByteConverter();
 	public ByteToPacketConverter createToPacketConverter();
 	
-	public EncoderThreadPool getEncoderPool();
-	public DecoderThreadPool getDecoderPool();
+	public CoderThreadPool.Encoder getEncoderPool();
+	public CoderThreadPool.Decoder getDecoderPool();
 	
 	public static NetworkManagerProperties of(CommonConfig<?> config, PacketIDMappingProvider provider,
 			EventDispatchChain.P1<RejectedExecutionException, ?> onEncoderError, EventDispatchChain.P1<RejectedExecutionException, ?> onDecoderError) {
@@ -50,13 +49,13 @@ public interface NetworkManagerProperties {
 			}
 
 			@Override
-			public EncoderThreadPool getEncoderPool() {
-				return new EncoderThreadPool(this, onEncoderError);
+			public CoderThreadPool.Encoder getEncoderPool() {
+				return new CoderThreadPool.Encoder(this, onEncoderError);
 			}
 
 			@Override
-			public DecoderThreadPool getDecoderPool() {
-				return new DecoderThreadPool(this, onDecoderError);
+			public CoderThreadPool.Decoder getDecoderPool() {
+				return new CoderThreadPool.Decoder(this, onDecoderError);
 			}
 		};
 	}

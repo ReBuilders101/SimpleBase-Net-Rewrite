@@ -8,8 +8,7 @@ import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.config.CommonConfig;
-import dev.lb.simplebase.net.connection.DecoderThreadPool;
-import dev.lb.simplebase.net.connection.EncoderThreadPool;
+import dev.lb.simplebase.net.connection.CoderThreadPool;
 import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.event.EventAccessor;
 import dev.lb.simplebase.net.event.EventDispatchChain;
@@ -73,8 +72,8 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 	private final ThreadPacketHandler multiThreadHandler;
 	private final EventDispatcher dispatcher;
 	private final Optional<Thread> managedThread;
-	private final EncoderThreadPool encoderPool;
-	private final DecoderThreadPool decoderPool;
+	private final CoderThreadPool.Encoder encoderPool;
+	private final CoderThreadPool.Decoder decoderPool;
 	private final Lazy<PacketToByteConverter> commonToByteConverter;
 	private final Lazy<ByteToPacketConverter> commonToPacketConverter;
 	
@@ -98,8 +97,8 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 		PacketReceiveRejected = new EventAccessor<>(PacketReceiveRejectedEvent.class);
 		
 		dispatcher = new EventDispatcher(() -> getLocalID().getDescription());
-		encoderPool = new EncoderThreadPool(this, EventDispatchChain.P1(dispatcher, PacketSendingFailed, PacketSendingFailedEvent::new));
-		decoderPool = new DecoderThreadPool(this, EventDispatchChain.P1(dispatcher, PacketReceiveRejected, PacketReceiveRejectedEvent::new));
+		encoderPool = new CoderThreadPool.Encoder(this, EventDispatchChain.P1(dispatcher, PacketSendingFailed, PacketSendingFailedEvent::new));
+		decoderPool = new CoderThreadPool.Decoder(this, EventDispatchChain.P1(dispatcher, PacketReceiveRejected, PacketReceiveRejectedEvent::new));
 		singleThreadHandler = new AtomicReference<>(new EmptyPacketHandler());
 		if(config.getUseManagedThread()) {
 			multiThreadHandler = new ThreadPacketHandler(singleThreadHandler, 
@@ -234,6 +233,7 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 	public void cleanUp() {
 		managedThread.ifPresent(Thread::interrupt);
 		encoderPool.shutdown();
+		decoderPool.shutdown();
 		NetworkManager.InternalAccess.INSTANCE.unregisterManagerForConnectionStatusCheck(this);
 	}
 	
@@ -244,13 +244,13 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 	public abstract void updateConnectionStatus();
 	
 	@Override
-	public EncoderThreadPool getEncoderPool() {
+	public CoderThreadPool.Encoder getEncoderPool() {
 		return encoderPool;
 	}
 	
 	
 	@Override
-	public DecoderThreadPool getDecoderPool() {
+	public CoderThreadPool.Decoder getDecoderPool() {
 		return decoderPool;
 	}
 	
