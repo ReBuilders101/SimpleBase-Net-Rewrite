@@ -15,6 +15,7 @@ import dev.lb.simplebase.net.events.PacketSendingFailedEvent;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
+import dev.lb.simplebase.net.manager.NetworkManagerServer;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
 import dev.lb.simplebase.net.util.AwaitableTask;
@@ -122,6 +123,19 @@ public abstract class NetworkConnection {
 	 */
 	@Internal
 	public Task closeConnection(ConnectionCloseReason reason) {
+		//This WILL alter the server, so lock on:
+		if(networkManager instanceof NetworkManagerServer) {
+			NetworkManagerServer serverManager = (NetworkManagerServer) networkManager;
+			return serverManager.exclusiveThreadsafe().actionReturn((server) -> {
+				return closeConnectionWithServerLock(reason);
+			});
+		} else {
+			return closeConnectionWithServerLock(reason);
+		}
+		
+	}
+	
+	private Task closeConnectionWithServerLock(ConnectionCloseReason reason) {
 		synchronized (lockCurrentState) {
 			if(currentState.hasBeenClosed()) {
 				STATE_LOGGER.debug("Cannot close a connection that is in state %s", currentState);

@@ -109,6 +109,10 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 		}
 	}
 	
+	public int getConnectionCount() {
+		return connections.size();
+	}
+	
 	public Task startServer() {
 		try {
 			lockServer.writeLock().lock();
