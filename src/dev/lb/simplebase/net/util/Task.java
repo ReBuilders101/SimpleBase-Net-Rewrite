@@ -4,7 +4,9 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BooleanSupplier;
 
+import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.connection.NetworkConnection;
 
 /**
@@ -150,5 +152,68 @@ public interface Task {
 	public static Pair<Task, Runnable> completable() {
 		final AwaitableTask task = new AwaitableTask();
 		return new Pair<>(task, task::release);
+	}
+	
+	public static Task awaitCondition(BooleanSupplier condition) {
+		return new Task() {
+			
+			private long startTimestamp = NetworkManager.getClockMillis();
+			private volatile boolean doneOnce = false;
+			
+			@Override
+			public void tryAwait(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+				final long msTimeout = unit.toMillis(timeout);
+				final long endTimestamp = startTimestamp + msTimeout;
+				
+				while(NetworkManager.getClockMillis() < endTimestamp) {
+					if(Thread.interrupted()) {
+						throw new InterruptedException();
+					}
+					
+					if(condition.getAsBoolean()) {
+						doneOnce = true;
+						return;
+					}
+				}
+				
+				throw new TimeoutException();
+			}
+			
+			@Override
+			public void tryAwait() throws InterruptedException {
+				while(true) {
+					if(Thread.interrupted()) {
+						throw new InterruptedException();
+					}
+					
+					if(condition.getAsBoolean()) {
+						doneOnce = true;
+						return;
+					}
+				}
+			}
+			
+			@Override
+			public Task thenAsync(Runnable chainTask) {
+				throw new UnsupportedOperationException();
+			}
+			
+			@Override
+			public Task then(Runnable chainTask) {
+				throw new UnsupportedOperationException();
+			}
+			
+			@Override
+			public boolean isDone() {
+				return doneOnce || condition.getAsBoolean();
+			}
+			
+			@Override
+			public boolean asyncAwait(long timeout, TimeUnit unit) {
+				final long msTimeout = unit.toMillis(timeout);
+				final long endTimestamp = startTimestamp + msTimeout;
+				return isDone() || NetworkManager.getClockMillis() >= endTimestamp;
+			}
+		};
 	}
 }
