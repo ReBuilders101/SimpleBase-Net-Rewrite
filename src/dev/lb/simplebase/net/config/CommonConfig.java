@@ -14,7 +14,7 @@ import dev.lb.simplebase.net.packet.handler.PacketHandler;
  * which prevents further modification.
  */
 @Threadsafe
-public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
+public class CommonConfig implements Cloneable {
 
 	/**
 	 * Can be used in {@link #setConnectionCheckTimeout(int)} to disable
@@ -75,52 +75,47 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 		return datagramPacketSize;
 	}
 	
-	@SuppressWarnings("unchecked")
-	public synchronized T setDatagramPacketMaxSize(int size) {
+	public synchronized CommonConfig setDatagramPacketMaxSize(int size) {
 		checkLocked();
 		this.datagramPacketSize = size;
-		return (T) this;
+		return this;
 	}
 	
 	public synchronized boolean getUseEncoderThreadPool() {
 		return useEncoderPool;
 	}
 	
-	@SuppressWarnings("unchecked")
-	public synchronized T setUseEncoderThreadPool(boolean value) {
+	public synchronized CommonConfig setUseEncoderThreadPool(boolean value) {
 		checkLocked();
 		this.useEncoderPool = value;
-		return (T) this;
+		return this;
 	}
 	
 	public synchronized boolean getUseDecoderThreadPool() {
 		return useDecoderPool;
 	}
 	
-	@SuppressWarnings("unchecked")
-	public synchronized T setUseDecoderThreadPool(boolean value) {
+	public synchronized CommonConfig setUseDecoderThreadPool(boolean value) {
 		checkLocked();
 		this.useDecoderPool = value;
-		return (T) this;
+		return this;
 	}
 	
-	@SuppressWarnings("unchecked")
-	public synchronized T setUseThreadPools(boolean encoder, boolean decoder) {
+	public synchronized CommonConfig setUseThreadPools(boolean encoder, boolean decoder) {
 		checkLocked();
 		this.useEncoderPool = encoder;
 		this.useDecoderPool = decoder;
-		return (T) this;
+		return this;
 	}
 	
 	public synchronized int getCompressionSize() {
 		return compressionSize;
 	}
 	
-	@SuppressWarnings("unchecked")
-	public synchronized T setCompressionSize(int minPacketSize) {
+	public synchronized CommonConfig setCompressionSize(int minPacketSize) {
 		checkLocked();
 		this.compressionSize = minPacketSize;
-		return (T) this;
+		return this;
 	}
 	
 	/**
@@ -138,11 +133,10 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 	 * @param value The new value for the connection timeout in milliseconds
 	 * @throws IllegalStateException If this config object is locked ({@link #isLocked()})
 	 */
-	@SuppressWarnings("unchecked")
-	public synchronized T setConnectionCheckTimeout(int value) {
+	public synchronized CommonConfig setConnectionCheckTimeout(int value) {
 		checkLocked();
 		this.connectionCheckTimeout = value;
-		return (T) this;
+		return this;
 	}
 	
 	/**
@@ -152,11 +146,10 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 	 * @param value The new value for whether to use the managed thread in a manager
 	 * @throws IllegalStateException If this config object is locked ({@link #isLocked()})
 	 */
-	@SuppressWarnings("unchecked")
-	public synchronized T setUseManagedThread(boolean value) {
+	public synchronized CommonConfig setUseManagedThread(boolean value) {
 		checkLocked();
 		this.useManagedThread = value;
-		return (T) this;
+		return this;
 	}
 	
 	/**
@@ -176,11 +169,10 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 	 * @param value The new value for the initial size of the packet encode buffer
 	 * @throws IllegalStateException If this config object is locked ({@link #isLocked()})
 	 */
-	@SuppressWarnings("unchecked")
-	public synchronized T setPacketBufferInitialSize(int value) {
+	public synchronized CommonConfig setPacketBufferInitialSize(int value) {
 		checkLocked();
 		this.encodeBufferInitialSize = value;
-		return (T) this;
+		return this;
 	}
 	
 	/**
@@ -199,7 +191,7 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 	 * If {@code true}, a global daemon worker thread will periodically check all connections on this manager for a timeout
 	 * @return
 	 */
-	public boolean getGlobalConnectionCheck() {
+	public synchronized boolean getGlobalConnectionCheck() {
 		return globalConnectionCheck;
 	}
 	
@@ -207,11 +199,10 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 	 * If {@code true}, a global daemon worker thread will periodically check all connections on this manager for a timeout
 	 * @param value The new value for the setting
 	 */
-	@SuppressWarnings("unchecked")
-	public T setGlobalConnectionCheck(boolean value) {
+	public synchronized CommonConfig setGlobalConnectionCheck(boolean value) {
 		checkLocked();
 		this.globalConnectionCheck = value;
-		return (T) this;
+		return this;
 	}
 	
 	/**
@@ -269,8 +260,11 @@ public class CommonConfig<T extends CommonConfig<T>> implements Cloneable {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public T clone() throws CloneNotSupportedException {
-		return (T) super.clone();
+	public CommonConfig clone() {
+		try {
+			return (CommonConfig) super.clone();
+		} catch (CloneNotSupportedException e) {
+			throw new RuntimeException("Cannot clone Config object");
+		}
 	}
 }

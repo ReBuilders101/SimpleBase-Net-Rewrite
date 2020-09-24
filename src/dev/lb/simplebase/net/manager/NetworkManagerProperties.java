@@ -14,7 +14,7 @@ import dev.lb.simplebase.net.util.Lazy;
  */
 public interface NetworkManagerProperties {
 
-	public CommonConfig<?> getConfig();
+	public CommonConfig getConfig();
 	public PacketIDMappingProvider getMappingContainer();
 	
 	public PacketToByteConverter createToByteConverter();
@@ -23,7 +23,7 @@ public interface NetworkManagerProperties {
 	public CoderThreadPool.Encoder getEncoderPool();
 	public CoderThreadPool.Decoder getDecoderPool();
 	
-	public static NetworkManagerProperties of(CommonConfig<?> config, PacketIDMappingProvider provider,
+	public static NetworkManagerProperties of(CommonConfig config, PacketIDMappingProvider provider,
 			EventDispatchChain.P1<RejectedExecutionException, ?> onEncoderError, EventDispatchChain.P1<RejectedExecutionException, ?> onDecoderError) {
 		return new NetworkManagerProperties() {
 			private final Lazy<PacketToByteConverter> toByte = new Lazy<>(() -> new PacketToByteConverter(this));
@@ -34,7 +34,7 @@ public interface NetworkManagerProperties {
 			}
 			
 			@Override
-			public CommonConfig<?> getConfig() {
+			public CommonConfig getConfig() {
 				return config;
 			}
 			

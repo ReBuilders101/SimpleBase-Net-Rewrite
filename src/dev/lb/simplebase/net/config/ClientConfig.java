@@ -11,8 +11,7 @@ import dev.lb.simplebase.net.packet.PacketContext;
  * managers, it is best practise to initialize all values once and the call {@link #lock()},
  * which prevents further modification.
  */
-public class ClientConfig extends CommonConfig<ClientConfig> {
-	
+public class ClientConfig extends CommonConfig {
 	private ConnectionType connectionType;
 	private Object customData;
 	
@@ -77,5 +76,60 @@ public class ClientConfig extends CommonConfig<ClientConfig> {
 		checkLocked();
 		this.customData = value;
 		return this;
+	}
+
+	@Override
+	public synchronized ClientConfig setDatagramPacketMaxSize(int size) {
+		return (ClientConfig) super.setDatagramPacketMaxSize(size);
+	}
+
+	@Override
+	public synchronized ClientConfig setUseEncoderThreadPool(boolean value) {
+		return (ClientConfig) super.setUseEncoderThreadPool(value);
+	}
+
+	@Override
+	public synchronized ClientConfig setUseDecoderThreadPool(boolean value) {
+		return (ClientConfig) super.setUseDecoderThreadPool(value);
+	}
+
+	@Override
+	public synchronized ClientConfig setUseThreadPools(boolean encoder, boolean decoder) {
+		return (ClientConfig) super.setUseThreadPools(encoder, decoder);
+	}
+
+	@Override
+	public synchronized ClientConfig setCompressionSize(int minPacketSize) {
+		return (ClientConfig) super.setCompressionSize(minPacketSize);
+	}
+
+	@Override
+	public synchronized ClientConfig setConnectionCheckTimeout(int value) {
+		return (ClientConfig) super.setConnectionCheckTimeout(value);
+	}
+
+	@Override
+	public synchronized ClientConfig setUseManagedThread(boolean value) {
+		return (ClientConfig) super.setUseManagedThread(value);
+	}
+
+	@Override
+	public synchronized ClientConfig setPacketBufferInitialSize(int value) {
+		return (ClientConfig) super.setPacketBufferInitialSize(value);
+	}
+
+	@Override
+	public synchronized ClientConfig setGlobalConnectionCheck(boolean value) {
+		return (ClientConfig) super.setGlobalConnectionCheck(value);
+	}
+
+	@Override
+	public ClientConfig clone() {
+		return (ClientConfig) super.clone();
+	}
+
+	@Override
+	public ClientConfig deriveClient() {
+		return clone();
 	}
 }

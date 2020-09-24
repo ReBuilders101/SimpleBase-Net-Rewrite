@@ -58,7 +58,7 @@ public final class ServerInfoRequest {
 	private ServerInfoRequest(NetworkManagerProperties manager) throws IOException {
 		if(broadcastAddress == null) throw new IllegalStateException("Broadcast address not initialized");
 		
-		final CommonConfig<?> config = manager.getConfig();
+		final CommonConfig config = manager.getConfig();
 		this.channel = DatagramChannel.open();
 		this.activeRequests = new HashMap<>();
 		this.encoder = new PacketToByteConverter(manager);
@@ -341,7 +341,7 @@ public final class ServerInfoRequest {
 		}
 	}
 	
-	public static ServerInfoRequest create(PacketIDMappingProvider mappings, CommonConfig<?> config) {
+	public static ServerInfoRequest create(PacketIDMappingProvider mappings, CommonConfig config) {
 		return create(NetworkManagerProperties.of(config, mappings, EventDispatchChain.P1(RejectedExecutionException.class),
 				EventDispatchChain.P1(RejectedExecutionException.class)));
 	}

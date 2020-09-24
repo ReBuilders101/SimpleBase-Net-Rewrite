@@ -5,7 +5,7 @@ import java.util.function.BiFunction;
 import dev.lb.simplebase.net.manager.NetworkManagerServer;
 import dev.lb.simplebase.net.packet.Packet;
 
-public class ServerConfig extends CommonConfig<ServerConfig> {
+public class ServerConfig extends CommonConfig {
 
 	private static final boolean REGISTER_INTERNAL_DEFAULT = true;
 	private static final boolean ALLOW_DETECTION_DEFAULT = true;
@@ -63,5 +63,60 @@ public class ServerConfig extends CommonConfig<ServerConfig> {
 		} else {
 			return serverInfoFactory.apply(server, address);
 		}
+	}
+
+	@Override
+	public synchronized ServerConfig setDatagramPacketMaxSize(int size) {
+		return (ServerConfig) super.setDatagramPacketMaxSize(size);
+	}
+
+	@Override
+	public synchronized ServerConfig setUseEncoderThreadPool(boolean value) {
+		return (ServerConfig) super.setUseEncoderThreadPool(value);
+	}
+
+	@Override
+	public synchronized ServerConfig setUseDecoderThreadPool(boolean value) {
+		return (ServerConfig) super.setUseDecoderThreadPool(value);
+	}
+
+	@Override
+	public synchronized ServerConfig setUseThreadPools(boolean encoder, boolean decoder) {
+		return (ServerConfig) super.setUseThreadPools(encoder, decoder);
+	}
+
+	@Override
+	public synchronized ServerConfig setCompressionSize(int minPacketSize) {
+		return (ServerConfig) super.setCompressionSize(minPacketSize);
+	}
+
+	@Override
+	public synchronized ServerConfig setConnectionCheckTimeout(int value) {
+		return (ServerConfig) super.setConnectionCheckTimeout(value);
+	}
+
+	@Override
+	public synchronized ServerConfig setUseManagedThread(boolean value) {
+		return (ServerConfig) super.setUseManagedThread(value);
+	}
+
+	@Override
+	public synchronized ServerConfig setPacketBufferInitialSize(int value) {
+		return (ServerConfig) super.setPacketBufferInitialSize(value);
+	}
+
+	@Override
+	public synchronized ServerConfig setGlobalConnectionCheck(boolean value) {
+		return (ServerConfig) super.setGlobalConnectionCheck(value);
+	}
+
+	@Override
+	public ServerConfig deriveServer() {
+		return clone();
+	}
+
+	@Override
+	public ServerConfig clone() {
+		return (ServerConfig) super.clone();
 	}
 }
