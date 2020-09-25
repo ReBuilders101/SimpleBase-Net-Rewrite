@@ -1,7 +1,10 @@
 package dev.lb.simplebase.net.connection;
 
 import java.nio.ByteBuffer;
+
+import dev.lb.simplebase.net.event.EventDispatchChain;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
+import dev.lb.simplebase.net.events.PacketSendingFailedEvent;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFunction;
 import dev.lb.simplebase.net.manager.ExternalNetworkManagerServer;
@@ -23,12 +26,15 @@ public abstract class ExternalNetworkConnection extends NetworkConnection {
 	protected final PacketToByteConverter packetToByteConverter;
 	protected final ConnectionAdapter connectionAdapter;
 	protected final AwaitableTask openCompleted;
-	
+	protected final EventDispatchChain.P1<Packet, ?> sendingFailed;
 	
 	protected ExternalNetworkConnection(NetworkManagerCommon networkManager, NetworkID remoteID,
 			NetworkConnectionState initialState, int checkTimeoutMS, boolean serverSide, Object customObject, boolean udpWarning) {
 		super(networkManager, remoteID, initialState, checkTimeoutMS, serverSide, customObject);
 		
+		EventDispatchChain.P2<NetworkID, Packet, ?> edc = EventDispatchChain.P2(networkManager.getEventDispatcher(),
+				networkManager.PacketSendingFailed, PacketSendingFailedEvent::new);
+		this.sendingFailed = edc.bind(remoteID);
 		this.openCompleted = new AwaitableTask();
 		this.connectionAdapter = new Adapter(udpWarning);
 		this.packetToByteConverter = networkManager.createToByteConverter();
@@ -46,7 +52,12 @@ public abstract class ExternalNetworkConnection extends NetworkConnection {
 	@Override
 	protected void sendPacketImpl(Packet packet) {
 		if(networkManager.getEncoderPool().isValidEncoderThread()) {
-			sendRawByteData(packetToByteConverter.convert(NetworkPacketFormats.PACKET, packet));
+			final ByteBuffer encodedData = packetToByteConverter.convert(NetworkPacketFormats.PACKET, packet);
+			if(encodedData != null) {
+				sendRawByteData(encodedData);
+			} else {
+				sendingFailed.post(packet);
+			}
 		} else {
 			networkManager.getEncoderPool().encodeAndSendPacket(this, packet);
 		}

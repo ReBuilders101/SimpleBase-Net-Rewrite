@@ -100,6 +100,10 @@ public abstract class EventDispatchChain<E extends Event> {
 		public P0<E> bind(T1 t1, T2 t2) {
 			return new P0<>(dispatcher, event, () -> builder.apply(t1, t2));
 		}
+		
+		public P1<T2, E> bind(T1 t1) {
+			return new P1<>(dispatcher, event, (t2) -> builder.apply(t1, t2));
+		}
 
 		@Override
 		@SuppressWarnings("unchecked")

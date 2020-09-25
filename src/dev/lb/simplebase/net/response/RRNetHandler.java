@@ -7,6 +7,7 @@ import java.util.function.BiConsumer;
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.manager.NetworkManagerClient;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
@@ -32,9 +33,23 @@ public class RRNetHandler implements PacketHandler {
 		this(manager, PacketHandler.createEmpty());
 	}
 	
-	public <ResponseType extends RRPacket> Task sendPacket(NetworkID target,RRPacket.Request<ResponseType> packet,
+	public <ResponseType extends RRPacket> Task sendPacket(NetworkID target, RRPacket.Request<ResponseType> packet,
 			BiConsumer<ResponseType, PacketContext> handler) {
 		return sendPacket(target, packet, handler, false);
+	}
+	
+	public <ResponseType extends RRPacket> Task sendPacket(RRPacket.Request<ResponseType> packet,
+			BiConsumer<ResponseType, PacketContext> handler, boolean async) {
+		if(manager instanceof NetworkManagerClient) {
+			return sendPacket(((NetworkManagerClient) manager).getServerID(), packet, handler, async);
+		} else {
+			throw new UnsupportedOperationException("Sending without a destination ID is only possible for clients");
+		}
+	}
+	
+	public <ResponseType extends RRPacket> Task sendPacket(RRPacket.Request<ResponseType> packet,
+			BiConsumer<ResponseType, PacketContext> handler) {
+		return sendPacket(packet, handler, false);
 	}
 	
 	@SuppressWarnings("unchecked")
