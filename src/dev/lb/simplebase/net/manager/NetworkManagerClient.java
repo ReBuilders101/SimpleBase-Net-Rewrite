@@ -122,4 +122,14 @@ public final class NetworkManagerClient extends NetworkManagerCommon {
 		connection.updateConnectionStatus();
 	}
 
+	@Override
+	@Deprecated
+	public boolean sendPacketTo(NetworkID remote, Packet packet) {
+		if(remote == remoteID) {
+			return sendPacketToServer(packet);
+		} else {
+			return false;
+		}
+	}
+
 }

@@ -1,8 +1,11 @@
 package dev.lb.simplebase.net.packet.handler;
 
-import dev.lb.simplebase.net.log.LogLevel;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
+import dev.lb.simplebase.net.util.Pair;
 
 /**
  * A method that handles incoming packets from all connections of a Network Manager
@@ -20,7 +23,6 @@ public interface PacketHandler {
 	
 	/**
 	 * Creates a new {@link PacketHandler} that discards any received packet.<br>
-	 * A log message at {@link LogLevel#DEBUG} will be generated for each discarded packet.
 	 * @return The empty packet handler
 	 */
 	public static PacketHandler createEmpty() {
@@ -33,6 +35,15 @@ public interface PacketHandler {
 	 */
 	public static PacketHandler createEcho() {
 		return (p, c) -> c.replyPacket(p);
+	}
+	
+	public static PacketHandler createUpdatable(AtomicReference<PacketHandler> reference) {
+		return reference.get()::handlePacket;
+	}
+	
+	public static Pair<PacketHandler, Consumer<PacketHandler>> createUpdatable(PacketHandler initial) {
+		final AtomicReference<PacketHandler> ref = new AtomicReference<PacketHandler>(initial);
+		return new Pair<>(createUpdatable(ref), ref::set);
 	}
 	
 	/**

@@ -1,14 +1,16 @@
 package dev.lb.simplebase.net.manager;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
@@ -101,7 +103,7 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 	 * @throws IllegalStateException If the lock is not held by the current thread (optional)
 	 * @see #getConnectionsCopy()
 	 */
-	public Iterable<NetworkConnection> getConnectionsFast() {
+	public Collection<NetworkConnection> getConnectionsFast() {
 		if(LockHelper.isHeldByCurrentThread(lockServer.readLock(), true)) { 
 			return connections.values();
 		} else {
@@ -109,7 +111,24 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 		}
 	}
 	
-	public int getConnectionCount() {
+	public Collection<NetworkID> getClientsFast() {
+		if(LockHelper.isHeldByCurrentThread(lockServer.readLock(), true)) { 
+			return connections.keySet();
+		} else {
+			throw new IllegalStateException("Current thread does not hold lock"); //No lock, no iterator
+		}
+	}
+	
+	public Set<NetworkID> getClientsCopy() {
+		try {
+			lockServer.readLock().lock();
+			return new HashSet<>(connections.keySet());
+		} finally {
+			lockServer.readLock().unlock();
+		}
+	}
+	
+	public int getClientCount() {
 		return connections.size();
 	}
 	
@@ -340,5 +359,11 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 		if(currentState != ServerManagerState.STOPPED) {
 			stopServer();
 		}
+	}
+
+	@Override
+	@Deprecated
+	public boolean sendPacketTo(NetworkID remote, Packet packet) {
+		return sendPacketToClient(remote, packet);
 	}
 }

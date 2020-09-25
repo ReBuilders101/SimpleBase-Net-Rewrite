@@ -198,6 +198,8 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 	@Internal
 	public	abstract void removeConnectionSilently(NetworkConnection connection);
 	
+	public abstract boolean sendPacketTo(NetworkID remote, Packet packet);
+	
 	/**
 	 * The event dispatcher. Only API-internal code may post events
 	 */
