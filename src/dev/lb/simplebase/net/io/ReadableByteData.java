@@ -3,7 +3,11 @@ package dev.lb.simplebase.net.io;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * This interface provides additional methods for reading primitives and strings directly. All methods
@@ -57,6 +61,21 @@ public interface ReadableByteData {
 				((( (char) b1) & 0xFF ) << 8) | //MSB shifted left
 				((  (char) b0) & 0xFF ) //LSB stays right
 				);
+	}
+	
+	public default UUID readUUID() {
+		long msb = readLong();
+		long lsb = readLong();
+		return new UUID(msb, lsb);
+	}
+	
+	public default Instant readTimeInstant() {
+		return Instant.from(readTime(DateTimeFormatter.ISO_INSTANT));
+	}
+	
+	public default TemporalAccessor readTime(DateTimeFormatter formatter) {
+		final String serialized = readShortStringWithLength();
+		return formatter.parse(serialized);
 	}
 	
 	/**

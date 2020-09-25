@@ -5,6 +5,10 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
+import java.util.UUID;
 
 /**
  * This interface provides additional methods for writing primitives and strings. All methods
@@ -55,6 +59,20 @@ public interface WritableByteData {
 	public default void writeChar(char c) {
 		writeByte((byte) (c & 0xFF));
 		writeByte((byte) ((c >>> 8) & 0xFF));
+	}
+	
+	public default void writeUUID(UUID uuid) {
+		writeLong(uuid.getMostSignificantBits());
+		writeLong(uuid.getLeastSignificantBits());
+	}
+	
+	public default void writeTimeInstant(Instant instant) {
+		writeTime(instant, DateTimeFormatter.ISO_INSTANT);
+	}
+	
+	public default void writeTime(TemporalAccessor time, DateTimeFormatter formatter) {
+		final String serialized = formatter.format(time);
+		writeShortStringWithLength(serialized);
 	}
 	
 	/**
