@@ -3,7 +3,7 @@ package dev.lb.simplebase.net.response;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.AbstractLogger;
@@ -33,14 +33,15 @@ public class RRNetHandler implements PacketHandler {
 	}
 	
 	public <ResponseType extends RRPacket> Task sendPacket(NetworkID target,RRPacket.Request<ResponseType> packet,
-			Consumer<ResponseType> handler) {
+			BiConsumer<ResponseType, PacketContext> handler) {
 		return sendPacket(target, packet, handler, false);
 	}
 	
 	@SuppressWarnings("unchecked")
 	public <ResponseType extends RRPacket> Task sendPacket(NetworkID target,RRPacket.Request<ResponseType> packet,
-			Consumer<ResponseType> handler,  boolean async) {
-		final RequestDetails details = new RequestDetails(packet.getUUID(), target, packet.getResponsePacketClass(), (Consumer<RRPacket>) handler, async);
+			BiConsumer<ResponseType, PacketContext> handler,  boolean async) {
+		final RequestDetails details = new RequestDetails(packet.getUUID(), target, packet.getResponsePacketClass(),
+				(BiConsumer<RRPacket, PacketContext>) handler, async);
 		synchronized (activeRequests) {
 			if(activeRequests.containsKey(details.getUUID())) {
 				throw new RuntimeException("Duplicate request UUID");
@@ -75,7 +76,7 @@ public class RRNetHandler implements PacketHandler {
 					if(syncReq == null) {
 						LOGGER.warning("Received RR response packet without a corresponding request UUID (missed sync)");
 					} else if(syncReq == req) {
-						req.handle(rrp);
+						req.handle(rrp, context);
 						activeRequests.remove(rrp.getUUID(), req);
 					} else {
 						LOGGER.error("Received RR response packet: missed sync - request was altered");
@@ -93,10 +94,11 @@ public class RRNetHandler implements PacketHandler {
 		private final UUID uuid;
 		private final NetworkID remote;
 		private final Class<? extends RRPacket> responseType;
-		private final Consumer<RRPacket> handler;
+		private final BiConsumer<RRPacket, PacketContext> handler;
 		private final boolean async;
 		
-		private RequestDetails(UUID uuid, NetworkID remote, Class<? extends RRPacket> responseType, Consumer<RRPacket> handler, boolean async) {
+		private RequestDetails(UUID uuid, NetworkID remote, Class<? extends RRPacket> responseType,
+				BiConsumer<RRPacket, PacketContext> handler, boolean async) {
 			this.task = new AwaitableTask();
 			this.uuid = uuid;
 			this.remote = remote;
@@ -121,13 +123,13 @@ public class RRNetHandler implements PacketHandler {
 			return responseType;
 		}
 		
-		public void handle(RRPacket packet) {
+		public void handle(RRPacket packet, PacketContext context) {
 			if(task.isDone()) throw new IllegalStateException("Already used this RequestDetails");
 			
 			if(async) {
-				CompletableFuture.runAsync(() -> handler.accept(packet));
+				CompletableFuture.runAsync(() -> handler.accept(packet, context));
 			} else {
-				handler.accept(packet);
+				handler.accept(packet, context);
 			}
 			
 			task.release();

@@ -127,7 +127,7 @@ public class PacketIDMappingProvider {
 	 * @throws NullPointerException If one of the mappings is null and the implementation does not allow null elements
 	 * @throws IllegalArgumentException If a mapping with the same ID or Class as one those to add already exists in this set and the implementation does not allow duplicate elements
 	 */
-	public void addMappings(PacketIDMapping[] newMappings) {
+	public void addMappings(PacketIDMapping...newMappings) {
 		//1. Validate before getting the lock
 		Objects.requireNonNull(newMappings, "'mapping' parameter must not be null");
 		//Also, if length==0, we don't do anything

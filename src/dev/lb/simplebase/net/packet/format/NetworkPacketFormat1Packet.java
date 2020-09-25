@@ -54,6 +54,7 @@ class NetworkPacketFormat1Packet<Connection> extends NetworkPacketFormat<Connect
 
 		if(mapping == null) {
 			//Invalid mapping, maybe logging, cancel packet
+			LOGGER.error("Unknown packet id: " + type + " - no matching PacketIdMapping in manager"); 
 			return null;
 		}
 
@@ -68,7 +69,10 @@ class NetworkPacketFormat1Packet<Connection> extends NetworkPacketFormat<Connect
 	@Override
 	public ByteBuffer encode(PacketIDMappingProvider context, Packet data, int bufferSize) {
 		final PacketIDMapping mapping = context.findMapping(data.getClass());
-		if(mapping == null) return null;
+		if(mapping == null) {
+			LOGGER.error("Unknown packet type: " + data.getClass() + " - no matching PacketIdMapping in manager"); 
+			return null;
+		}
 		final int packetId = mapping.getPacketID();
 		final int expectedSize = data.getByteSize();
 		final WritableNIOData writableData;
