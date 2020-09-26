@@ -1,6 +1,6 @@
 package dev.lb.simplebase.net.task;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -26,7 +26,7 @@ public class AwaitableTask implements Task {
 	
 	protected AwaitableTask(int counter) {
 		this.waiter = new CountDownLatch(counter);
-		this.completeTasks = new ArrayList<>();
+		this.completeTasks = new LinkedList<>();
 		this.startTimeStamp = NetworkManager.getClockMillis();
 	}
 	
@@ -72,6 +72,9 @@ public class AwaitableTask implements Task {
 	}
 	
 	public synchronized void release() {
+		if(isDone()) {
+			throw new IllegalStateException("Cannot complete task twice");
+		}
 		completeTasks.forEach(Runnable::run);
 		waiter.countDown();
 	}

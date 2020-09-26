@@ -32,6 +32,10 @@ public interface Task {
 	 */
 	public boolean isDone();
 	
+	public default boolean isRunning() {
+		return !isDone();
+	}
+	
 	/**
 	 * Waits until the action associated with this task has completed.
 	 * <p>
