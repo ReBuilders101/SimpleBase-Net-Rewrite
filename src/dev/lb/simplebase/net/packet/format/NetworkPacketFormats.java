@@ -62,7 +62,7 @@ public final class NetworkPacketFormats {
 			new NetworkPacketFormatEmpty<>(CONNECTED_UUID, "Connected-Accepted", ConnectionAdapter::receiveConnectionAccepted);
 	
 	private static final Lazy<Set<NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider , ?>>> ALL_FORMATS =
-			new Lazy<>(() -> {
+			Lazy.of(() -> {
 				final Set<NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider , ?>> set = new HashSet<>();
 				set.add(PACKET);
 				set.add(CHECK);

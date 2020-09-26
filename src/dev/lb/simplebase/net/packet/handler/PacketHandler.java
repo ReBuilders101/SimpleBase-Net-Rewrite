@@ -42,7 +42,7 @@ public interface PacketHandler {
 	}
 	
 	public static Pair<PacketHandler, Consumer<PacketHandler>> createUpdatable(PacketHandler initial) {
-		final AtomicReference<PacketHandler> ref = new AtomicReference<PacketHandler>(initial);
+		final AtomicReference<PacketHandler> ref = new AtomicReference<>(initial);
 		return new Pair<>(createUpdatable(ref), ref::set);
 	}
 	
