@@ -1,4 +1,4 @@
-package dev.lb.simplebase.net.util;
+package dev.lb.simplebase.net.task;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -19,13 +19,13 @@ class CompletedTask implements Task {
 	}
 
 	@Override
-	public void tryAwait() throws InterruptedException {
-		return;
+	public Task tryAwait() throws InterruptedException {
+		return this;
 	}
 
 	@Override
-	public void tryAwait(long timeout, TimeUnit unit) throws InterruptedException {
-		return;
+	public Task tryAwait(long timeout, TimeUnit unit) throws InterruptedException {
+		return this;
 	}
 
 	@Override

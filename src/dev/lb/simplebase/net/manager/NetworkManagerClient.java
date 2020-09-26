@@ -15,7 +15,7 @@ import dev.lb.simplebase.net.event.EventAccessor;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.packet.Packet;
-import dev.lb.simplebase.net.util.Task;
+import dev.lb.simplebase.net.task.Task;
 import dev.lb.simplebase.net.util.ThreadsafeAction;
 
 /**

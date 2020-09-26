@@ -10,7 +10,7 @@ import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFunction;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.manager.SelectorManager;
-import dev.lb.simplebase.net.util.Task;
+import dev.lb.simplebase.net.task.Task;
 
 public class TcpChannelNetworkConnection extends ExternalNetworkConnection implements ChannelConnection {
 	

@@ -18,8 +18,8 @@ import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.manager.NetworkManagerServer;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
-import dev.lb.simplebase.net.util.AwaitableTask;
-import dev.lb.simplebase.net.util.Task;
+import dev.lb.simplebase.net.task.AwaitableTask;
+import dev.lb.simplebase.net.task.Task;
 import dev.lb.simplebase.net.util.ThreadsafeAction;
 
 /**

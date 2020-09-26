@@ -6,7 +6,7 @@ import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFunction;
 import dev.lb.simplebase.net.manager.SocketNetworkManagerServer;
-import dev.lb.simplebase.net.util.Task;
+import dev.lb.simplebase.net.task.Task;
 
 /**
  * From Server-Side

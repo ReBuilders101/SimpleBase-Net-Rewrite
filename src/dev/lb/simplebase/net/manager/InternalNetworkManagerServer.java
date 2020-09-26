@@ -4,7 +4,7 @@ import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.config.ServerConfig;
 import dev.lb.simplebase.net.config.ServerType;
 import dev.lb.simplebase.net.id.NetworkID;
-import dev.lb.simplebase.net.util.Task;
+import dev.lb.simplebase.net.task.Task;
 
 public class InternalNetworkManagerServer extends NetworkManagerServer {
 

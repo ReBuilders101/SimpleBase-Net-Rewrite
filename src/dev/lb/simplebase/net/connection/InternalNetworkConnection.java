@@ -5,7 +5,7 @@ import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.Packet;
-import dev.lb.simplebase.net.util.Task;
+import dev.lb.simplebase.net.task.Task;
 
 public class InternalNetworkConnection extends NetworkConnection {
 

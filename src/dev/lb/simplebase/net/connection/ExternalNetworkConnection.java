@@ -15,7 +15,7 @@ import dev.lb.simplebase.net.packet.converter.ConnectionAdapter;
 import dev.lb.simplebase.net.packet.converter.PacketToByteConverter;
 import dev.lb.simplebase.net.packet.converter.SingleConnectionAdapter;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
-import dev.lb.simplebase.net.util.AwaitableTask;
+import dev.lb.simplebase.net.task.AwaitableTask;
 
 /**
  * A network connection that converts packets to/from bytes when sending them

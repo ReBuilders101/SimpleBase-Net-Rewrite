@@ -24,9 +24,9 @@ import dev.lb.simplebase.net.events.FilterRawConnectionEvent;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.packet.Packet;
+import dev.lb.simplebase.net.task.Task;
 import dev.lb.simplebase.net.util.LockBasedThreadsafeIterable;
 import dev.lb.simplebase.net.util.LockHelper;
-import dev.lb.simplebase.net.util.Task;
 import dev.lb.simplebase.net.util.ThreadsafeIterable;
 
 @Threadsafe

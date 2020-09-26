@@ -1,4 +1,4 @@
-package dev.lb.simplebase.net.util;
+package dev.lb.simplebase.net.task;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -21,13 +21,15 @@ public class ContextTask<T> implements Task {
 	}
 	
 	@Override
-	public void tryAwait() throws InterruptedException {
+	public ContextTask<T> tryAwait() throws InterruptedException {
 		task.tryAwait();
+		return this;
 	}
 	
 	@Override
-	public void tryAwait(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+	public ContextTask<T> tryAwait(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
 		task.tryAwait(timeout, unit);
+		return this;
 	}
 	
 	@Override

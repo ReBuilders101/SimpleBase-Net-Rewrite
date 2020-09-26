@@ -31,8 +31,8 @@ import dev.lb.simplebase.net.packet.converter.AnonymousClientConnectionAdapter;
 import dev.lb.simplebase.net.packet.converter.MutableAddressConnectionAdapter;
 import dev.lb.simplebase.net.packet.converter.PacketToByteConverter;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
-import dev.lb.simplebase.net.util.AwaitableTask;
-import dev.lb.simplebase.net.util.Task;
+import dev.lb.simplebase.net.task.AwaitableTask;
+import dev.lb.simplebase.net.task.Task;
 
 public final class ServerInfoRequest {
 	private static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("server-info");

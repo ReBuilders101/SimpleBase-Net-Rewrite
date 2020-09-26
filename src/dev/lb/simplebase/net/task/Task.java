@@ -1,4 +1,4 @@
-package dev.lb.simplebase.net.util;
+package dev.lb.simplebase.net.task;
 
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
@@ -8,6 +8,7 @@ import java.util.function.BooleanSupplier;
 
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.connection.NetworkConnection;
+import dev.lb.simplebase.net.util.Pair;
 
 /**
  * A task represents an action that may execute asynchrounously.
@@ -36,16 +37,15 @@ public interface Task {
 	 * <p>
 	 * The method will block the calling thread until the action completes or
 	 * the waiting thread is interrupted.
-	 * @return {@code true} if the action completed, {@code false} if the thread was interrupted while waiting
+	 * @return {@code this}
 	 * @see #await(long, TimeUnit)
 	 * @see #tryAwait()
 	 */
-	public default boolean await() {
+	public default Task await() {
 		try {
-			tryAwait();
-			return true;
+			return tryAwait();
 		} catch (InterruptedException e) {
-			return false;
+			return this;
 		}
 	}
 	
@@ -56,16 +56,15 @@ public interface Task {
 	 * the waiting thread is interrupted or the timeout elapses.
 	 * @param timeout The maximum amount of time to wait until this method returns, in the specified time unit
 	 * @param unit The unit of time for the timeout value
-	 * @return {@code true} if the action completed, {@code false} if the thread was interrupted while waiting or timed out
+	 * @return {@code this}
 	 * @see #await()
 	 * @see #tryAwait(long, TimeUnit)
 	 */
-	public default boolean await(long timeout, TimeUnit unit) {
+	public default Task await(long timeout, TimeUnit unit) {
 		try {
-			tryAwait(timeout, unit);
-			return true;
+			return tryAwait(timeout, unit);
 		} catch (InterruptedException | TimeoutException e) {
-			return false;
+			return this;
 		}
 	}
 	
@@ -74,11 +73,12 @@ public interface Task {
 	 * <p>
 	 * The method will block the calling thread until the action completes or
 	 * the waiting thread is interrupted.
+	 * @return {@code this}
 	 * @throws InterruptedException When the thread was interrupted while waiting
 	 * @see #await()
 	 * @see #tryAwait(long, TimeUnit)
 	 */
-	public void tryAwait() throws InterruptedException;
+	public Task tryAwait() throws InterruptedException;
 	
 	/**
 	 * Waits until the action associated with this task has completed or until a specified waiting time elapses.
@@ -87,18 +87,19 @@ public interface Task {
 	 * the waiting thread is interrupted or the timeout elapses.
 	 * @param timeout The maximum amount of time to wait until this method returns, in the specified time unit
 	 * @param unit The unit of time for the timeout value
+	 * @return {@code this}
 	 * @throws InterruptedException When the thread was interrupted while waiting
 	 * @throws TimeoutException When the specified time elapsed without the task completing
 	 * @see #await(long, TimeUnit)
 	 * @see #tryAwait()
 	 */
-	public void tryAwait(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException;
+	public Task tryAwait(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException;
 	
 	/**
 	 * A non-blocking way to check whether a task has timed out
 	 * @param timeout The amount of time that must have passed for this method to succeed in the specified time unit
 	 * @param unit The unit of time for the timeout value
-	 * @return {@code True} if the specified amount of time has passed since the task was created <b>OR the task has completed</b>,
+	 * @return {@code true} if the specified amount of time has passed since the task was created <b>OR the task has completed</b>,
 	 *  {@code false} if the task is still running and the timespan has not passed.
 	 */
 	public boolean asyncAwait(long timeout, TimeUnit unit);
@@ -161,7 +162,7 @@ public interface Task {
 			private volatile boolean doneOnce = false;
 			
 			@Override
-			public void tryAwait(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+			public Task tryAwait(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
 				final long msTimeout = unit.toMillis(timeout);
 				final long endTimestamp = startTimestamp + msTimeout;
 				
@@ -172,7 +173,7 @@ public interface Task {
 					
 					if(condition.getAsBoolean()) {
 						doneOnce = true;
-						return;
+						return this;
 					}
 				}
 				
@@ -180,7 +181,7 @@ public interface Task {
 			}
 			
 			@Override
-			public void tryAwait() throws InterruptedException {
+			public Task tryAwait() throws InterruptedException {
 				while(true) {
 					if(Thread.interrupted()) {
 						throw new InterruptedException();
@@ -188,7 +189,7 @@ public interface Task {
 					
 					if(condition.getAsBoolean()) {
 						doneOnce = true;
-						return;
+						return this;
 					}
 				}
 			}

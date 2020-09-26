@@ -12,8 +12,8 @@ import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
 import dev.lb.simplebase.net.packet.handler.PacketHandler;
-import dev.lb.simplebase.net.util.AwaitableTask;
-import dev.lb.simplebase.net.util.Task;
+import dev.lb.simplebase.net.task.AwaitableTask;
+import dev.lb.simplebase.net.task.Task;
 
 public class RRNetHandler implements PacketHandler {
 	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("packet-handler");

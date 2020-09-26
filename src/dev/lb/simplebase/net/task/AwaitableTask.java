@@ -1,4 +1,4 @@
-package dev.lb.simplebase.net.util;
+package dev.lb.simplebase.net.task;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,15 +36,17 @@ public class AwaitableTask implements Task {
 	}
 
 	@Override
-	public void tryAwait() throws InterruptedException {
+	public Task tryAwait() throws InterruptedException {
 		waiter.await();
+		return this;
 	}
 
 	@Override
-	public void tryAwait(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+	public Task tryAwait(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
 		if(!waiter.await(timeout, unit)) {
 			throw new TimeoutException();
 		}
+		return this;
 	}
 
 	//Sync these two to ensure that all chain tasks are run

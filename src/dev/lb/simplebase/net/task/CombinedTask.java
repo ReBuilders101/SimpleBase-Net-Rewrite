@@ -1,4 +1,4 @@
-package dev.lb.simplebase.net.util;
+package dev.lb.simplebase.net.task;
 
 import dev.lb.simplebase.net.annotation.Internal;
 
