@@ -72,9 +72,6 @@ public class AwaitableTask implements Task {
 	}
 	
 	public synchronized void release() {
-		if(isDone()) {
-			throw new IllegalStateException("Cannot complete task twice");
-		}
 		completeTasks.forEach(Runnable::run);
 		waiter.countDown();
 	}
