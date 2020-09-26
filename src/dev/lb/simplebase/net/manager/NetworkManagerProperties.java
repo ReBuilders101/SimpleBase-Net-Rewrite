@@ -26,8 +26,8 @@ public interface NetworkManagerProperties {
 	public static NetworkManagerProperties of(CommonConfig config, PacketIDMappingProvider provider,
 			EventDispatchChain.P1<RejectedExecutionException, ?> onEncoderError, EventDispatchChain.P1<RejectedExecutionException, ?> onDecoderError) {
 		return new NetworkManagerProperties() {
-			private final Lazy<PacketToByteConverter> toByte = new Lazy<>(() -> new PacketToByteConverter(this));
-			private final Lazy<ByteToPacketConverter> toPack = new Lazy<>(() -> new ByteToPacketConverter(this));			
+			private final Lazy<PacketToByteConverter> toByte = Lazy.of(() -> new PacketToByteConverter(this));
+			private final Lazy<ByteToPacketConverter> toPack = Lazy.of(() -> new ByteToPacketConverter(this));			
 			@Override
 			public PacketIDMappingProvider getMappingContainer() {
 				return provider;

@@ -113,8 +113,8 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 			NetworkManager.InternalAccess.INSTANCE.registerManagerForConnectionStatusCheck(this);
 		}
 		
-		commonToByteConverter = new Lazy<>(() -> new PacketToByteConverter(this));
-		commonToPacketConverter = new Lazy<>(() -> new ByteToPacketConverter(this));
+		commonToByteConverter = Lazy.of(() -> new PacketToByteConverter(this));
+		commonToPacketConverter = Lazy.of(() -> new ByteToPacketConverter(this));
 	}
 
 	/**

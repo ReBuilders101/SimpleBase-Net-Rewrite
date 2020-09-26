@@ -93,6 +93,10 @@ static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("packet-deco
 		requiredBytes = 4; //The format ID
 	}
 	
+	public boolean isDone() {
+		return currentFormat == null && buffer.position() == 0;
+	}
+	
 	/**
 	 * Puts a single byte into the accumulation buffer.
 	 * @param data The byte value

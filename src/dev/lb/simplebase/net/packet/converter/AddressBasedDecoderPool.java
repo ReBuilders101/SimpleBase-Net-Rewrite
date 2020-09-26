@@ -61,7 +61,8 @@ public class AddressBasedDecoderPool {
 			if(usedAdapters.containsKey(address)) {
 				final ByteAccumulator decoder = usedAdapters.get(address);
 				getCounter(decoder).release();
-				if(getCounter(decoder).getCounter() == 0) {
+				//Only release a decoder when a packet is complete, otherwise it might get another data segment
+				if(getCounter(decoder).getCounter() == 0 && decoder.isDone()) {
 					usedAdapters.remove(address, decoder);
 					decoder.resetToFindFormat(); //clear any extra data
 					freeAdapters.add(decoder);
