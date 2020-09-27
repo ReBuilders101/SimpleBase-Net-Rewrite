@@ -166,7 +166,7 @@ public final class EventAccessor<E extends Event> { //NOT Iterable on purpose!!
 				//Must have 1 param that is a subclass of Event, no exceptions or generics
 				if(params.length == 1 && params[0] != null &&
 						method.getExceptionTypes().length == 0 &&
-						method.getParameterTypes().length == 0 &&
+//						method.getGe.length == 0 &&
 						Event.class.isAssignableFrom(params[0])) {
 					//Must have the annotation
 					if(method.isAnnotationPresent(EventHandler.class)) {

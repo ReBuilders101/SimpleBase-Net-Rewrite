@@ -5,6 +5,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -323,5 +324,38 @@ public interface ValueTask<V> extends Task {
 			return onCompletedAsync(Pair.spreading(successTask), cancelledTask);
 		}
 
+		public <R> ValueTask<R> map(BiFunction<A, B, R> mapper) {
+			return ValueTask.super.map((p) -> mapper.apply(p.getLeft(), p.getRight()));
+		}
+
+		public <R> ValueTask.PairTask<R, B> mapLeft(BiFunction<A, B, R> mapper) {
+			return ValueTask.ofPair(ValueTask.super.map((p) -> new Pair<>(mapper.apply(p.getLeft(), p.getRight()), p.getRight())));
+		}
+		
+		public <R> ValueTask.PairTask<R, B> mapLeft(Function<A, R> mapper) {
+			return ValueTask.ofPair(ValueTask.super.map((p) -> new Pair<>(mapper.apply(p.getLeft()), p.getRight())));
+		}
+		
+		public <R> ValueTask.PairTask<A, R> mapRight(BiFunction<A, B, R> mapper) {
+			return ValueTask.ofPair(ValueTask.super.map((p) -> new Pair<>(p.getLeft(), mapper.apply(p.getLeft(), p.getRight()))));
+		}
+		
+		public <R> ValueTask.PairTask<A, R> mapRight(Function<B, R> mapper) {
+			return ValueTask.ofPair(ValueTask.super.map((p) -> new Pair<>(p.getLeft(), mapper.apply(p.getRight()))));
+		}
+		
+		public <R, S> ValueTask.PairTask<R, S> mapBoth(BiFunction<A, B, Pair<R, S>> mapper) {
+			return ValueTask.ofPair(ValueTask.super.map((p) -> mapper.apply(p.getLeft(), p.getRight())));
+		}
+		
+		public <R, S> ValueTask.PairTask<R, S> mapBoth(BiFunction<A, B, R> leftMapper, BiFunction<A, B, S> rightMapper) {
+			return ValueTask.ofPair(ValueTask.super.map((p) -> new Pair<>(leftMapper.apply(p.getLeft(), p.getRight()),
+					rightMapper.apply(p.getLeft(), p.getRight()))));
+		}
+		
+		public <R, S> ValueTask.PairTask<R, S> mapBoth(Function<A, R> leftMapper, Function<B, S> rightMapper) {
+			return ValueTask.ofPair(ValueTask.super.map((p) -> new Pair<>(leftMapper.apply(p.getLeft()),
+					rightMapper.apply(p.getRight()))));
+		}
 	}
 } 
