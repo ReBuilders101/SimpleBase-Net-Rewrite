@@ -15,7 +15,7 @@ import dev.lb.simplebase.net.annotation.Threadsafe;
 
 @Internal
 @Threadsafe
-public final class AwaitableValueTask<V> implements ValueTask<V> {
+final class AwaitableValueTask<V> implements ValueTask<V> {
 
 	private static final int RUNNING = 1;
 	private static final int SUCCESS = 2;
@@ -28,7 +28,7 @@ public final class AwaitableValueTask<V> implements ValueTask<V> {
 	private volatile int status;
 	private volatile Object checkedData;
 	
-	public AwaitableValueTask() {
+	AwaitableValueTask() {
 		this.waiter = new CountDownLatch(1);
 		this.successTasks = new LinkedList<>();
 		this.cancelledTasks = new LinkedList<>();
@@ -171,30 +171,8 @@ public final class AwaitableValueTask<V> implements ValueTask<V> {
 		waiter.countDown();
 	}
 	
-	public AwaitableValueTask.CompletionSource<V> createCompletionSource() {
+	public ValueTask.CompletionSource<V> createCompletionSource() {
 		return new CompletionSource<>(this);
-	}
-	
-	public static final class CompletionSource<V> {
-		
-		private final AwaitableValueTask<V> task;
-		
-		private CompletionSource(AwaitableValueTask<V> task) {
-			this.task = task;
-		}
-		
-		public void success(V value) {
-			task.success(value);
-		}
-		
-		public void cancelled(Throwable cause) {
-			task.cancelled(cause);
-		}
-		
-		public boolean isSet() {
-			return task.isDone();
-		}
-		
 	}
 
 }

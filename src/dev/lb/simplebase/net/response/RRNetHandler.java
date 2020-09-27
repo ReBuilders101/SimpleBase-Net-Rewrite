@@ -2,8 +2,6 @@ package dev.lb.simplebase.net.response;
 
 import java.util.HashMap;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.BiConsumer;
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.AbstractLogger;
@@ -12,14 +10,14 @@ import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
 import dev.lb.simplebase.net.packet.handler.PacketHandler;
-import dev.lb.simplebase.net.task.AwaitableTask;
-import dev.lb.simplebase.net.task.Task;
+import dev.lb.simplebase.net.task.ValueTask;
+import dev.lb.simplebase.net.util.Pair;
 
 public class RRNetHandler implements PacketHandler {
 	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("packet-handler");
 	
 	//Use a HashMap to quickly lokkup uuids:
-	private final HashMap<UUID, RequestDetails> activeRequests;
+	private final HashMap<UUID, RequestDetails<?>> activeRequests;
 	private final NetworkManagerCommon manager;
 	private final PacketHandler defaultHandler;
 	
@@ -33,30 +31,18 @@ public class RRNetHandler implements PacketHandler {
 		this(manager, PacketHandler.createEmpty());
 	}
 	
-	public <ResponseType extends RRPacket> Task sendPacket(NetworkID target, RRPacket.Request<ResponseType> packet,
-			BiConsumer<ResponseType, PacketContext> handler) {
-		return sendPacket(target, packet, handler, false);
-	}
-	
-	public <ResponseType extends RRPacket> Task sendPacket(RRPacket.Request<ResponseType> packet,
-			BiConsumer<ResponseType, PacketContext> handler, boolean async) {
+	public <ResponseType extends RRPacket> ValueTask.PairTask<ResponseType, PacketContext> sendPacket(RRPacket.Request<ResponseType> packet) {
 		if(manager instanceof NetworkManagerClient) {
-			return sendPacket(((NetworkManagerClient) manager).getServerID(), packet, handler, async);
+			return sendPacket(((NetworkManagerClient) manager).getServerID(), packet);
 		} else {
 			throw new UnsupportedOperationException("Sending without a destination ID is only possible for clients");
 		}
 	}
 	
-	public <ResponseType extends RRPacket> Task sendPacket(RRPacket.Request<ResponseType> packet,
-			BiConsumer<ResponseType, PacketContext> handler) {
-		return sendPacket(packet, handler, false);
-	}
-	
 	@SuppressWarnings("unchecked")
-	public <ResponseType extends RRPacket> Task sendPacket(NetworkID target,RRPacket.Request<ResponseType> packet,
-			BiConsumer<ResponseType, PacketContext> handler,  boolean async) {
-		final RequestDetails details = new RequestDetails(packet.getUUID(), target, packet.getResponsePacketClass(),
-				(BiConsumer<RRPacket, PacketContext>) handler, async);
+	public <ResponseType extends RRPacket> ValueTask.PairTask<ResponseType, PacketContext> sendPacket(NetworkID target, RRPacket.Request<ResponseType> packet) {
+		final RequestDetails<ResponseType> details = new RequestDetails<>(packet.getUUID(), target, packet.getResponsePacketClass());
+		
 		synchronized (activeRequests) {
 			if(activeRequests.containsKey(details.getUUID())) {
 				throw new RuntimeException("Duplicate request UUID");
@@ -68,7 +54,7 @@ public class RRNetHandler implements PacketHandler {
 					return details.getTask();
 				} else {
 					LOGGER.warning("Cannot send packet to " + target);
-					return Task.completed();
+					return ValueTask.ofPair((ValueTask<Pair<ResponseType, PacketContext>>) ValueTask.cancelled(new Exception("Packet was not sent (see log)")));
 				}
 			}
 		}
@@ -78,7 +64,7 @@ public class RRNetHandler implements PacketHandler {
 	public void handlePacket(Packet packet, PacketContext context) {
 		if(packet instanceof RRPacket) {
 			final RRPacket rrp = (RRPacket) packet;
-			final RequestDetails req = activeRequests.get(rrp.getUUID());
+			final RequestDetails<?> req = activeRequests.get(rrp.getUUID());
 			if(req == null) {
 				LOGGER.warning("Received RR response packet without a corresponding request UUID");
 			} else if(req.getRemoteID() != context.getRemoteID()) {
@@ -87,7 +73,7 @@ public class RRNetHandler implements PacketHandler {
 				LOGGER.warning("Received RR response packet with a different type than the request asked for");
 			} else {
 				synchronized (activeRequests) {
-					final RequestDetails syncReq = activeRequests.get(rrp.getUUID());
+					final RequestDetails<?> syncReq = activeRequests.get(rrp.getUUID());
 					if(syncReq == null) {
 						LOGGER.warning("Received RR response packet without a corresponding request UUID (missed sync)");
 					} else if(syncReq == req) {
@@ -103,27 +89,45 @@ public class RRNetHandler implements PacketHandler {
 		}
 	}
 	
-	private static final class RequestDetails {
+	public int getPendingReplyCount() {
+		synchronized (activeRequests) {
+			return activeRequests.size();
+		}
+	}
+	
+	public void cancelPendingReplies() {
+		synchronized (activeRequests) {
+			activeRequests.forEach((uuid, details) -> 
+				details.taskCompleted.cancelled(new Exception("Task cancelled by user: Cleared pending tasks in RRNetHandler")));
+			activeRequests.clear();
+		}
+	}
+	
+	public int getPendingReplyCount(NetworkID forRemote) {
+		synchronized (activeRequests) {
+			return (int) activeRequests.values().stream().filter((details) -> details.remote == forRemote).count();
+		}
+	}
+	
+	private static final class RequestDetails<RT extends RRPacket> {
 		
-		private final AwaitableTask task;
+		private final ValueTask.CompletionSource<Pair<RT, PacketContext>> taskCompleted;
+		private final ValueTask.PairTask<RT, PacketContext> delegate;
 		private final UUID uuid;
 		private final NetworkID remote;
-		private final Class<? extends RRPacket> responseType;
-		private final BiConsumer<RRPacket, PacketContext> handler;
-		private final boolean async;
+		private final Class<RT> responseType;
 		
-		private RequestDetails(UUID uuid, NetworkID remote, Class<? extends RRPacket> responseType,
-				BiConsumer<RRPacket, PacketContext> handler, boolean async) {
-			this.task = new AwaitableTask();
+		private RequestDetails(UUID uuid, NetworkID remote, Class<RT> responseType) {
+			final Pair<ValueTask<Pair<RT, PacketContext>>, ValueTask.CompletionSource<Pair<RT, PacketContext>>> oof = ValueTask.completable();
+			this.taskCompleted = oof.getRight();
+			this.delegate = ValueTask.ofPair(oof.getLeft());
 			this.uuid = uuid;
 			this.remote = remote;
 			this.responseType = responseType;
-			this.handler = handler;
-			this.async = async;
 		}
 		
-		public Task getTask() {
-			return task;
+		public ValueTask.PairTask<RT, PacketContext> getTask() {
+			return delegate;
 		}
 		
 		public UUID getUUID() {
@@ -138,16 +142,10 @@ public class RRNetHandler implements PacketHandler {
 			return responseType;
 		}
 		
+		@SuppressWarnings("unchecked")
 		public void handle(RRPacket packet, PacketContext context) {
-			if(task.isDone()) throw new IllegalStateException("Already used this RequestDetails");
-			
-			if(async) {
-				CompletableFuture.runAsync(() -> handler.accept(packet, context));
-			} else {
-				handler.accept(packet, context);
-			}
-			
-			task.release();
+			if(taskCompleted.isSet()) throw new IllegalStateException("Already used this RequestDetails");
+			taskCompleted.success(new Pair<>((RT) packet, context));
 		}
 	}
 }
