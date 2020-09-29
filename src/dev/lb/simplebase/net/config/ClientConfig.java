@@ -39,7 +39,7 @@ public class ClientConfig extends CommonConfig {
 	 * Not all server implementations support all connection types.
 	 * @return The {@link ConnectionType} for the server connection
 	 */
-	public synchronized ConnectionType getConnectionType() {
+	public ConnectionType getConnectionType() {
 		return connectionType;
 	}
 	
@@ -61,7 +61,7 @@ public class ClientConfig extends CommonConfig {
 	 * in the packet handler.
 	 * @return The custom object for the server connection
 	 */
-	public synchronized Object getCustomData() {
+	public Object getCustomData() {
 		return customData;
 	}
 	
@@ -124,12 +124,12 @@ public class ClientConfig extends CommonConfig {
 	}
 
 	@Override
-	public ClientConfig clone() {
+	public synchronized ClientConfig clone() {
 		return (ClientConfig) super.clone();
 	}
 
 	@Override
-	public ClientConfig deriveClient() {
+	public synchronized ClientConfig deriveClient() {
 		return clone();
 	}
 }

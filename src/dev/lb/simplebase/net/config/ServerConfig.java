@@ -26,7 +26,7 @@ public class ServerConfig extends CommonConfig {
 		return registerInternalServer;
 	}
 	
-	public ServerConfig setRegisterInternalServer(boolean value) {
+	public synchronized ServerConfig setRegisterInternalServer(boolean value) {
 		checkLocked();
 		this.registerInternalServer = value;
 		return this;
@@ -36,7 +36,7 @@ public class ServerConfig extends CommonConfig {
 		return allowDetection;
 	}
 	
-	public ServerConfig setAllowDetection(boolean value) {
+	public synchronized ServerConfig setAllowDetection(boolean value) {
 		checkLocked();
 		this.allowDetection = value;
 		return this;
@@ -46,18 +46,18 @@ public class ServerConfig extends CommonConfig {
 		return serverType;
 	}
 	
-	public ServerConfig setServerType(ServerType value) {
+	public synchronized ServerConfig setServerType(ServerType value) {
 		checkLocked();
 		this.serverType = value;
 		return this;
 	}
 	
-	public ServerConfig setServerInfoPacket(BiFunction<NetworkManagerServer, InetSocketAddress, ? extends Packet> factory) {
+	public synchronized ServerConfig setServerInfoPacket(BiFunction<NetworkManagerServer, InetSocketAddress, ? extends Packet> factory) {
 		this.serverInfoFactory = factory;
 		return this;
 	}
 	
-	public Packet createServerInfoPacket(NetworkManagerServer server, InetSocketAddress address) {
+	public synchronized Packet createServerInfoPacket(NetworkManagerServer server, InetSocketAddress address) {
 		if(serverInfoFactory == null) {
 			return null;
 		} else {
@@ -111,12 +111,12 @@ public class ServerConfig extends CommonConfig {
 	}
 
 	@Override
-	public ServerConfig deriveServer() {
+	public synchronized ServerConfig deriveServer() {
 		return clone();
 	}
 
 	@Override
-	public ServerConfig clone() {
+	public synchronized ServerConfig clone() {
 		return (ServerConfig) super.clone();
 	}
 }

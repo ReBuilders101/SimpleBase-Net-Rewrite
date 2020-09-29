@@ -71,7 +71,7 @@ public class CommonConfig implements Cloneable {
 		this.locked = false;
 	}
 	
-	public synchronized int getDatagramPacketMaxSize() {
+	public int getDatagramPacketMaxSize() {
 		return datagramPacketSize;
 	}
 	
@@ -81,7 +81,7 @@ public class CommonConfig implements Cloneable {
 		return this;
 	}
 	
-	public synchronized boolean getUseEncoderThreadPool() {
+	public boolean getUseEncoderThreadPool() {
 		return useEncoderPool;
 	}
 	
@@ -91,7 +91,7 @@ public class CommonConfig implements Cloneable {
 		return this;
 	}
 	
-	public synchronized boolean getUseDecoderThreadPool() {
+	public boolean getUseDecoderThreadPool() {
 		return useDecoderPool;
 	}
 	
@@ -108,7 +108,7 @@ public class CommonConfig implements Cloneable {
 		return this;
 	}
 	
-	public synchronized int getCompressionSize() {
+	public int getCompressionSize() {
 		return compressionSize;
 	}
 	
@@ -123,7 +123,7 @@ public class CommonConfig implements Cloneable {
 	 * will wait before it is treated as disconnected.
 	 * @return The connection check timeout in milliseconds
 	 */
-	public synchronized int getConnectionCheckTimeout() {
+	public int getConnectionCheckTimeout() {
 		return connectionCheckTimeout;
 	}
 	
@@ -158,7 +158,7 @@ public class CommonConfig implements Cloneable {
 	 * thread (See {@link NetworkManagerCommon#getManagedThread()} for more details).
 	 * @return {@code true} if the managed thread will be used in a manager, {@code false} otherwise
 	 */
-	public synchronized boolean getUseManagedThread() {
+	public boolean getUseManagedThread() {
 		return useManagedThread;
 	}
 	
@@ -183,7 +183,7 @@ public class CommonConfig implements Cloneable {
 	 * The decode buffer for UDP packets cannot expand, larger packets will be truncated.
 	 * @return The initial size of the packet encode buffer
 	 */
-	public synchronized int getPacketBufferInitialSize() {
+	public int getPacketBufferInitialSize() {
 		return encodeBufferInitialSize;
 	}
 	
@@ -191,7 +191,7 @@ public class CommonConfig implements Cloneable {
 	 * If {@code true}, a global daemon worker thread will periodically check all connections on this manager for a timeout
 	 * @return
 	 */
-	public synchronized boolean getGlobalConnectionCheck() {
+	public boolean getGlobalConnectionCheck() {
 		return globalConnectionCheck;
 	}
 	
@@ -235,7 +235,7 @@ public class CommonConfig implements Cloneable {
 		return locked;
 	}
 	
-	public ClientConfig deriveClient() {
+	public synchronized ClientConfig deriveClient() {
 		return new ClientConfig()
 			.setUseManagedThread(getUseManagedThread())
 			.setConnectionCheckTimeout(getConnectionCheckTimeout())
@@ -247,7 +247,7 @@ public class CommonConfig implements Cloneable {
 			.setUseDecoderThreadPool(getUseDecoderThreadPool());
 	}
 	
-	public ServerConfig deriveServer() {
+	public synchronized ServerConfig deriveServer() {
 		return new ServerConfig()
 			.setUseManagedThread(getUseManagedThread())
 			.setConnectionCheckTimeout(getConnectionCheckTimeout())
@@ -260,7 +260,7 @@ public class CommonConfig implements Cloneable {
 	}
 
 	@Override
-	public CommonConfig clone() {
+	public synchronized CommonConfig clone() {
 		try {
 			return (CommonConfig) super.clone();
 		} catch (CloneNotSupportedException e) {
