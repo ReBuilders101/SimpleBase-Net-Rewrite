@@ -4,6 +4,7 @@ import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.handler.PacketHandler;
+import dev.lb.simplebase.net.util.Cloneable2;
 
 /**
  * Sets config values for {@link NetworkManagerCommon} on creation.<p>
@@ -14,7 +15,7 @@ import dev.lb.simplebase.net.packet.handler.PacketHandler;
  * which prevents further modification.
  */
 @Threadsafe
-public class CommonConfig implements Cloneable {
+public class CommonConfig implements Cloneable2 {
 
 	/**
 	 * Can be used in {@link #setConnectionCheckTimeout(int)} to disable
