@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import java.util.Optional;
 
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.config.ServerConfig;
@@ -171,11 +172,11 @@ public abstract class ExternalNetworkManagerServer extends NetworkManagerServer 
 	@Internal
 	public void receiveServerInfoRequest(InetSocketAddress from) {
 		if(hasLan) {
-			Packet serverInfoPacket = getConfig().createServerInfoPacket(this, from);
-			if(serverInfoPacket == null) {
-				LOGGER.debug("No server info reply packet could be generated (To: %s)", from);
+			final Optional<Packet> serverInfoPacket = getConfig().createServerInfoPacket(this, from);
+			if(serverInfoPacket.isPresent()) {
+				sendRawUdpByteData(from, createToByteConverter().convert(NetworkPacketFormats.SERVERINFOAN, serverInfoPacket.get()));
 			} else {
-				sendRawUdpByteData(from, createToByteConverter().convert(NetworkPacketFormats.SERVERINFOAN, serverInfoPacket));
+				LOGGER.debug("No server info reply packet could be generated (To: %s)", from);
 			}
 		} else {
 			LOGGER.debug("Received a Server-Info-Request for server %s, but LAN module is disabled", getLocalID().getDescription());

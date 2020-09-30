@@ -1,6 +1,7 @@
 package dev.lb.simplebase.net.config;
 
 import java.net.InetSocketAddress;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import dev.lb.simplebase.net.manager.NetworkManagerServer;
 import dev.lb.simplebase.net.packet.Packet;
@@ -14,12 +15,45 @@ public class ServerConfig extends CommonConfig {
 	private boolean registerInternalServer;
 	private boolean allowDetection;
 	private ServerType serverType;
-	private BiFunction<NetworkManagerServer, InetSocketAddress, ? extends Packet> serverInfoFactory;
+	private BiFunction<NetworkManagerServer, Optional<InetSocketAddress>, ? extends Packet> serverInfoFactory;
 	
 	public ServerConfig() {
+		super();
 		this.registerInternalServer = REGISTER_INTERNAL_DEFAULT;
 		this.allowDetection = ALLOW_DETECTION_DEFAULT;
 		this.serverType = SERVER_TYPE_DEFAULT;
+	}
+	
+	public ServerConfig(CommonConfig template) {
+		super();
+		synchronized (template) {
+			this.setUseManagedThread(template.getUseManagedThread());
+			this.setConnectionCheckTimeout(template.getConnectionCheckTimeout());
+			this.setPacketBufferInitialSize(template.getPacketBufferInitialSize());
+			this.setGlobalConnectionCheck(template.getGlobalConnectionCheck());
+			this.setCompressionSize(template.getCompressionSize());
+			this.setUseEncoderThreadPool(template.getUseEncoderThreadPool());
+			this.setDatagramPacketMaxSize(template.getDatagramPacketMaxSize());
+			this.setUseDecoderThreadPool(template.getUseDecoderThreadPool());
+		}
+	}
+	
+	public ServerConfig(ServerConfig template) {
+		super();
+		synchronized (template) {
+			this.setUseManagedThread(template.getUseManagedThread());
+			this.setConnectionCheckTimeout(template.getConnectionCheckTimeout());
+			this.setPacketBufferInitialSize(template.getPacketBufferInitialSize());
+			this.setGlobalConnectionCheck(template.getGlobalConnectionCheck());
+			this.setCompressionSize(template.getCompressionSize());
+			this.setUseEncoderThreadPool(template.getUseEncoderThreadPool());
+			this.setDatagramPacketMaxSize(template.getDatagramPacketMaxSize());
+			this.setUseDecoderThreadPool(template.getUseDecoderThreadPool());
+			this.setRegisterInternalServer(template.getRegisterInternalServer());
+			this.setAllowDetection(template.getAllowDetection());
+			this.setServerType(template.getServerType());
+			this.setServerInfoPacket(template.getServerInfoPacket());
+		}
 	}
 	
 	public boolean getRegisterInternalServer() {
@@ -52,17 +86,21 @@ public class ServerConfig extends CommonConfig {
 		return this;
 	}
 	
-	public synchronized ServerConfig setServerInfoPacket(BiFunction<NetworkManagerServer, InetSocketAddress, ? extends Packet> factory) {
+	public synchronized ServerConfig setServerInfoPacket(BiFunction<NetworkManagerServer, Optional<InetSocketAddress>, ? extends Packet> factory) {
 		this.serverInfoFactory = factory;
 		return this;
 	}
 	
-	public synchronized Packet createServerInfoPacket(NetworkManagerServer server, InetSocketAddress address) {
-		if(serverInfoFactory == null) {
-			return null;
-		} else {
-			return serverInfoFactory.apply(server, address);
-		}
+	private BiFunction<NetworkManagerServer, Optional<InetSocketAddress>, ? extends Packet> getServerInfoPacket() {
+		return serverInfoFactory;
+	}
+	
+	public synchronized Optional<Packet> createServerInfoPacket(NetworkManagerServer server, Optional<InetSocketAddress> address) {
+		return Optional.ofNullable(serverInfoFactory).map((sif) -> sif.apply(server, address));
+	}
+	
+	public synchronized Optional<Packet> createServerInfoPacket(NetworkManagerServer server, InetSocketAddress address) {
+		return createServerInfoPacket(server, Optional.ofNullable(address));
 	}
 
 	@Override
@@ -108,11 +146,6 @@ public class ServerConfig extends CommonConfig {
 	@Override
 	public synchronized ServerConfig setGlobalConnectionCheck(boolean value) {
 		return (ServerConfig) super.setGlobalConnectionCheck(value);
-	}
-
-	@Override
-	public synchronized ServerConfig deriveServer() {
-		return clone();
 	}
 
 	@Override

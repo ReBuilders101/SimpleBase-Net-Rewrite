@@ -12,6 +12,12 @@ import dev.lb.simplebase.net.packet.PacketContext;
  * which prevents further modification.
  */
 public class ClientConfig extends CommonConfig {
+	
+	public static final Object NO_CUSTOM_DATA = null;
+	
+	private static final ConnectionType DEFAULT_CONNECTION_TYPE = ConnectionType.DEFAULT;
+	private static final Object DEFAULT_CUSTOM_DATA = NO_CUSTOM_DATA;
+	
 	private ConnectionType connectionType;
 	private Object customData;
 	
@@ -30,8 +36,36 @@ public class ClientConfig extends CommonConfig {
 	 */
 	public ClientConfig() {
 		super();
-		this.connectionType = ConnectionType.DEFAULT;
-		this.customData = null;
+		this.connectionType = DEFAULT_CONNECTION_TYPE;
+		this.customData = DEFAULT_CUSTOM_DATA;
+	}
+	
+	public ClientConfig(CommonConfig template) {
+		synchronized (template) {
+			this.setUseManagedThread(template.getUseManagedThread());
+			this.setConnectionCheckTimeout(template.getConnectionCheckTimeout());
+			this.setPacketBufferInitialSize(template.getPacketBufferInitialSize());
+			this.setGlobalConnectionCheck(template.getGlobalConnectionCheck());
+			this.setCompressionSize(template.getCompressionSize());
+			this.setUseEncoderThreadPool(template.getUseEncoderThreadPool());
+			this.setDatagramPacketMaxSize(template.getDatagramPacketMaxSize());
+			this.setUseDecoderThreadPool(template.getUseDecoderThreadPool());
+		}
+	}
+	
+	public ClientConfig(ClientConfig template) {
+		synchronized (template) {
+			this.setUseManagedThread(template.getUseManagedThread());
+			this.setConnectionCheckTimeout(template.getConnectionCheckTimeout());
+			this.setPacketBufferInitialSize(template.getPacketBufferInitialSize());
+			this.setGlobalConnectionCheck(template.getGlobalConnectionCheck());
+			this.setCompressionSize(template.getCompressionSize());
+			this.setUseEncoderThreadPool(template.getUseEncoderThreadPool());
+			this.setDatagramPacketMaxSize(template.getDatagramPacketMaxSize());
+			this.setUseDecoderThreadPool(template.getUseDecoderThreadPool());
+			this.setConnectionType(template.getConnectionType());
+			this.setCustomData(template.getCustomData());
+		}
 	}
 	
 	/**
@@ -126,10 +160,5 @@ public class ClientConfig extends CommonConfig {
 	@Override
 	public synchronized ClientConfig clone() {
 		return (ClientConfig) super.clone();
-	}
-
-	@Override
-	public synchronized ClientConfig deriveClient() {
-		return clone();
 	}
 }

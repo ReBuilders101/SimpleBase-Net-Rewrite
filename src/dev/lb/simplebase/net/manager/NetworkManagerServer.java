@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -236,6 +237,9 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 		}
 	}
 	
+	public Optional<Packet> createServerInfoPacket() {
+		return getConfig().createServerInfoPacket(this, Optional.empty());
+	}
 	
 	public boolean sendPacketToClient(NetworkID client, Packet packet) {
 		try {

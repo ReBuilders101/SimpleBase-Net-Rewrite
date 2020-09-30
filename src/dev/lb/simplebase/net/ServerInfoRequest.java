@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Consumer;
@@ -90,7 +91,8 @@ public final class ServerInfoRequest {
 		} else if(remote.hasFunction(NetworkIDFunction.INTERNAL)) {
 			final NetworkManagerServer server = InternalServerProvider.getServer(remote);
 			final RequestToken token = new RequestToken(null, remote.getDescription(), callback);
-			token.completeRequest(server.getConfig().createServerInfoPacket(server, null));
+			final Optional<Packet> infoPacket = server.createServerInfoPacket();
+			token.completeRequest(infoPacket.orElse(null));
 			return token;
 		} else {
 			throw new IllegalArgumentException("NetworkID must implement CONNECT or INTERNAL function");

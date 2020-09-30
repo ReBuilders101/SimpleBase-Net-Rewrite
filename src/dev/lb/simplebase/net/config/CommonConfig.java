@@ -23,13 +23,13 @@ public class CommonConfig implements Cloneable {
 	public static final int DISABLE_CONNECTION_TIMEOUT = -1;
 	public static final int DISABLE_COMPRESSION = -1;
 	
-	protected static final int BUFFER_INITIAL_DEFAULT = 512;
-	protected static final int CONNECTION_CHECK_DEFAULT = 1000;
+	protected static final int BUFFER_INITIAL_DEFAULT = 4_096;
+	protected static final int CONNECTION_CHECK_DEFAULT = 5_000;
 	protected static final boolean USE_MANAGED_DEFAULT = true;
 	protected static final boolean GLOBAL_CHECK_DEFAULT = false;
 	protected static final int COMPRESSION_SIZE_DEFAULT = DISABLE_COMPRESSION;
 	protected static final boolean USE_ENCODER_POOL_DEFAULT = true;
-	protected static final int DATAGRAM_PACKET_SIZE_DEFAULT = 2048;
+	protected static final int DATAGRAM_PACKET_SIZE_DEFAULT = 4_096;
 	protected static final boolean USE_DECODER_POOL_DEFAULT = true;
 	
 	//Only this one needs to be up-to-date everywhere immediately
@@ -233,30 +233,6 @@ public class CommonConfig implements Cloneable {
 	 */
 	public synchronized boolean isLocked() {
 		return locked;
-	}
-	
-	public synchronized ClientConfig deriveClient() {
-		return new ClientConfig()
-			.setUseManagedThread(getUseManagedThread())
-			.setConnectionCheckTimeout(getConnectionCheckTimeout())
-			.setPacketBufferInitialSize(getPacketBufferInitialSize())
-			.setGlobalConnectionCheck(getGlobalConnectionCheck())
-			.setCompressionSize(getCompressionSize())
-			.setUseEncoderThreadPool(getUseEncoderThreadPool())
-			.setDatagramPacketMaxSize(getDatagramPacketMaxSize())
-			.setUseDecoderThreadPool(getUseDecoderThreadPool());
-	}
-	
-	public synchronized ServerConfig deriveServer() {
-		return new ServerConfig()
-			.setUseManagedThread(getUseManagedThread())
-			.setConnectionCheckTimeout(getConnectionCheckTimeout())
-			.setPacketBufferInitialSize(getPacketBufferInitialSize())
-			.setGlobalConnectionCheck(getGlobalConnectionCheck())
-			.setCompressionSize(getCompressionSize())
-			.setUseEncoderThreadPool(getUseEncoderThreadPool())
-			.setDatagramPacketMaxSize(getDatagramPacketMaxSize())
-			.setUseDecoderThreadPool(getUseDecoderThreadPool());
 	}
 
 	@Override
