@@ -1,7 +1,10 @@
 package dev.lb.simplebase.net.config;
 
+import java.util.Objects;
+
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
+import dev.lb.simplebase.net.annotation.ValueType;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.handler.PacketHandler;
 import dev.lb.simplebase.net.util.Cloneable2;
@@ -14,6 +17,7 @@ import dev.lb.simplebase.net.util.Cloneable2;
  * managers, it is best practise to initialize all values once and the call {@link #lock()},
  * which prevents further modification.
  */
+@ValueType
 @Threadsafe
 public class CommonConfig implements Cloneable2 {
 
@@ -243,5 +247,36 @@ public class CommonConfig implements Cloneable2 {
 		} catch (CloneNotSupportedException e) {
 			throw new RuntimeException("Cannot clone Config object");
 		}
+	}
+
+	@Override
+	public String toString() {
+		return "CommonConfig [locked=" + locked + ", useManagedThread=" + useManagedThread
+				+ ", encodeBufferInitialSize=" + encodeBufferInitialSize + ", connectionCheckTimeout="
+				+ connectionCheckTimeout + ", globalConnectionCheck=" + globalConnectionCheck + ", compressionSize="
+				+ compressionSize + ", useEncoderPool=" + useEncoderPool + ", datagramPacketSize=" + datagramPacketSize
+				+ ", useDecoderPool=" + useDecoderPool + "]";
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(compressionSize, connectionCheckTimeout, datagramPacketSize, encodeBufferInitialSize,
+				globalConnectionCheck, useDecoderPool, useEncoderPool, useManagedThread);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!(obj instanceof CommonConfig)) {
+			return false;
+		}
+		CommonConfig other = (CommonConfig) obj;
+		return compressionSize == other.compressionSize && connectionCheckTimeout == other.connectionCheckTimeout
+				&& datagramPacketSize == other.datagramPacketSize
+				&& encodeBufferInitialSize == other.encodeBufferInitialSize
+				&& globalConnectionCheck == other.globalConnectionCheck && useDecoderPool == other.useDecoderPool
+				&& useEncoderPool == other.useEncoderPool && useManagedThread == other.useManagedThread;
 	}
 }

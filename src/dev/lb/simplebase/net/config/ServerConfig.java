@@ -1,11 +1,17 @@
 package dev.lb.simplebase.net.config;
 
 import java.net.InetSocketAddress;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
+
+import dev.lb.simplebase.net.annotation.Threadsafe;
+import dev.lb.simplebase.net.annotation.ValueType;
 import dev.lb.simplebase.net.manager.NetworkManagerServer;
 import dev.lb.simplebase.net.packet.Packet;
 
+@ValueType
+@Threadsafe
 public class ServerConfig extends CommonConfig {
 
 	private static final boolean REGISTER_INTERNAL_DEFAULT = true;
@@ -151,5 +157,41 @@ public class ServerConfig extends CommonConfig {
 	@Override
 	public synchronized ServerConfig clone() {
 		return (ServerConfig) super.clone();
+	}
+
+	@Override
+	public String toString() {
+		return "ServerConfig [registerInternalServer=" + registerInternalServer + ", allowDetection=" + allowDetection
+				+ ", serverType=" + serverType + ", serverInfoFactory=" + serverInfoFactory
+				+ ", getDatagramPacketMaxSize()=" + getDatagramPacketMaxSize() + ", getUseEncoderThreadPool()="
+				+ getUseEncoderThreadPool() + ", getUseDecoderThreadPool()=" + getUseDecoderThreadPool()
+				+ ", getCompressionSize()=" + getCompressionSize() + ", getConnectionCheckTimeout()="
+				+ getConnectionCheckTimeout() + ", getUseManagedThread()=" + getUseManagedThread()
+				+ ", getPacketBufferInitialSize()=" + getPacketBufferInitialSize() + ", getGlobalConnectionCheck()="
+				+ getGlobalConnectionCheck() + "]";
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Objects.hash(allowDetection, registerInternalServer, serverInfoFactory, serverType);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!super.equals(obj)) {
+			return false;
+		}
+		if (!(obj instanceof ServerConfig)) {
+			return false;
+		}
+		ServerConfig other = (ServerConfig) obj;
+		return allowDetection == other.allowDetection && registerInternalServer == other.registerInternalServer
+				&& Objects.equals(serverInfoFactory, other.serverInfoFactory) && serverType == other.serverType;
 	}
 }

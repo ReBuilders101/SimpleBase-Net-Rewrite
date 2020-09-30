@@ -1,5 +1,9 @@
 package dev.lb.simplebase.net.config;
 
+import java.util.Objects;
+
+import dev.lb.simplebase.net.annotation.Threadsafe;
+import dev.lb.simplebase.net.annotation.ValueType;
 import dev.lb.simplebase.net.manager.NetworkManagerClient;
 import dev.lb.simplebase.net.packet.PacketContext;
 
@@ -11,6 +15,8 @@ import dev.lb.simplebase.net.packet.PacketContext;
  * managers, it is best practise to initialize all values once and the call {@link #lock()},
  * which prevents further modification.
  */
+@ValueType
+@Threadsafe
 public class ClientConfig extends CommonConfig {
 	
 	public static final Object NO_CUSTOM_DATA = null;
@@ -160,5 +166,39 @@ public class ClientConfig extends CommonConfig {
 	@Override
 	public synchronized ClientConfig clone() {
 		return (ClientConfig) super.clone();
+	}
+
+	@Override
+	public String toString() {
+		return "ClientConfig [connectionType=" + connectionType + ", customData=" + customData
+				+ ", getDatagramPacketMaxSize()=" + getDatagramPacketMaxSize() + ", getUseEncoderThreadPool()="
+				+ getUseEncoderThreadPool() + ", getUseDecoderThreadPool()=" + getUseDecoderThreadPool()
+				+ ", getCompressionSize()=" + getCompressionSize() + ", getConnectionCheckTimeout()="
+				+ getConnectionCheckTimeout() + ", getUseManagedThread()=" + getUseManagedThread()
+				+ ", getPacketBufferInitialSize()=" + getPacketBufferInitialSize() + ", getGlobalConnectionCheck()="
+				+ getGlobalConnectionCheck() + ", isLocked()=" + isLocked() + "]";
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Objects.hash(connectionType, customData);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!super.equals(obj)) {
+			return false;
+		}
+		if (!(obj instanceof ClientConfig)) {
+			return false;
+		}
+		ClientConfig other = (ClientConfig) obj;
+		return connectionType == other.connectionType && Objects.equals(customData, other.customData);
 	}
 }
