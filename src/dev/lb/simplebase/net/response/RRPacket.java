@@ -12,7 +12,7 @@ public abstract class RRPacket implements Packet {
 	private UUID uuid;
 	
 	protected RRPacket(UUID existingUUID) {
-		this.uuid = Objects.requireNonNull(uuid, "Cannot set packet UUID to null");
+		this.uuid = Objects.requireNonNull(existingUUID, "Cannot set packet UUID to null");
 	}
 	
 	protected RRPacket(boolean generateUUID) {
