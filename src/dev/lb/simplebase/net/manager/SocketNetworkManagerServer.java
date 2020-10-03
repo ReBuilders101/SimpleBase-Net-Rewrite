@@ -29,6 +29,7 @@ import dev.lb.simplebase.net.packet.converter.PacketToByteConverter;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
 import dev.lb.simplebase.net.task.Task;
 
+@Internal
 public class SocketNetworkManagerServer extends ExternalNetworkManagerServer {
 	
 	//NEW TCP SECTION//
@@ -44,8 +45,9 @@ public class SocketNetworkManagerServer extends ExternalNetworkManagerServer {
 	public static final BiPredicate<NetworkID, InetSocketAddress> matchRemoteAddress = (n, i) -> 
 		n.ifFunction(NetworkIDFunction.CONNECT, r -> r.equals(i), false);
 	
-	protected SocketNetworkManagerServer(NetworkID local, ServerConfig config) throws IOException {
-		super(local, config, true);
+	@Internal
+	public SocketNetworkManagerServer(NetworkID local, ServerConfig config, int depth) throws IOException {
+		super(local, config, true, depth + 1);
 		
 		if(hasTcp) {
 			tcp_serverSocket = new ServerSocket();

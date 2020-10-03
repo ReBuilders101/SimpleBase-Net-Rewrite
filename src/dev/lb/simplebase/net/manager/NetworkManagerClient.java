@@ -1,8 +1,7 @@
 package dev.lb.simplebase.net.manager;
 
-import java.util.Objects;
-
 import dev.lb.simplebase.net.NetworkManager;
+import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.config.ClientConfig;
 import dev.lb.simplebase.net.config.ConnectionType;
@@ -32,11 +31,11 @@ public final class NetworkManagerClient extends NetworkManagerCommon {
 	private final NetworkID remoteID;
 	private final NetworkConnection connection;
 
-	protected NetworkManagerClient(NetworkID local, NetworkID remote, ClientConfig config) {
-		super(local, config); //This will null-check most both, Below will null-check the config and type
-		Objects.requireNonNull(config, "'config' parameter must not be null");
+	@Internal
+	public NetworkManagerClient(NetworkID local, NetworkID remote, ClientConfig config, int depth) {
+		super(local, config, depth + 1);
 		this.remoteID = remote;
-		this.connection = getImplementation(ConnectionType.resolve(config.getConnectionType(), remote));
+		this.connection = getImplementation(config.getConnectionType());
 	}
 
 	public NetworkID getServerID() {

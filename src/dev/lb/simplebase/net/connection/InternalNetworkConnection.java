@@ -1,12 +1,14 @@
 package dev.lb.simplebase.net.connection;
 
-import dev.lb.simplebase.net.NetworkManager;
+import dev.lb.simplebase.net.InternalServerProvider;
+import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.task.Task;
 
+@Internal
 public class InternalNetworkConnection extends NetworkConnection {
 
 	private InternalNetworkConnection peer;
@@ -33,7 +35,7 @@ public class InternalNetworkConnection extends NetworkConnection {
 	
 	@Override
 	protected Task openConnectionImpl() {
-		final InternalNetworkConnection foundPeer = NetworkManager.InternalAccess.INSTANCE.createInternalConnectionPeer(this);
+		final InternalNetworkConnection foundPeer = InternalServerProvider.createInternalConnectionPeer(this);
 		if(foundPeer == null) { //failed to find
 			//Fail
 			STATE_LOGGER.error("Failed to find a peer for server id %s", remoteID);

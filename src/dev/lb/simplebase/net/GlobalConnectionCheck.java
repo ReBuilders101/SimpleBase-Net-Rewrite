@@ -9,6 +9,7 @@ import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.StaticType;
 import dev.lb.simplebase.net.config.CommonConfig;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
+import dev.lb.simplebase.net.util.InternalAccess;
 
 /**
  * Handles the global connection state check.<p>
@@ -20,7 +21,10 @@ import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 public class GlobalConnectionCheck {
 	private static final long DEFAULT_SLEEP_TIME = 30000;
 	
-	protected static void subscribe(NetworkManagerCommon manager) {
+	@Internal
+	public static void subscribeManagerForConnectionStatusCheck(NetworkManagerCommon manager) {
+		InternalAccess.assertCaller(NetworkManagerCommon.class, 0, "Cannot call subscribeManagerForConnectionStatusCheck() directly");
+		
 		if(!thread.isAlive()) {
 			thread.start();
 		}
@@ -29,7 +33,10 @@ public class GlobalConnectionCheck {
 		}
 	}
 	
-	protected static void unsubscribe(NetworkManagerCommon manager) {
+	@Internal
+	public static void unsubscribeManagerForConnectionStatusCheck(NetworkManagerCommon manager) {
+		InternalAccess.assertCaller(NetworkManagerCommon.class, 0, "Cannot call unsubscribeManagerForConnectionStatusCheck() directly");
+		
 		synchronized (managers) {
 			managers.remove(manager);
 		}

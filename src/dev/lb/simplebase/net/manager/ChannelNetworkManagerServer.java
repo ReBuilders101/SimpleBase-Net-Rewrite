@@ -14,6 +14,7 @@ import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.config.ServerConfig;
 import dev.lb.simplebase.net.config.ServerType;
 import dev.lb.simplebase.net.connection.ChannelConnection;
@@ -28,6 +29,7 @@ import dev.lb.simplebase.net.packet.converter.PacketToByteConverter;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
 import dev.lb.simplebase.net.task.Task;
 
+@Internal
 public class ChannelNetworkManagerServer extends ExternalNetworkManagerServer implements SelectorManager {
 
 	private final SelectorThread selectorThread;
@@ -42,8 +44,9 @@ public class ChannelNetworkManagerServer extends ExternalNetworkManagerServer im
 	private final AddressBasedDecoderPool udp_decoderPool;
 	private final PacketToByteConverter udp_toByteConverter;
 	
-	protected ChannelNetworkManagerServer(NetworkID local, ServerConfig config) throws IOException {
-		super(local, config, false);
+	@Internal
+	public ChannelNetworkManagerServer(NetworkID local, ServerConfig config, int depth) throws IOException {
+		super(local, config, false, depth + 1);
 		final ServerType actualType = ServerType.resolve(config.getServerType(), local);
 		if(actualType.useSockets()) throw new IllegalArgumentException("Invalid ServerConfig: ServerType must not use Sockets");
 

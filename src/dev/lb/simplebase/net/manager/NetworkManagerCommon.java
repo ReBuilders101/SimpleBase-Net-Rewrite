@@ -1,9 +1,10 @@
 package dev.lb.simplebase.net.manager;
 
-import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import dev.lb.simplebase.net.GlobalConnectionCheck;
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
@@ -26,6 +27,7 @@ import dev.lb.simplebase.net.packet.converter.PacketToByteConverter;
 import dev.lb.simplebase.net.packet.handler.EmptyPacketHandler;
 import dev.lb.simplebase.net.packet.handler.PacketHandler;
 import dev.lb.simplebase.net.packet.handler.ThreadPacketHandler;
+import dev.lb.simplebase.net.util.InternalAccess;
 import dev.lb.simplebase.net.util.Lazy;
 
 /**
@@ -82,10 +84,8 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 	 * @param local The local {@link NetworkID} representing this manager
 	 * @param config The configuration object to create this manager. Will be locked if it is not already.
 	 */
-	protected NetworkManagerCommon(NetworkID local, CommonConfig config) {
-		Objects.requireNonNull(local, "'local' parameter must not be null");
-		Objects.requireNonNull(config, "'config' parameter must not be null");
-		config.lock(); //To be sure, now we can use config without caching the values
+	protected NetworkManagerCommon(NetworkID local, CommonConfig config, int depth) {
+		InternalAccess.assertCaller(NetworkManager.class, depth, "Cannot instantiate NetworkManagerCommon subclasses directly");
 		
 		this.local = local;
 		this.config = config; //It is now locked and can't be changed, so it can be stored
@@ -109,8 +109,9 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 			multiThreadHandler = null;
 			managedThread = Optional.empty();
 		}
+		
 		if(config.getGlobalConnectionCheck()) {
-			NetworkManager.InternalAccess.INSTANCE.registerManagerForConnectionStatusCheck(this);
+			GlobalConnectionCheck.subscribeManagerForConnectionStatusCheck(this);
 		}
 		
 		commonToByteConverter = Lazy.of(() -> new PacketToByteConverter(this));
@@ -236,7 +237,7 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 		managedThread.ifPresent(Thread::interrupt);
 		encoderPool.shutdown();
 		decoderPool.shutdown();
-		NetworkManager.InternalAccess.INSTANCE.unregisterManagerForConnectionStatusCheck(this);
+		GlobalConnectionCheck.unsubscribeManagerForConnectionStatusCheck(this);
 	}
 	
 	/**
@@ -272,6 +273,11 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 	@Internal
 	public ByteToPacketConverter createToPacketConverter() {
 		return commonToPacketConverter.get();
+	}
+	
+	private static final AtomicInteger NAME_INDEX = new AtomicInteger(0);
+	static String generateNetworkIdName(String prefix) {
+		return prefix + NAME_INDEX.getAndIncrement();
 	}
 	
 }

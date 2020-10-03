@@ -1,5 +1,6 @@
 package dev.lb.simplebase.net;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,12 +9,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.StaticType;
 import dev.lb.simplebase.net.config.ClientConfig;
+import dev.lb.simplebase.net.config.ConnectionType;
 import dev.lb.simplebase.net.config.ServerConfig;
 import dev.lb.simplebase.net.config.ServerType;
-import dev.lb.simplebase.net.connection.InternalNetworkConnection;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.AbstractLogLevel;
 import dev.lb.simplebase.net.log.AbstractLogger;
@@ -22,13 +22,22 @@ import dev.lb.simplebase.net.log.Formatter;
 import dev.lb.simplebase.net.log.LogLevel;
 import dev.lb.simplebase.net.log.Loggers;
 import dev.lb.simplebase.net.log.PrintStreamLogger;
-import dev.lb.simplebase.net.manager.ManagerInstanceProvider;
+import dev.lb.simplebase.net.manager.ChannelNetworkManagerServer;
+import dev.lb.simplebase.net.manager.InternalNetworkManagerServer;
 import dev.lb.simplebase.net.manager.NetworkManagerClient;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.manager.NetworkManagerServer;
+import dev.lb.simplebase.net.manager.SocketNetworkManagerServer;
 import dev.lb.simplebase.net.packet.converter.ByteDeflater;
 import dev.lb.simplebase.net.packet.converter.ByteInflater;
 
+/**
+ * <p>
+ * The {@link NetworkManager} class provides static methods to create client and server managers.
+ * </p><p>
+ * It also offers methods related to logging and application behavior such as cleanup tasks
+ * <p>
+ */
 @StaticType
 public final class NetworkManager {
 	
@@ -150,7 +159,12 @@ public final class NetworkManager {
 		Objects.requireNonNull(serverRemote, "'serverRemote' parameter must not be null");
 		Objects.requireNonNull(config, "'config' parameter must not be null");
 		
-		return register(PROVIDER.createClient(clientLocal, serverRemote, config));
+		final ConnectionType actualType = ConnectionType.resolve(config.getConnectionType(), serverRemote);
+		final ClientConfig copiedConfig = new ClientConfig(config);
+		copiedConfig.setConnectionType(actualType);
+		copiedConfig.lock();
+		
+		return register(new NetworkManagerClient(clientLocal, serverRemote, copiedConfig, 0));
 	}
 	
 	public static NetworkManagerServer createServer(NetworkID serverLocal) {
@@ -161,48 +175,35 @@ public final class NetworkManager {
 		Objects.requireNonNull(serverLocal, "'serverLocal' parameter must not be null");
 		Objects.requireNonNull(config, "'config' parameter must not be null");
 		
+		//Create actual server type and config
 		final ServerType actualType = ServerType.resolve(config.getServerType(), serverLocal);
+		final ServerConfig copiedConfig = new ServerConfig(config);
+		copiedConfig.setServerType(actualType);
+		copiedConfig.lock();
+		
 		switch (actualType) {
 		case INTERNAL:
-			return register(PROVIDER.createInternalServer(serverLocal, config));
+			return register(new InternalNetworkManagerServer(serverLocal, copiedConfig, 0));
 		case TCP_IO:
 		case UDP_IO:
 		case COMBINED_IO:
-			return register(PROVIDER.createSocketServer(serverLocal, config));
+			try {
+				return register(new SocketNetworkManagerServer(serverLocal, copiedConfig, 0));
+			} catch (IOException e) {
+				LOGGER.error("Cannot create SocketNetworkManagerServer", e);
+				return null;
+			}
 		case TCP_NIO:
 		case UDP_NIO:
 		case COMBINED_NIO:
-			return register(PROVIDER.createChannelServer(serverLocal, config));
+			try {
+				return register(new ChannelNetworkManagerServer(serverLocal, copiedConfig, 0));
+			} catch (IOException e) {
+				LOGGER.error("Cannot create ChannelNetworkManagerServer", e);
+				return null;
+			}
 		default:
 			throw new IllegalArgumentException("Invalid server type: " + actualType);
-		}
-	}
-	
-	private static final ManagerInstanceProvider PROVIDER = ManagerInstanceProvider.get();
-
-	@Internal
-	public static class InternalAccess {
-		public static final InternalAccess INSTANCE = new InternalAccess();
-		private InternalAccess() {}
-		
-		public void registerManagerForConnectionStatusCheck(NetworkManagerCommon manager) {
-			GlobalConnectionCheck.subscribe(manager);
-		}
-		
-		public void unregisterManagerForConnectionStatusCheck(NetworkManagerCommon manager) {
-			GlobalConnectionCheck.unsubscribe(manager);
-		}
-		
-		public InternalNetworkConnection createInternalConnectionPeer(InternalNetworkConnection request) {
-			return InternalServerProvider.createServerPeer(request);
-		}	
-		
-		public void registerServerManagerForInternalConnections(NetworkManagerServer server) {
-			InternalServerProvider.register(server);
-		}
-		
-		public void unregisterServerManagerForInternalConnections(NetworkManagerServer server) {
-			InternalServerProvider.unregister(server);
 		}
 	}
 }

@@ -10,17 +10,21 @@ import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.manager.NetworkManagerServer;
+import dev.lb.simplebase.net.util.InternalAccess;
 
 /**
  * Lists all available internal servers
  */
 @Internal
-class InternalServerProvider {
+public final class InternalServerProvider {
 	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("internal-servers");
 	
 	private static final Map<NetworkID, NetworkManagerServer> serverList = new HashMap<>();
 	
-	protected static synchronized InternalNetworkConnection createServerPeer(InternalNetworkConnection source) {
+	@Internal
+	public static synchronized InternalNetworkConnection createInternalConnectionPeer(InternalNetworkConnection source) {
+		InternalAccess.assertCaller(InternalNetworkConnection.class, 0, "Cannot call createServerPeer() directly");
+		
 		final NetworkManagerServer server = serverList.get(source.getRemoteID());
 		if(server == null) return null;
 		final ConfigureConnectionEvent event = new ConfigureConnectionEvent(server, source.getLocalID());
@@ -39,7 +43,10 @@ class InternalServerProvider {
 		return peer;
 	}
 	
-	protected static synchronized boolean register(NetworkManagerServer server) {
+	@Internal
+	public static synchronized boolean registerServerForInternalConnections(NetworkManagerServer server) {
+		InternalAccess.assertCaller(NetworkManagerServer.class, 0, "Cannot call registerServerForInternalConnections() directly");
+		
 		final NetworkID serverId = server.getLocalID();
 		if(serverList.containsKey(serverId)) {
 			LOGGER.warning("Cannot register an internal server for the same local ID twice");
@@ -51,7 +58,10 @@ class InternalServerProvider {
 		}
 	}
 
-	protected static synchronized boolean unregister(NetworkManagerServer server) {
+	@Internal
+	public static synchronized boolean unregisterServerForInternalConnections(NetworkManagerServer server) {
+		InternalAccess.assertCaller(NetworkManagerServer.class, 0, "Cannot call unregisterServerForInternalConnections() directly");
+		
 		final NetworkID serverId = server.getLocalID();
 		if(serverList.containsKey(serverId)) {
 			serverList.remove(serverId);

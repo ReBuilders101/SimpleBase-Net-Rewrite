@@ -30,8 +30,8 @@ public abstract class ExternalNetworkManagerServer extends NetworkManagerServer 
 	protected final boolean hasUdp;
 	protected final boolean hasLan;
 	
-	protected ExternalNetworkManagerServer(NetworkID local, ServerConfig config, boolean requireSockets) {
-		super(local, config);
+	protected ExternalNetworkManagerServer(NetworkID local, ServerConfig config, boolean requireSockets, int depth) {
+		super(local, config, depth + 1);
 		
 		final ServerType actualType = ServerType.resolve(config.getServerType(), local);
 		if(actualType.useSockets() != requireSockets) throw new IllegalArgumentException("Invalid ServerConfig");
@@ -66,7 +66,7 @@ public abstract class ExternalNetworkManagerServer extends NetworkManagerServer 
 
 		//post and handle the event
 		final FilterRawConnectionEvent event1 = new FilterRawConnectionEvent(remoteAddress, 
-				ManagerInstanceProvider.generateNetworkIdName("RemoteId-"));
+				generateNetworkIdName("RemoteId-"));
 		getEventDispatcher().post(FilterRawConnection, event1);
 		if(event1.isCancelled()) {
 			try {
@@ -109,7 +109,7 @@ public abstract class ExternalNetworkManagerServer extends NetworkManagerServer 
 		
 		
 		final FilterRawConnectionEvent event1 = new FilterRawConnectionEvent(remoteAddress, 
-				ManagerInstanceProvider.generateNetworkIdName("RemoteId-"));
+				generateNetworkIdName("RemoteId-"));
 		getEventDispatcher().post(FilterRawConnection, event1);
 		if(event1.isCancelled()) {
 			//Disconnect

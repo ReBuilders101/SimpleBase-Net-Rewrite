@@ -12,6 +12,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+
+import dev.lb.simplebase.net.InternalServerProvider;
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
@@ -59,8 +61,8 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 	 */
 	public final EventAccessor<FilterRawConnectionEvent> FilterRawConnection = new EventAccessor<>(FilterRawConnectionEvent.class);
 	
-	protected NetworkManagerServer(NetworkID local, ServerConfig config) {
-		super(local, config);
+	protected NetworkManagerServer(NetworkID local, ServerConfig config, int depth) {
+		super(local, config, depth + 1);
 		this.connections = new HashMap<>();
 		this.lockServer = new ReentrantReadWriteLock();
 		this.currentState = ServerManagerState.INITIALIZED;
@@ -140,7 +142,7 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 				LOGGER.info("Starting server (%s)...", getLocalID().getDescription());
 				currentState = ServerManagerState.STARTING;
 				if(getConfig().getRegisterInternalServer())
-					NetworkManager.InternalAccess.INSTANCE.registerServerManagerForInternalConnections(this);
+					InternalServerProvider.registerServerForInternalConnections(this);
 				//Custom startup
 				return startServerImpl();
 			} else {
@@ -168,7 +170,7 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 				LOGGER.info("Stopping server (%s)...", getLocalID().getDescription());
 				currentState = ServerManagerState.STOPPING;
 				if(getConfig().getRegisterInternalServer())
-					NetworkManager.InternalAccess.INSTANCE.unregisterServerManagerForInternalConnections(this);
+					InternalServerProvider.unregisterServerForInternalConnections(this);
 				//Disconnect everyone
 				LOGGER.info("Closing %d connections for server shutdown", connections.size());
 				for(NetworkConnection con : connections.values()) {
