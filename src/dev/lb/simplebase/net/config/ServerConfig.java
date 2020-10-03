@@ -109,7 +109,7 @@ public class ServerConfig extends CommonConfig {
 	 * @param template The old {@link CommonConfig} that holds the configuration values
 	 */
 	public ServerConfig(CommonConfig template) {
-		super();
+		this();
 		synchronized (template) {
 			this.setUseHandlerThread(template.getUseHandlerThread());
 			this.setConnectionCheckTimeout(template.getConnectionCheckTimeout());
@@ -128,7 +128,7 @@ public class ServerConfig extends CommonConfig {
 	 * @param template The old {@link ServerConfig} that holds the configuration values
 	 */
 	public ServerConfig(ServerConfig template) {
-		super();
+		this();
 		synchronized (template) {
 			this.setUseHandlerThread(template.getUseHandlerThread());
 			this.setConnectionCheckTimeout(template.getConnectionCheckTimeout());

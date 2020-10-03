@@ -92,6 +92,7 @@ public class ClientConfig extends CommonConfig {
 	 * @param template The old {@link CommonConfig} that holds the configuration values
 	 */
 	public ClientConfig(CommonConfig template) {
+		this();
 		synchronized (template) {
 			this.setUseHandlerThread(template.getUseHandlerThread());
 			this.setConnectionCheckTimeout(template.getConnectionCheckTimeout());
@@ -111,6 +112,7 @@ public class ClientConfig extends CommonConfig {
 	 * @param template The old {@link ClientConfig} that holds the configuration values
 	 */
 	public ClientConfig(ClientConfig template) {
+		this();
 		synchronized (template) {
 			this.setUseHandlerThread(template.getUseHandlerThread());
 			this.setConnectionCheckTimeout(template.getConnectionCheckTimeout());
