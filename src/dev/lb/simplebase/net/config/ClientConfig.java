@@ -15,7 +15,7 @@ import dev.lb.simplebase.net.packet.handler.PacketHandler;
  * The following is copied from the {@code CommonConfig} class description and also applies to this class: 
  * </p>
  * <hr>
- * <h4>Thread safety</h4>
+ * <h2>Thread safety</h2>
  * <p>
  * The {@link CommonConfig} class and both subclasses included with the API ({@link ClientConfig} and {@link ServerConfig}) are all threadsafe.
  * If the synchronization object is the {@code CommonConfig} object itself. {@code get...()} methods are single reads and never acquire the lock,
@@ -24,14 +24,14 @@ import dev.lb.simplebase.net.packet.handler.PacketHandler;
  * <b>Mutating a config object on multiple threads should not be necessary:</b> Despite being possible, it is rarely necessary or appropiate to
  * modify the config on more than one thread. It is best practise to initialize all values and then <i>lock</i> the config object to prevent further mutation.
  * </p>
- * <h4>Locking Behavior</h4>
+ * <h2>Locking Behavior</h2>
  * <p>
  * To ensure that config objects and their properties can be cached anywhere in a {@link NetworkManagerCommon} and related classes the {@link CommonConfig}
  * class includes a special <i>locking</i> mechanism. After a {@code CommonConfig} instance has been locked, all attempts to set a config value
  * will result in an {@link IllegalStateException}. A locked config can never be unlocked, but a new instance that has the same values without being locked can
  * be created using the copy constructor. Config objects can be locked by calling {@link #lock()}. 
  * </p>
- * <h4>Comparison and Cloning</h4>
+ * <h2>Comparison and Cloning</h2>
  * <p>
  * The {@link #equals(Object)} method compares all configured values in the two instances. <b>It does not consider the <i>locked</i> state of either config.</b>
  * A locked and a different unlocked {@code CommonConfig} object are considered equal as long as they store the same configuration values and produce equally configured
@@ -56,10 +56,11 @@ public class ClientConfig extends CommonConfig {
 	private Object customData;
 	
 	/**
-	 * Creates a new {@link CommonConfig} instance with default configuration values. The instance will not be <i>locked</i>.
 	 * <p>
-	 * The initial values for all config options are: 
+	 * Creates a new {@link CommonConfig} instance with default configuration values. The instance will not be <i>locked</i>.
+	 * </p>
 	 * <table>
+	 * <caption>Config option defaults:</caption>
 	 * <tr><th>Getter method name</th><th>Initial value</th></tr>
 	 * <tr><td>{@link #getUseHandlerThread()}</td><td>{@code true}<td></tr>
 	 * <tr><td>{@link #getPacketBufferInitialSize()}</td><td>{@code 4096}</td></tr>
@@ -72,7 +73,6 @@ public class ClientConfig extends CommonConfig {
 	 * <tr><td>{@link #getConnectionType()}</td><td>{@link ConnectionType#DEFAULT}</td></tr>
 	 * <tr><td>{@link #getCustomData()}</td><td>{@link #NO_CUSTOM_DATA}</td></tr>
 	 * </table>
-	 * </p>
 	 */
 	public ClientConfig() {
 		super();

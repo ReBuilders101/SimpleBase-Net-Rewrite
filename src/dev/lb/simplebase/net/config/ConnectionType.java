@@ -9,13 +9,16 @@ import dev.lb.simplebase.net.id.NetworkIDFunction;
 import dev.lb.simplebase.net.manager.NetworkManagerClient;
 
 /**
+ * <p>
  * The type of network connection that a {@link NetworkManagerClient} will make when connecting to the server.
- * <h4>Server/Client type compatibility</h4>
+ * </p>
+ * <h2>Server/Client type compatibility</h2>
  * <p>
  * To successfully connect to a server, the server must have a compatible {@link ServerType}; and the client has to be created
  * using a compatible {@link NetworkID}:
  * </p>
  * <table>
+ * <caption>{@code ConnectionType} and {@code ServerType} compatibility:</caption>
  * <tr><th>{@code ConnectionType}</th><th>Server requirements</th><th>Required {@link NetworkIDFunction}</th></tr>
  * <tr><td>{@link #INTERNAL}</td><td>Any server that enables
  * 		{@link ServerConfig#getRegisterInternalServer()}</td><td>{@link NetworkIDFunction#INTERNAL}</td></tr>
@@ -24,7 +27,7 @@ import dev.lb.simplebase.net.manager.NetworkManagerClient;
  * <tr><td>{@link #UDP}</td><td>{@link ServerType#UDP_IO}, {@link ServerType#UDP_IO}, {@link ServerType#COMBINED_IO},
  * 		{@link ServerType#COMBINED_NIO}</td><td>{@link NetworkIDFunction#CONNECT}</td></tr>
  * </table>
- * <h4>Special case: {@link #DEFAULT}</h4>
+ * <h2>Special case: {@link #DEFAULT}</h2>
  * <p>
  * The connection type created when using the {@code DEFAULT} connection type is determined at runtime depending on
  * the {@link NetworkID} used to create the client. It is converted into a resolved {@code ConnectionType} using

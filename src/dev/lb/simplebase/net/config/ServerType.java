@@ -19,14 +19,15 @@ import dev.lb.simplebase.net.manager.NetworkManagerServer;
  * and the server has to be created using a compatible {@link NetworkID}:
  * </p>
  * <table>
- * <tr><th>{@code ServerType}</th><th>Client {@link ConnectionType}</th><th>Required {@link NetworkIDFunction}</th></tr>
+ * <caption>{@code ServerType} and {@code ConnectionType} compatibility:</caption>
+ * <tr><th>{@code ServerType}</th><th>Client {@code ConnectionType}</th><th>Required {@link NetworkIDFunction}</th></tr>
  * <tr><td>{@link #INTERNAL}</td><td>{@link ConnectionType#INTERNAL}</td><td>{@link NetworkIDFunction#INTERNAL}</td></tr>
  * <tr><td>{@link #TCP_IO} or {@link #TCP_NIO}</td><td>{@link ConnectionType#TCP}</td><td>{@link NetworkIDFunction#BIND}</td></tr>
  * <tr><td>{@link #UDP_IO} or {@link #UDP_NIO}</td><td>{@link ConnectionType#UDP}</td><td>{@link NetworkIDFunction#BIND}</td></tr>
  * <tr><td>{@link #COMBINED_IO} or {@link #COMBINED_NIO}</td><td>{@link ConnectionType#TCP} or {@link ConnectionType#UDP}</td>
  * <td>{@link NetworkIDFunction#BIND}</td></tr>
  * </table>
- * <h4>Special case: {@link #DEFAULT}</h4>
+ * <h2>Special case: {@link #DEFAULT}</h2>
  * <p>
  * The server type created when using the {@code DEFAULT} connection type is determined at runtime depending on
  * the {@link NetworkID} used to create the client. It is converted into a resolved {@code ServerType} using

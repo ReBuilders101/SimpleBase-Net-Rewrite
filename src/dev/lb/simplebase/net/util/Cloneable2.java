@@ -11,35 +11,34 @@ public interface Cloneable2 extends Cloneable {
 
 	/**
 	 * Creates an exact, usually flat copy of this object. Always returns a new instance.
-	 * <p>There are some general requirements for an implementation of {@link #clone()}:
+	 * <p>There are some general requirements for an implementation of {@link #clone()}:</p>
 	 * <ul>
-	 * <p><li>The returned object should be different from this object, so that:<br>
+	 * <li>The returned object should be different from this object, so that:<br>
 	 * <code>x.clone() != x</code> (as in {@link Object#clone()})<br>
 	 * If this behavior is not required (e.g. for immutable types), use {@link #copy()}, which acts as {@link #clone()}
 	 * without this limitation, and may simply return {@code this} for an immutable or effectively immutable type.
-	 * </li></p>
-	 * <p><li>The actual return type of the method should be the exact type of this object. The return type is declared as
+	 * </li>
+	 * <li>The actual return type of the method should be the exact type of this object. The return type is declared as
 	 * {@link Object} to avoid problems with type parameters on the {@code Cloneable2} interface, but the actually returned type
 	 * must still be the type of the cloned object.
 	 * A subclass of a class that implements {@code Cloneable2} <b>must override</b> the existing {@code clone()} implementation to return
 	 * the correct type, so that:<br>
 	 * <code>x.clone().getClass() == x.getClass()</code> (as in {@link Object#clone()})
-	 * </li></p>
-	 * <p><li>
-	 * The returned object must be {@code equal()} to this object (and as {@link #equals(Object)} states, the objects must also have the same
-	 * {@link #hashCode()}), so that:<br>
+	 * </li>
+	 * <li>
+	 * The returned object must be equal to this object (and as {@link Object#equals(Object)} states, the objects must also have the same
+	 * {@link Object#hashCode()}), so that:<br>
 	 * <code>x.clone().equals(x)</code> (this is recommended in {@link Object#clone()}, but required here)<br>
-	 * If the implementing class has some members or states that are not considered by {@link #equals(Object)}, it is recommended
+	 * If the implementing class has some members or states that are not considered by {@link Object#equals(Object)}, it is recommended
 	 * but not required that they are also cloned.
-	 * </p></li>
+	 * </li>
 	 * </ul>
-	 * </p>
 	 * <p>
 	 * Implementations of this method should change the return type to the correct type in their method declarations, so that
 	 * unchecked casts can be avoided. If the implementation returns {@link Object}, the {@link #typedClone(Cloneable2)} method can be
 	 * used to get a copy of the correct type.
 	 * </p><p>
-	 * Assuming that an objects {@link #equals(Object)} and {@link #hashCode()} methods only depend on the states of all or some of
+	 * Assuming that an objects {@link Object#equals(Object)} and {@link Object#hashCode()} methods only depend on the states of all or some of
 	 * the classes fields, the default {@link Object#clone()} implementation satisfies all requirements.
 	 * </p>
 	 * @return The cloned object. The actual return type is the runtime type of the objecton which {@code clone()} was called,
@@ -50,28 +49,27 @@ public interface Cloneable2 extends Cloneable {
 	
 	/**
 	 * Creates an exact, usually flat copy of this object. Unlike {@link #clone()}, it might return the same instance for effectively immutabale types.
-	 * <p>There are some general requirements for an implementation of {@link #copy()}:
+	 * <p>There are some general requirements for an implementation of {@link #copy()}:</p>
 	 * <ul>
-	 * <p><li>The returned object should not be altered by changes made to the original object. For mutable types, a new and independent instance is
+	 * <li>The returned object should not be altered by changes made to the original object. For mutable types, a new and independent instance is
 	 * required, but immutable objects can be reused. The copy still is a flat copy, so changes of a members state might be shared by both original and copy,
 	 * as it is the case with the {@code clone()} method too.
-	 * </li></p>
-	 * <p><li>The actual return type of the method should be the exact type of this object. The return type is declared as
+	 * </li>
+	 * <li>The actual return type of the method should be the exact type of this object. The return type is declared as
 	 * {@link Object} to avoid problems with type parameters on the {@code Cloneable2} interface, but the actually returned type
 	 * must still be the type of the cloned object.
 	 * A subclass of a class that implements {@code Cloneable2} <b>must override</b> the existing {@code clone()} implementation to return
 	 * the correct type, so that:<br>
 	 * <code>x.clone().getClass() == x.getClass()</code> (as in {@link Object#clone()})
-	 * </li></p>
-	 * <p><li>
-	 * The returned object must be {@code equal()} to this object (and as {@link #equals(Object)} states, the objects must also have the same
-	 * {@link #hashCode()}), so that:<br>
+	 * </li>
+	 * <li>
+	 * The returned object must be {@code equal()} to this object (and as {@link Object#equals(Object)} states, the objects must also have the same
+	 * {@link Object#hashCode()}), so that:<br>
 	 * <code>x.clone().equals(x)</code> (this is recommended in {@link Object#clone()}, but required here)<br>
-	 * If the implementing class has some members or states that are not considered by {@link #equals(Object)}, it is recommended
+	 * If the implementing class has some members or states that are not considered by {@link Object#equals(Object)}, it is recommended
 	 * but not required that they are also cloned.
-	 * </p></li>
+	 * </li>
 	 * </ul>
-	 * </p>
 	 * <p>
 	 * Implementations of this method should change the return type to the correct type in their method declarations, so that
 	 * unchecked casts can be avoided.<br>
