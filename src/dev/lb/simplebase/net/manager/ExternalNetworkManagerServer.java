@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.config.ServerConfig;
+import dev.lb.simplebase.net.config.ServerConfig.InfoPacketFactory;
 import dev.lb.simplebase.net.config.ServerType;
 import dev.lb.simplebase.net.connection.ConnectionConstructor;
 import dev.lb.simplebase.net.connection.ExternalNetworkConnection;
@@ -37,7 +38,7 @@ public abstract class ExternalNetworkManagerServer extends NetworkManagerServer 
 
 		hasTcp = actualType.supportsTcp();
 		hasUdp = actualType.supportsUdp();
-		hasLan = config.getAllowDetection();
+		hasLan = !InfoPacketFactory.isDisabled(config.getServerInfoPacket());
 	}
 
 	protected void acceptIncomingRawTcpConnection(Socket connectedSocket, ConnectionConstructor ctor) {
@@ -172,9 +173,9 @@ public abstract class ExternalNetworkManagerServer extends NetworkManagerServer 
 	@Internal
 	public void receiveServerInfoRequest(InetSocketAddress from) {
 		if(hasLan) {
-			final Optional<Packet> serverInfoPacket = getConfig().createServerInfoPacket(this, from);
-			if(serverInfoPacket.isPresent()) {
-				sendRawUdpByteData(from, createToByteConverter().convert(NetworkPacketFormats.SERVERINFOAN, serverInfoPacket.get()));
+			final Packet serverInfoPacket = getConfig().getServerInfoPacket().createPacket(this, Optional.of(from));
+			if(serverInfoPacket != null) {
+				sendRawUdpByteData(from, createToByteConverter().convert(NetworkPacketFormats.SERVERINFOAN, serverInfoPacket));
 			} else {
 				LOGGER.debug("No server info reply packet could be generated (To: %s)", from);
 			}

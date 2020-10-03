@@ -5,50 +5,95 @@ import java.util.Objects;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.annotation.ValueType;
 import dev.lb.simplebase.net.manager.NetworkManagerClient;
+import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.PacketContext;
+import dev.lb.simplebase.net.packet.handler.PacketHandler;
 
 /**
- * Sets config values for {@link NetworkManagerClient} on creation.<p>
- * Instances can be reused after they have been used to create a manager,
- * but they should be mutated on one thread only if possible.<br>
- * If the config object should be used on multiple threads (e.g. as a global config for all
- * managers, it is best practise to initialize all values once and the call {@link #lock()},
- * which prevents further modification.
+ * A {@link CommonConfig} implementation that stores all configuration settings applicable to a {@link NetworkManagerClient}.
+ * <p>
+ * The following is copied from the {@code CommonConfig} class description and also applies to this class: 
+ * </p>
+ * <hr>
+ * <h4>Thread safety</h4>
+ * <p>
+ * The {@link CommonConfig} class and both subclasses included with the API ({@link ClientConfig} and {@link ServerConfig}) are all threadsafe.
+ * If the synchronization object is the {@code CommonConfig} object itself. {@code get...()} methods are single reads and never acquire the lock,
+ * as those operations will be executed frequently while the program is running. Getters do not require locking because it is impossible to leave
+ * a {@code CommonConfig} object in an invalid state.<br>
+ * <b>Mutating a config object on multiple threads should not be necessary:</b> Despite being possible, it is rarely necessary or appropiate to
+ * modify the config on more than one thread. It is best practise to initialize all values and then <i>lock</i> the config object to prevent further mutation.
+ * </p>
+ * <h4>Locking Behavior</h4>
+ * <p>
+ * To ensure that config objects and their properties can be cached anywhere in a {@link NetworkManagerCommon} and related classes the {@link CommonConfig}
+ * class includes a special <i>locking</i> mechanism. After a {@code CommonConfig} instance has been locked, all attempts to set a config value
+ * will result in an {@link IllegalStateException}. A locked config can never be unlocked, but a new instance that has the same values without being locked can
+ * be created using the copy constructor. Config objects can be locked by calling {@link #lock()}. 
+ * </p>
+ * <h4>Comparison and Cloning</h4>
+ * <p>
+ * The {@link #equals(Object)} method compares all configured values in the two instances. <b>It does not consider the <i>locked</i> state of either config.</b>
+ * A locked and a different unlocked {@code CommonConfig} object are considered equal as long as they store the same configuration values and produce equally configured
+ * network managers. To comply with the contract for the {@code equals} and {@code hashCode} methods, {@link #hashCode()} also does not consider the <i>locked</i> state
+ * when calculating the hash.<br>
+ * The locked state will be copied when using the {@link #clone()} method.
  */
 @ValueType
 @Threadsafe
 public class ClientConfig extends CommonConfig {
 	
+	/**
+	 * Can be used in {@link #setCustomData(Object)} to indicate that the client's connection
+	 * will not have a custom object attached to it. The connection's custom object will be {@code null}.
+	 */
 	public static final Object NO_CUSTOM_DATA = null;
 	
-	private static final ConnectionType DEFAULT_CONNECTION_TYPE = ConnectionType.DEFAULT;
-	private static final Object DEFAULT_CUSTOM_DATA = NO_CUSTOM_DATA;
+	private static final ConnectionType CONNECTION_TYPE = ConnectionType.DEFAULT;
+	private static final Object CUSTOM_DATA = NO_CUSTOM_DATA;
 	
 	private ConnectionType connectionType;
 	private Object customData;
 	
 	/**
-	 * Creates a new ClientConfig instance. Instance will not be locked
+	 * Creates a new {@link CommonConfig} instance with default configuration values. The instance will not be <i>locked</i>.
 	 * <p>
-	 * Initial values are:
+	 * The initial values for all config options are: 
 	 * <table>
 	 * <tr><th>Getter method name</th><th>Initial value</th></tr>
-	 * <tr><td>{@link #getUseManagedThread()}</td><td>{@code true}<td></tr>
-	 * <tr><td>{@link #getPacketBufferInitialSize()}</td><td>{@code 128}</td></tr>
-	 * <tr><td>{@link #getConnectionCheckTimeout()}</td><td>{@code 1000}</td></tr>
+	 * <tr><td>{@link #getUseHandlerThread()}</td><td>{@code true}<td></tr>
+	 * <tr><td>{@link #getPacketBufferInitialSize()}</td><td>{@code 4096}</td></tr>
+	 * <tr><td>{@link #getConnectionCheckTimeout()}</td><td>{@code 5000} [ms]</td></tr>
+	 * <tr><td>{@link #getGlobalConnectionCheck()}</td><td>{@code false}</td></tr>
+	 * <tr><td>{@link #getCompressionSize()}</td><td>{@link CommonConfig#DISABLE_COMPRESSION}</td></tr>
+	 * <tr><td>{@link #getDatagramPacketMaxSize()}</td><td>{@code 4096}</td></tr>
+	 * <tr><td>{@link #getUseEncoderThreadPool()}</td><td>{@code true}</td></tr>
+	 * <tr><td>{@link #getUseDecoderThreadPool()}</td><td>{@code true}</td></tr>
 	 * <tr><td>{@link #getConnectionType()}</td><td>{@link ConnectionType#DEFAULT}</td></tr>
-	 * <tr><td>{@link #getCustomData()}</td><td>{@code null}</td></tr>
+	 * <tr><td>{@link #getCustomData()}</td><td>{@link #NO_CUSTOM_DATA}</td></tr>
 	 * </table>
+	 * </p>
 	 */
 	public ClientConfig() {
 		super();
-		this.connectionType = DEFAULT_CONNECTION_TYPE;
-		this.customData = DEFAULT_CUSTOM_DATA;
+		this.connectionType = CONNECTION_TYPE;
+		this.customData = CUSTOM_DATA;
 	}
 	
+	/**
+	 * Creates a new {@link ClientConfig} instance that copies all configuration values from a different {@link CommonConfig} object.
+	 * The created instance will not be <i>locked</i>.<br>
+	 * The constructor will synchronize on the template object while copying values to prevent concurrent modification.
+	 * <p>
+	 * This constructor will only copy any configuration values that are present in the {@code CommonConfig} class, even
+	 * when the template's runtime type is {@code ClientConfig}. To fully copy a {@code ClientConfig}, use the correct constructor
+	 * {@link #ClientConfig(ClientConfig)}.
+	 * </p>
+	 * @param template The old {@link CommonConfig} that holds the configuration values
+	 */
 	public ClientConfig(CommonConfig template) {
 		synchronized (template) {
-			this.setUseManagedThread(template.getUseManagedThread());
+			this.setUseHandlerThread(template.getUseHandlerThread());
 			this.setConnectionCheckTimeout(template.getConnectionCheckTimeout());
 			this.setPacketBufferInitialSize(template.getPacketBufferInitialSize());
 			this.setGlobalConnectionCheck(template.getGlobalConnectionCheck());
@@ -59,9 +104,15 @@ public class ClientConfig extends CommonConfig {
 		}
 	}
 	
+	/**
+	 * Creates a new {@link ClientConfig} instance that copies all configuration values from a different {@code ClientConfig} object.
+	 * The created instance will not be <i>locked</i>.<br>
+	 * The constructor will synchronize on the template object while copying values to prevent concurrent modification.
+	 * @param template The old {@link ClientConfig} that holds the configuration values
+	 */
 	public ClientConfig(ClientConfig template) {
 		synchronized (template) {
-			this.setUseManagedThread(template.getUseManagedThread());
+			this.setUseHandlerThread(template.getUseHandlerThread());
 			this.setConnectionCheckTimeout(template.getConnectionCheckTimeout());
 			this.setPacketBufferInitialSize(template.getPacketBufferInitialSize());
 			this.setGlobalConnectionCheck(template.getGlobalConnectionCheck());
@@ -75,44 +126,56 @@ public class ClientConfig extends CommonConfig {
 	}
 	
 	/**
-	 * The type of connection that will be made to the server.
-	 * Not all server implementations support all connection types.
-	 * @return The {@link ConnectionType} for the server connection
+	 * The type of network connection that will be created when connecting the client to the server.
+	 * <p>
+	 * To successfully connect to a server, the server must have a compatible {@link ServerType}.
+	 * See the {@link ConnectionType} documentation to find a list of compatible server and connection types
+	 * </p>
+	 * @return The {@link ConnectionType} that the client will make to the server
 	 */
 	public ConnectionType getConnectionType() {
 		return connectionType;
 	}
 	
 	/**
-	 * The type of connection that will be made to the server.
-	 * Not all server implementations support all connection types.
-	 * @param The new {@link ConnectionType} for this config
-	 * @throws IllegalStateException If this config object is locked ({@link #isLocked()})
+	 * Sets the type of network connection that will be created when connecting the client to the server.
+	 * <p>
+	 * To successfully connect to a server, the server must have a compatible {@link ServerType}.
+	 * See the {@link ConnectionType} documentation to find a list of compatible server and connection types
+	 * </p>
+	 * @param value The new value for this config option
+	 * @return {@code this}
+	 * @throws IllegalStateException When this config object is locked
 	 */
-	public synchronized ClientConfig setConnectionType(ConnectionType value) {
+	public synchronized ClientConfig setConnectionType(ConnectionType value) throws IllegalStateException {
 		checkLocked();
 		this.connectionType = value;
 		return this;
 	}
 	
 	/**
-	 * The custom object associated with the connection that the client manager will make
-	 * to the server. The object will be accessible through {@link PacketContext#getCustomData()}
-	 * in the packet handler.
-	 * @return The custom object for the server connection
+	 * A user-defined custom object that will be associated with the connection the client makes to the server.
+	 * <p>
+	 * Here, an object can be stored to be later retrieved in a {@link PacketHandler} using the {@link PacketContext#getCustomData()}
+	 * method. Set to {@link #NO_CUSTOM_DATA} to store no object.
+	 * </p>
+	 * @return The user-defined custom object for the server connection
 	 */
 	public Object getCustomData() {
 		return customData;
 	}
 	
 	/**
-	 * The custom object associated with the connection that the client manager will make
-	 * to the server. The object will be accessible through {@link PacketContext#getCustomData()}
-	 * in the packet handler.
-	 * @param value The new custom object for the server connection
-	 * @throws IllegalStateException If this config object is locked ({@link #isLocked()})
+	 * Sets the user-defined custom object that will be associated with the connection the client makes to the server.
+	 * <p>
+	 * Here, an object can be stored to be later retrieved in a {@link PacketHandler} using the {@link PacketContext#getCustomData()}
+	 * method. Set to {@link #NO_CUSTOM_DATA} to store no object.
+	 * </p>
+	 * @param value The new value for this config option
+	 * @return {@code this}
+	 * @throws IllegalStateException When this config object is locked
 	 */
-	public synchronized ClientConfig setCustomData(Object value) {
+	public synchronized ClientConfig setCustomData(Object value) throws IllegalStateException {
 		checkLocked();
 		this.customData = value;
 		return this;
@@ -134,8 +197,8 @@ public class ClientConfig extends CommonConfig {
 	}
 
 	@Override
-	public synchronized ClientConfig setUseThreadPools(boolean encoder, boolean decoder) {
-		return (ClientConfig) super.setUseThreadPools(encoder, decoder);
+	public synchronized ClientConfig setUseThreadPools(boolean encodeAndDecode) {
+		return (ClientConfig) super.setUseThreadPools(encodeAndDecode);
 	}
 
 	@Override
@@ -149,8 +212,8 @@ public class ClientConfig extends CommonConfig {
 	}
 
 	@Override
-	public synchronized ClientConfig setUseManagedThread(boolean value) {
-		return (ClientConfig) super.setUseManagedThread(value);
+	public synchronized ClientConfig setUseHandlerThread(boolean value) {
+		return (ClientConfig) super.setUseHandlerThread(value);
 	}
 
 	@Override
@@ -169,12 +232,21 @@ public class ClientConfig extends CommonConfig {
 	}
 
 	@Override
+	public synchronized ClientConfig copy() {
+		if(isLocked()) {
+			return this;
+		} else {
+			return clone();
+		}
+	}
+	
+	@Override
 	public String toString() {
 		return "ClientConfig [connectionType=" + connectionType + ", customData=" + customData
 				+ ", getDatagramPacketMaxSize()=" + getDatagramPacketMaxSize() + ", getUseEncoderThreadPool()="
 				+ getUseEncoderThreadPool() + ", getUseDecoderThreadPool()=" + getUseDecoderThreadPool()
 				+ ", getCompressionSize()=" + getCompressionSize() + ", getConnectionCheckTimeout()="
-				+ getConnectionCheckTimeout() + ", getUseManagedThread()=" + getUseManagedThread()
+				+ getConnectionCheckTimeout() + ", getUseManagedThread()=" + getUseHandlerThread()
 				+ ", getPacketBufferInitialSize()=" + getPacketBufferInitialSize() + ", getGlobalConnectionCheck()="
 				+ getGlobalConnectionCheck() + ", isLocked()=" + isLocked() + "]";
 	}

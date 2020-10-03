@@ -237,8 +237,8 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 		}
 	}
 	
-	public Optional<Packet> createServerInfoPacket() {
-		return getConfig().createServerInfoPacket(this, Optional.empty());
+	public Packet createServerInfoPacket() {
+		return getConfig().getServerInfoPacket().createPacket(this, Optional.empty());
 	}
 	
 	public boolean sendPacketToClient(NetworkID client, Packet packet) {

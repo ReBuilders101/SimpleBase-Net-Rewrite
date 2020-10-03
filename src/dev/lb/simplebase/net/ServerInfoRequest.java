@@ -91,8 +91,8 @@ public final class ServerInfoRequest {
 		} else if(remote.hasFunction(NetworkIDFunction.INTERNAL)) {
 			final NetworkManagerServer server = InternalServerProvider.getServer(remote);
 			final RequestToken token = new RequestToken(null, remote.getDescription(), callback);
-			final Optional<Packet> infoPacket = server.createServerInfoPacket();
-			token.completeRequest(infoPacket.orElse(null));
+			final Packet infoPacket = server.createServerInfoPacket();
+			token.completeRequest(infoPacket);
 			return token;
 		} else {
 			throw new IllegalArgumentException("NetworkID must implement CONNECT or INTERNAL function");

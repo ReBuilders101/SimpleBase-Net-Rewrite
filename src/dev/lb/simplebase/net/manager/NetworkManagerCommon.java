@@ -100,7 +100,7 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 		encoderPool = new CoderThreadPool.Encoder(this, EventDispatchChain.P1(dispatcher, PacketSendingFailed, PacketSendingFailedEvent::new));
 		decoderPool = new CoderThreadPool.Decoder(this, EventDispatchChain.P1(dispatcher, PacketReceiveRejected, PacketReceiveRejectedEvent::new));
 		singleThreadHandler = new AtomicReference<>(new EmptyPacketHandler());
-		if(config.getUseManagedThread()) {
+		if(config.getUseHandlerThread()) {
 			multiThreadHandler = new ThreadPacketHandler(singleThreadHandler, 
 					EventDispatchChain.P2(dispatcher, PacketReceiveRejected, 
 					(packet, context) -> new PacketReceiveRejectedEvent(context.getRemoteID(), packet.getClass())));
