@@ -2,15 +2,10 @@ package dev.lb.simplebase.net.packet;
 
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
-import java.util.Spliterator;
-import java.util.function.Consumer;
-import java.util.function.Function;
-
 import dev.lb.simplebase.net.annotation.Threadsafe;
+import dev.lb.simplebase.net.util.MonitorBasedThreadsafeIterable;
 import dev.lb.simplebase.net.util.ThreadsafeIterable;
 
 /**
@@ -25,65 +20,12 @@ public class PacketIDMappingProvider {
 
 	public PacketIDMappingProvider() {
 		mappings = new HashSet<>(); //Will be manually synchronized
-		threadsafe = new Threadsafe();
+		threadsafe = new MonitorBasedThreadsafeIterable<>(this, this, () -> mappings);
 	}
 	
 	private final Set<PacketIDMapping> mappings;
-	private final Threadsafe threadsafe;
-	private class Threadsafe implements ThreadsafeIterable<PacketIDMappingProvider, PacketIDMapping> {
-
-		@Override
-		public void action(Consumer<PacketIDMappingProvider> action) {
-			synchronized (mappings) { //Run the action while holding monitor
-				action.accept(PacketIDMappingProvider.this);
-			}
-		}
-
-		@Override
-		public <R> R actionReturn(Function<PacketIDMappingProvider, R> action) {
-			synchronized (mappings) { //Run the action while holding monitor
-				return action.apply(PacketIDMappingProvider.this); //Return here, will release monitor on its own
-			}
-		}
-
-		@Override
-		public void forEach(Consumer<? super PacketIDMapping> itemAction) {
-			synchronized (mappings) { //Iterate backing set while holding the monitor
-				mappings.forEach(itemAction);
-			}
-		}
-
-		@Override
-		public Iterator<PacketIDMapping> iterator() {
-			if(Thread.holdsLock(mappings)) { //If it is held by this thread then it is held somewhere up the stack -> 
-				return mappings.iterator(); //so we can return an instance to the caller (relatively) safely
-			} else {
-				throw new IllegalStateException("Current thread does not hold object monitor"); //No lock, no iterator
-			}
-		}
-
-		@Override
-		public Spliterator<PacketIDMapping> spliterator() {
-			if(Thread.holdsLock(mappings)) { //If it is held by this thread then it is held somewhere up the stack -> 
-				return mappings.spliterator(); //so we can return an instance to the caller (relatively) safely
-			} else {
-				throw new IllegalStateException("Current thread does not hold object monitor"); //No lock, no iterator
-			}
-		}
-
-		@Override
-		public <R> Optional<R> forEachReturn(Function<? super PacketIDMapping, Optional<R>> itemFunction) {
-			synchronized (mappings) {
-				for(PacketIDMapping mapping : mappings) {
-					Optional<R> val = itemFunction.apply(mapping);
-					if(val.isPresent()) return val;
-				}
-				return Optional.empty();
-			}
-		}
-		
-	}
-
+	private final ThreadsafeIterable<PacketIDMappingProvider, PacketIDMapping> threadsafe;
+	
 	/**
 	 * Creates an object that allows threadsafe access to the mapping list.
 	 * @return A {@link ThreadsafeIterable} for this provider

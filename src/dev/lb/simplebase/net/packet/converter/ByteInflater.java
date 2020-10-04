@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
+import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.io.ByteDataHelper;
 
 public abstract class ByteInflater implements AutoCloseable {
@@ -24,6 +25,10 @@ public abstract class ByteInflater implements AutoCloseable {
 	};
 	
 	public static final ByteInflater ZIP_COMPRESSION_PREFIXED = new ByteInflater() {
+		
+		{
+			NetworkManager.addCleanupTask(this::close);
+		}
 		
 		private final Inflater inf = new Inflater();
 		

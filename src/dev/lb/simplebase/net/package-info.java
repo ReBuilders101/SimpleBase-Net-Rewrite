@@ -1,5 +1,5 @@
 /**
- * <h1>The {@code dev.simplebase.net} package and its subpackages contain the networking code for the SimpleBase API.</h1>
+ * <h2>The {@code dev.simplebase.net} package and its subpackages contain the networking code for the SimpleBase API.</h2>
  * This document will give a short explaination of the concepts of the API.
  * <p>
  * <b>Basic concept</b><br>

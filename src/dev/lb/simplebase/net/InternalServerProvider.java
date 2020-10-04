@@ -1,10 +1,12 @@
 package dev.lb.simplebase.net;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.stream.Stream;
-
+import java.util.Set;
 import dev.lb.simplebase.net.annotation.Internal;
+import dev.lb.simplebase.net.config.ServerConfig;
 import dev.lb.simplebase.net.connection.InternalNetworkConnection;
 import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
 import dev.lb.simplebase.net.id.NetworkID;
@@ -13,7 +15,14 @@ import dev.lb.simplebase.net.manager.NetworkManagerServer;
 import dev.lb.simplebase.net.util.InternalAccess;
 
 /**
- * Lists all available internal servers
+ * <h2>Internal use only</h2>
+ * <p>
+ * This class is used internally by the API and the contained methods should not and can not be called directly.
+ * </p><hr><p>
+ * Manages the list of servers available for internal network connections. {@link NetworkManagerServer}s will automatically
+ * register and unregister when starting and stopping if {@link ServerConfig#getRegisterInternalServer()} is enabled.
+ * </p>
+ * @see InternalAccess#assertCaller(Class, int, String)
  */
 @Internal
 public final class InternalServerProvider {
@@ -21,6 +30,18 @@ public final class InternalServerProvider {
 	
 	private static final Map<NetworkID, NetworkManagerServer> serverList = new HashMap<>();
 	
+	/**
+	 * <h2>Internal use only</h2>
+	 * <p>
+	 * This method is used internally by the API and can not be called directly.
+	 * </p><hr><p>
+	 * Creates the peer that is stored in an {@link InternalNetworkConnection} when connecting the client to one of the
+	 * registered internal servers.
+	 * </p>
+	 * @param source The client-side connection that wants to connect to a server
+	 * @return The server-side connection, initialized with the source as its peer
+	 * @see InternalAccess#assertCaller(Class, int, String)
+	 */
 	@Internal
 	public static synchronized InternalNetworkConnection createInternalConnectionPeer(InternalNetworkConnection source) {
 		InternalAccess.assertCaller(InternalNetworkConnection.class, 0, "Cannot call createServerPeer() directly");
@@ -29,7 +50,6 @@ public final class InternalServerProvider {
 		if(server == null) return null;
 		final ConfigureConnectionEvent event = new ConfigureConnectionEvent(server, source.getLocalID());
 		server.getEventDispatcher().post(server.ConfigureConnection, event);
-//		if(event.isCancelled()) return null; //Is no longer cancellable
 		
 		final InternalNetworkConnection peer = new InternalNetworkConnection(server, source, event.getCustomObject());
 		
@@ -43,6 +63,21 @@ public final class InternalServerProvider {
 		return peer;
 	}
 	
+	/**
+	 * <h2>Internal use only</h2>
+	 * <p>
+	 * This method is used internally by the API and can not be called directly.
+	 * </p><hr><p>
+	 * Registers a {@link NetworkManagerServer} to be available for internal connections.
+	 * Called automatically from {@link NetworkManagerServer#startServer()} if {@link ServerConfig#getRegisterInternalServer()}
+	 * is enabled in the server config.
+	 * </p><p>
+	 * Registration will fail if the server is already registered.
+	 * </p>
+	 * @param server The server to register for internal connections
+	 * @return Whether the registration was successful
+	 * @see InternalAccess#assertCaller(Class, int, String)
+	 */
 	@Internal
 	public static synchronized boolean registerServerForInternalConnections(NetworkManagerServer server) {
 		InternalAccess.assertCaller(NetworkManagerServer.class, 0, "Cannot call registerServerForInternalConnections() directly");
@@ -58,6 +93,21 @@ public final class InternalServerProvider {
 		}
 	}
 
+	/**
+	 * <h2>Internal use only</h2>
+	 * <p>
+	 * This method is used internally by the API and can not be called directly.
+	 * </p><hr><p>
+	 * Unregisters a {@link NetworkManagerServer} to no longer be available for internal connections.
+	 * Called automatically from {@link NetworkManagerServer#stopServer()} if {@link ServerConfig#getRegisterInternalServer()}
+	 * is enabled in the server config.
+	 * </p><p>
+	 * Unregistration will fail if the server not currently registered.
+	 * </p>
+	 * @param server The server to unregister for internal connections
+	 * @return Whether the unregistration was successful
+	 * @see InternalAccess#assertCaller(Class, int, String)
+	 */
 	@Internal
 	public static synchronized boolean unregisterServerForInternalConnections(NetworkManagerServer server) {
 		InternalAccess.assertCaller(NetworkManagerServer.class, 0, "Cannot call unregisterServerForInternalConnections() directly");
@@ -73,6 +123,11 @@ public final class InternalServerProvider {
 		}
 	}
 	
+	/**
+	 * Get a registered server for a certain {@link NetworkID}
+	 * @param serverId The {@link NetworkID} for the server
+	 * @return The registered server, or {@code null} of no matching server was found
+	 */
 	protected static synchronized NetworkManagerServer getServer(NetworkID serverId) {
 		if(serverList.containsKey(serverId)) {
 			return serverList.get(serverId);
@@ -81,7 +136,11 @@ public final class InternalServerProvider {
 		}
 	}
 	
-	protected static synchronized Stream<NetworkManagerServer> getInternalServers() {
-		return serverList.values().stream();
+	/**
+	 * Lists all currently registered servers in a new immutable {@link Set}.
+	 * @return A new {@link Set} containing all registered servers
+	 */
+	protected static synchronized Set<NetworkManagerServer> getInternalServers() {
+		return Collections.unmodifiableSet(new HashSet<>(serverList.values()));
 	}
 }

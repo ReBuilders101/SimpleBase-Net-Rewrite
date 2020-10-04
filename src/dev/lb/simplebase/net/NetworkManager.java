@@ -2,13 +2,15 @@ package dev.lb.simplebase.net;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Stream;
-
+import java.util.Set;
 import dev.lb.simplebase.net.annotation.StaticType;
 import dev.lb.simplebase.net.config.ClientConfig;
 import dev.lb.simplebase.net.config.ConnectionType;
@@ -28,15 +30,13 @@ import dev.lb.simplebase.net.manager.NetworkManagerClient;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.manager.NetworkManagerServer;
 import dev.lb.simplebase.net.manager.SocketNetworkManagerServer;
-import dev.lb.simplebase.net.packet.converter.ByteDeflater;
-import dev.lb.simplebase.net.packet.converter.ByteInflater;
 
 /**
  * <p>
  * The {@link NetworkManager} class provides static methods to create client and server managers.
  * </p><p>
  * It also offers methods related to logging and application behavior such as cleanup tasks
- * <p>
+ * </p>
  */
 @StaticType
 public final class NetworkManager {
@@ -94,29 +94,55 @@ public final class NetworkManager {
 	//CLEANUP #################################################################################
 	private static final List<Runnable> cleanUpTasks = new ArrayList<>();
 	
+	
+	private static final MethodType timeSourceType;
+	private static final MethodHandle defaultTimeSource;
+	private static volatile MethodHandle timeSource;
+	
 	static {
+		timeSourceType = MethodType.methodType(long.class);
+		try {
+			defaultTimeSource = MethodHandles.lookup().findStatic(System.class, "currentTimeMillis", timeSourceType);
+		} catch (NoSuchMethodException | IllegalAccessException e) {
+			throw new RuntimeException("Cannot find System.currentTimeMillis()");
+		}
+		timeSource = defaultTimeSource;
+		
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 				synchronized (cleanUpTasks) {
 					if(cleanUpTasks.size() > 0) {
 						LOGGER.warning("Cleanup tasks have not been run. Please call NetworkManager.cleanUp() before exiting the program");
-						cleanUp();
+						cleanup();
 					}
 				}
 		}, "Net-Simplebase-Cleanup"));
 	}
 	
-	public static void addCleanUpTask(Runnable task) {
+	/**
+	 * Register a {@link Runnable} that will be run when {@link #cleanup()} is called. Can be used to
+	 * dipose of resources automatically when closing the API.
+	 * @param task The task to run when cleaning up
+	 */
+	public static void addCleanupTask(Runnable task) {
 		synchronized (cleanUpTasks) {
 			cleanUpTasks.add(task);
 		}
 	}
 	
-	public static void cleanUp() {
+	/**
+	 * <b>Should be called before the application using this API exits.</b>
+	 * <p>
+	 * Disposes of all resources held by the API,
+	 * stops all active servers after terminating their connections
+	 * and ends all non-daemon threads created by the API.
+	 * </p><p>
+	 * If not called before the application exits, it will run automatically using a shutdown hook,
+	 * but relying on this behavior is discouraged and will be logged as a warning.
+	 * </p>
+	 */
+	public static void cleanup() {
 		synchronized (cleanUpTasks) {
 			LOGGER.info("Cleanup: running %d tasks", cleanUpTasks.size());
-			//There are some fixed static tasks
-			ByteInflater.ZIP_COMPRESSION_PREFIXED.close();
-			ByteDeflater.ZIP_COMPRESSION_PREFIXED.close();
 			
 			cleanUpTasks.forEach(Runnable::run);
 			cleanUpTasks.clear();
@@ -126,34 +152,83 @@ public final class NetworkManager {
 	
 	//UTILITIES ################################################################################
 	
-	public static Stream<NetworkManagerServer> getInternalServers() {
+	/**
+	 * A list of all {@link NetworkManagerServer} that are currently available for internal
+	 * connections.
+	 * @return An immutable {@link Set} of registered internal servers
+	 */
+	public static Set<NetworkManagerServer> getInternalServers() {
 		return InternalServerProvider.getInternalServers();
 	}
 	
 	
 	/**
 	 * A consistent time source. Defaults to
-	 * {@link System#currentTimeMillis()}, but can be swapped for a faster or more preceise time source if necessary
+	 * {@link System#currentTimeMillis()}, but can be swapped for a faster or more precise time source if necessary
 	 * (See 'granularity' in the docs)
 	 * @return The current time in milliseconds. The value will be positive, but there are no guarantees to what point
 	 * in time the {@code 0} value represents (This may be an Epoch date, or e.g. the start time of the program).
 	 */
 	public static long getClockMillis() {
-		return System.currentTimeMillis();
+		try {
+			return (long) timeSource.invokeExact();
+		} catch (Throwable e) {
+			throw new RuntimeException("Time source threw exception: ", e);
+		}
+	}
+	
+	/**
+	 * Can be used to replace the APIs time source.
+	 * <b>Protected as this is an experimental feature.</b>
+	 * <p>
+	 * The {@link MethodHandle} must accept no parameters and return a value of type {@code long} (Descriptor: '()J').
+	 * </p><p>
+	 * If the supplied {@code MethodHandle} is {@code null}, the default source ({@link System#currentTimeMillis()})
+	 * will be used as a fallback.
+	 * </p>
+	 * @param newTimeSource The {@link MethodHandle} to the new time source, or {@code null}
+	 * @throws IllegalArgumentException When the {@link MethodType} of the handle is incorrect
+	 */
+	protected static void setTimeSource(MethodHandle newTimeSource) {
+		if(newTimeSource == null) {
+			timeSource = defaultTimeSource;
+		} else {
+			if(newTimeSource.type().equals(timeSourceType)) {
+				timeSource = newTimeSource;
+			} else {
+				throw new IllegalArgumentException("MethodHandle has incorrect MethodType: ()J required");
+			}
+		}
 	}
 	
 	//MANAGER FACTORIES #######################################################################
 	
 	private static <T extends NetworkManagerCommon> T register(T instance) {
 		if(instance == null) return null;
-		addCleanUpTask(instance::cleanUp);
+		addCleanupTask(instance::cleanUp);
 		return instance;
 	}
 	
+	/**
+	 * Creates a new {@link NetworkManagerClient} instance.<br>
+	 * All config values are the defaults listed in {@link ClientConfig#ClientConfig()}.
+	 * @param clientLocal The local address of the client
+	 * @param serverRemote The remote address of the server to connect to
+	 * @return The created {@link NetworkManagerClient}, or {@code null} if an error occurred during creation
+	 * @throws NullPointerException When any of the paramters is {@code null}
+	 */
 	public static NetworkManagerClient createClient(NetworkID clientLocal, NetworkID serverRemote) {
 		return createClient(clientLocal, serverRemote, new ClientConfig());
 	}
 	
+	/**
+	 * Creates a new {@link NetworkManagerClient} instance with a custom configuration.
+	 * @param clientLocal The local address of the client
+	 * @param serverRemote The remote address of the server to connect to
+	 * @param config The {@link ClientConfig} with additional settings for the manager
+	 * @return The created {@link NetworkManagerClient}, or {@code null} if an error occurred during creation
+	 * @throws NullPointerException When any of the paramters is {@code null}
+	 */
 	public static NetworkManagerClient createClient(NetworkID clientLocal, NetworkID serverRemote, ClientConfig config) {
 		Objects.requireNonNull(clientLocal, "'clientLocal' parameter must not be null");
 		Objects.requireNonNull(serverRemote, "'serverRemote' parameter must not be null");
@@ -167,10 +242,26 @@ public final class NetworkManager {
 		return register(new NetworkManagerClient(clientLocal, serverRemote, copiedConfig, 0));
 	}
 	
+	/**
+	 * Creates a new {@link NetworkManagerServer} instance.<br>
+	 * All config values are the defaults listed in {@link ServerConfig#ServerConfig()}.
+	 * @param serverLocal The address for the server to bind to
+	 * @return The created {@link NetworkManagerServer}, or {@code null} if an error occurred during creation
+	 * @throws NullPointerException When any of the paramters is {@code null}
+	 */
 	public static NetworkManagerServer createServer(NetworkID serverLocal) {
 		return createServer(serverLocal, new ServerConfig());
 	}
 	
+	/**
+	 * Creates a new {@link NetworkManagerServer} instance.<br>
+	 * All config values are the defaults listed in {@link ServerConfig#ServerConfig()}.
+	 * @param serverLocal The address for the server to bind to
+	 * @param config The {@link ServerConfig} with additional settings for the manager
+	 * @return The created {@link NetworkManagerServer}, or {@code null} if an error occurred during creation
+	 * @throws NullPointerException When any of the paramters is {@code null}
+	 * @throws IllegalArgumentException When there is a mismatch between the config's {@link ServerType} and the used {@link NetworkID}
+	 */
 	public static NetworkManagerServer createServer(NetworkID serverLocal, ServerConfig config) {
 		Objects.requireNonNull(serverLocal, "'serverLocal' parameter must not be null");
 		Objects.requireNonNull(config, "'config' parameter must not be null");

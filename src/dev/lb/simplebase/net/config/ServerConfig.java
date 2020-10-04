@@ -203,9 +203,11 @@ public class ServerConfig extends CommonConfig {
 	 * @param value The new value for this config option
 	 * @return {@code this}
 	 * @throws IllegalStateException When this config object is locked
+	 * @throws NullPointerException When {@code value} is {@code null}
 	 */
 	public synchronized ServerConfig setServerType(ServerType value) throws IllegalStateException {
 		checkLocked();
+		Objects.requireNonNull(value, "'value' for ServerType must not be null");
 		this.serverType = value;
 		return this;
 	}

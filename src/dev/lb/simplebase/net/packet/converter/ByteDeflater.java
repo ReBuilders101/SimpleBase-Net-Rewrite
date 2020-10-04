@@ -2,6 +2,8 @@ package dev.lb.simplebase.net.packet.converter;
 
 import java.nio.ByteBuffer;
 import java.util.zip.Deflater;
+
+import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.io.ByteDataHelper;
 
 /**
@@ -23,6 +25,10 @@ public abstract class ByteDeflater implements AutoCloseable {
 	};
 	
 	public static final ByteDeflater ZIP_COMPRESSION_PREFIXED = new ByteDeflater() {
+		
+		{
+			NetworkManager.addCleanupTask(this::close);
+		}
 		
 		private final Deflater def = new Deflater();
 		

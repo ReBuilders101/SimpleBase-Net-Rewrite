@@ -148,9 +148,11 @@ public class ClientConfig extends CommonConfig {
 	 * @param value The new value for this config option
 	 * @return {@code this}
 	 * @throws IllegalStateException When this config object is locked
+	 * @throws NullPointerException When {@code value} is {@code null}
 	 */
 	public synchronized ClientConfig setConnectionType(ConnectionType value) throws IllegalStateException {
 		checkLocked();
+		Objects.requireNonNull(value, "'value' for ConnectionType must not be null");
 		this.connectionType = value;
 		return this;
 	}
