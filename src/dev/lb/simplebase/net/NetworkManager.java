@@ -149,6 +149,9 @@ public final class NetworkManager {
 			
 			cleanUpTasks.forEach(Runnable::run);
 			cleanUpTasks.clear();
+			
+			//This is the very last thing in case a cleanup tasks still requires the timer
+			GlobalTimer.cleanup();
 			LOGGER.info("Cleanup: completed; task list cleared");
 		}
 	}

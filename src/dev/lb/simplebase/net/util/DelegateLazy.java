@@ -1,5 +1,6 @@
 package dev.lb.simplebase.net.util;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 class DelegateLazy<V, D> implements Lazy<V> {
@@ -35,6 +36,11 @@ class DelegateLazy<V, D> implements Lazy<V> {
 	@Override
 	public <R> Lazy<R> map(Function<V, R> mapper) {
 		return new DelegateLazy<>(delegate, mapper.compose(this.mapper));
+	}
+
+	@Override
+	public void ifPresent(Consumer<? super V> action) {
+		delegate.ifPresent(a -> action.accept(mapper.apply(a)));
 	}
 
 }

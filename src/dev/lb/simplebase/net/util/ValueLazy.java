@@ -1,6 +1,7 @@
 package dev.lb.simplebase.net.util;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -13,7 +14,7 @@ import dev.lb.simplebase.net.annotation.Threadsafe;
 @Threadsafe
 class ValueLazy<T> implements Lazy<T> {
 
-	private Supplier<T> supplier;
+	private Supplier<? extends T> supplier;
 	private T value;
 	
 	private final Object lock = new Object();
@@ -22,7 +23,7 @@ class ValueLazy<T> implements Lazy<T> {
 	 * Creates a new instance
 	 * @param supplier The value supplier. Must not be null. Will be called only once.
 	 */
-	ValueLazy(Supplier<T> supplier) {
+	ValueLazy(Supplier<? extends T> supplier) {
 		Objects.requireNonNull(supplier, "Lazy value supplier must not be null");
 		this.supplier = supplier;
 		this.value = null;
@@ -51,5 +52,12 @@ class ValueLazy<T> implements Lazy<T> {
 	@Override
 	public <V> Lazy<V> map(Function<T, V> mapper) {
 		return new DelegateLazy<>(this, mapper);
+	}
+
+	@Override
+	public void ifPresent(Consumer<? super T> action) {
+		if(value != null) { //This will never change as there is no unGet() or sth
+			action.accept(value);
+		}
 	}
 }

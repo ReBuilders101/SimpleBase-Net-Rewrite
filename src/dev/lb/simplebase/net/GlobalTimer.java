@@ -27,7 +27,7 @@ import dev.lb.simplebase.net.util.Pair;
 @StaticType
 public class GlobalTimer {
 	//Timer starts the thread in the constructor. Use Lazy so no thread is started if a program doesn't use the GlobalTimer
-	private static final Lazy<Timer> timer = Lazy.of(() -> new Timer("SimpleBase-Net-GlobalTimer"));
+	private static final Lazy.Closeable<Timer> timer = Lazy.ofCloseable(() -> new Timer("SimpleBase-Net-GlobalTimer"), Timer::cancel);
 	private static volatile ManagerTimerTask currentTask = null;
 	private static volatile long currentTaskPeriod = TimeUnit.SECONDS.toMillis(60);
 	private static final Object taskPeriodLock = new Object();
@@ -120,6 +120,10 @@ public class GlobalTimer {
 		Pair<Task, Runnable> task = Task.completable();
 		timer.get().schedule(new FunctionalTimerTask(task.getRight()), milliseconds);
 		return task.getLeft();
+	}
+	
+	protected static void cleanup() {
+		timer.close();
 	}
 	
 	/**
