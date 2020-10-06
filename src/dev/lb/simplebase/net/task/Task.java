@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BooleanSupplier;
 
+import dev.lb.simplebase.net.GlobalTimer;
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.util.Pair;
@@ -157,6 +158,11 @@ public interface Task {
 	public static Pair<Task, Runnable> completable() {
 		final AwaitableTask task = new AwaitableTask();
 		return new Pair<>(task, task::release);
+	}
+	
+	public static Task timeout(long time, TimeUnit unit) {
+		final long wakeupMsTime = unit.toMillis(time);
+		return GlobalTimer.subscribeTimeoutTaskOnce(wakeupMsTime);
 	}
 	
 	public static Task awaitCondition(BooleanSupplier condition) {

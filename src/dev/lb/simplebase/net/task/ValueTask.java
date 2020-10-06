@@ -62,6 +62,11 @@ public interface ValueTask<V> extends Task {
 
 	public V getSuccess() throws IllegalStateException;
 	public ExecutionException getCancelled() throws IllegalStateException;
+	
+	@SuppressWarnings("unchecked")
+	public default <E extends Exception> E getCancelledInner(Class<E> innerExceptionType) throws IllegalStateException, ClassCastException {
+		return (E) getCancelled().getCause();
+	}
 
 	public default Optional<V> getOptional() throws InterruptedException {
 		tryAwait();

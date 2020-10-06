@@ -11,8 +11,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import dev.lb.simplebase.net.annotation.StaticType;
 import dev.lb.simplebase.net.config.ClientConfig;
+import dev.lb.simplebase.net.config.CommonConfig;
 import dev.lb.simplebase.net.config.ConnectionType;
 import dev.lb.simplebase.net.config.ServerConfig;
 import dev.lb.simplebase.net.config.ServerType;
@@ -199,6 +202,20 @@ public final class NetworkManager {
 				throw new IllegalArgumentException("MethodHandle has incorrect MethodType: ()J required");
 			}
 		}
+	}
+	
+	/**
+	 * Sets the timer period for the task that calls {@link NetworkManagerCommon#updateConnectionStatus()}
+	 * if {@link CommonConfig#getGlobalConnectionCheck()} was enabled.
+	 * @param period The time period in the given unit
+	 * @param unit The time unit for the period
+	 */
+	public static void setConnectionCheckTimer(long period, TimeUnit unit) {
+		long millis = unit.toMillis(period);
+		//Adjust rounding errors to avoid unexpected error messages
+		if(millis == 0 && period > 0) millis = 1;
+		if(millis <= 0) throw new IllegalArgumentException("Period must be greater than 0");
+		GlobalTimer.setManagerTimeout(millis);
 	}
 	
 	//MANAGER FACTORIES #######################################################################

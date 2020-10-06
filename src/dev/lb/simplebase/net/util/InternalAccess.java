@@ -1,6 +1,7 @@
 package dev.lb.simplebase.net.util;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import dev.lb.simplebase.net.annotation.StaticType;
 
@@ -78,6 +79,46 @@ public class InternalAccess {
 				"InternalAPIException: " + getLocalizedMessage();
 			return nameAndMessage + " (Called from " + actualCaller + ", requires " + requiredCaller + ")";
 		}
-		
+	}
+	
+	/**
+	 * Creates an {@link AtomicBoolean} that can be used to assert that only a single instance of a class is ever created.
+	 * <p>
+	 * The returned value should be stored in a {@code private static final} field in the singleton class.<br>
+	 * In the constructor, call {@link InternalAccess#assertSingleton(AtomicBoolean, String)} with the returned
+	 * {@code AtomicBoolean}.
+	 * </p><p>
+	 * The returned {@code AtomicBoolean} will initially be set to {@code false}. A value of {@code true} means that
+	 * an instance exists.
+	 * </p>
+	 * @return An {@link AtomicBoolean} with value {@code false}
+	 */
+	public static AtomicBoolean createSingleton() {
+		return new AtomicBoolean(false); //bool =^= instance created
+	}
+	
+	/**
+	 * Asserts that an instance of a singleton can be created.
+	 * <p>
+	 * The {@link AtomicBoolean} should be created as stated in {@link InternalAccess#createSingleton()}.
+	 * This method should the be called in the constructor of the singleton class.
+	 * It will return on success, or simply throw an unchecked exception to immediately exit the constructor.
+	 * </p><p>
+	 * If the method returns normally, the {@code AtomicBoolean} will have been updated to {@code true}.
+	 * <p>
+	 * @param staticBool The static {@link AtomicBoolean} of the class
+	 * @param message The error message for the thrown exception
+	 * @throws IllegalStateException When an instance already exists
+	 */
+	public static void assertSingleton(AtomicBoolean staticBool, String message) throws IllegalStateException {
+		if(staticBool.getAndSet(true)) throw new IllegalStateException(message);
+	}
+	
+	public static void freeSingleton(AtomicBoolean staticBool, String message) {
+		if(!staticBool.getAndSet(false)) throw new IllegalStateException(message);
+	}
+	
+	public static boolean hasSingleton(AtomicBoolean staticBool) {
+		return staticBool.get();
 	}
 }

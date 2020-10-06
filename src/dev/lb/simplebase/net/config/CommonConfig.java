@@ -5,7 +5,7 @@ import java.util.concurrent.Executors;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
-import dev.lb.simplebase.net.GlobalConnectionCheck;
+import dev.lb.simplebase.net.GlobalTimer;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.annotation.ValueType;
@@ -428,7 +428,7 @@ public class CommonConfig implements Cloneable2 {
 	/**
 	 * Whether to subscribe the {@link NetworkManagerCommon} to the global connection checker thread.
 	 * <p>
-	 * If enabled, a thread managed by the {@link GlobalConnectionCheck} class periodically calls
+	 * If enabled, a thread managed by the {@link GlobalTimer} class periodically calls
 	 * {@link NetworkConnection#updateConnectionStatus()} on all of the manager's connections. This will
 	 * automatically remove a connection that has timed out after a call to {@link NetworkConnection#checkConnection()}.
 	 * </p>
@@ -441,7 +441,7 @@ public class CommonConfig implements Cloneable2 {
 	/**
 	 * Sets whether to subscribe the {@link NetworkManagerCommon} to the global connection checker thread.
 	 * <p>
-	 * If enabled, a thread managed by the {@link GlobalConnectionCheck} class periodically calls
+	 * If enabled, a thread managed by the {@link GlobalTimer} class periodically calls
 	 * {@link NetworkConnection#updateConnectionStatus()} on all of the manager's connections. This will
 	 * automatically remove a connection that has timed out after a call to {@link NetworkConnection#checkConnection()}.
 	 * </p>

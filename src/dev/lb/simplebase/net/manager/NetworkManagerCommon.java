@@ -4,7 +4,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import dev.lb.simplebase.net.GlobalConnectionCheck;
+import dev.lb.simplebase.net.GlobalTimer;
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
@@ -111,7 +111,7 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 		}
 		
 		if(config.getGlobalConnectionCheck()) {
-			GlobalConnectionCheck.subscribeManagerForConnectionStatusCheck(this);
+			GlobalTimer.subscribeManagerForConnectionStatusCheck(this);
 		}
 		
 		commonToByteConverter = Lazy.of(() -> new PacketToByteConverter(this));
@@ -237,7 +237,7 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 		managedThread.ifPresent(Thread::interrupt);
 		encoderPool.shutdown();
 		decoderPool.shutdown();
-		GlobalConnectionCheck.unsubscribeManagerForConnectionStatusCheck(this);
+		GlobalTimer.unsubscribeManagerForConnectionStatusCheck(this);
 	}
 	
 	/**
