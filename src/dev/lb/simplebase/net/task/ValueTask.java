@@ -8,8 +8,10 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import dev.lb.simplebase.net.GlobalTimer;
 import dev.lb.simplebase.net.util.Pair;
 
 public interface ValueTask<V> extends Task {
@@ -142,18 +144,56 @@ public interface ValueTask<V> extends Task {
 	public static <V> ValueTask<V> cancelled(Throwable cause, Class<V> expectedValueType) {
 		return new CancelledValueTask<>(cause);
 	}
+	
+	public static <V> ValueTask<V> successAfter(Supplier<V> value, long timeout, TimeUnit unit) {
+		final Pair<ValueTask<V>, ValueTask.CompletionSource<V>> task = ValueTask.completable();
+		GlobalTimer.delay(() -> task.getRight().success(value.get()), timeout, unit);
+		return task.getLeft();
+	}
+	
+	public static <V> ValueTask<V> successAfter(V value, long timeout, TimeUnit unit) {
+		final Pair<ValueTask<V>, ValueTask.CompletionSource<V>> task = ValueTask.completable();
+		GlobalTimer.delay(() -> task.getRight().success(value), timeout, unit);
+		return task.getLeft();
+	}
+	
+	public static <V> ValueTask<V> cancelledAfter(Supplier<Throwable> cause, Class<V> expectedValueType, long timeout, TimeUnit unit) {
+		final Pair<ValueTask<V>, ValueTask.CompletionSource<V>> task = ValueTask.completable();
+		GlobalTimer.delay(() -> task.getRight().cancelled(cause.get()), timeout, unit);
+		return task.getLeft();
+	}
+	
+	public static <V> ValueTask<V> cancelledAfter(Throwable cause, Class<V> expectedValueType, long timeout, TimeUnit unit) {
+		final Pair<ValueTask<V>, ValueTask.CompletionSource<V>> task = ValueTask.completable();
+		GlobalTimer.delay(() -> task.getRight().cancelled(cause), timeout, unit);
+		return task.getLeft();
+	}
+	
+	public static ValueTask<?> cancelledAfter(Supplier<Throwable> cause, long timeout, TimeUnit unit) {
+		final Pair<ValueTask<?>, ValueTask.CompletionSource<?>> task = ValueTask.completableUntyped();
+		GlobalTimer.delay(() -> task.getRight().cancelled(cause.get()), timeout, unit);
+		return task.getLeft();
+	}
+	
+	public static ValueTask<?> cancelledAfter(Throwable cause, long timeout, TimeUnit unit) {
+		final Pair<ValueTask<?>, ValueTask.CompletionSource<?>> task = ValueTask.completableUntyped();
+		GlobalTimer.delay(() -> task.getRight().cancelled(cause), timeout, unit);
+		return task.getLeft();
+	}
 
 	public static <V> Pair<ValueTask<V>, CompletionSource<V>> completable() {
 		final AwaitableValueTask<V> task = new AwaitableValueTask<>();
+		return new Pair<>(task, task.createCompletionSource());
+	}
+	
+	public static Pair<ValueTask<?>, CompletionSource<?>> completableUntyped() {
+		final AwaitableValueTask<?> task = new AwaitableValueTask<>();
 		return new Pair<>(task, task.createCompletionSource());
 	}
 
 	public static <A, B> ValueTask.PairTask<A, B> ofPair(ValueTask<Pair<A, B>> delegate) {
 		return new PairTask<>(delegate);
 	}
-
-
-
 
 
 	public static final class CompletionSource<V> {

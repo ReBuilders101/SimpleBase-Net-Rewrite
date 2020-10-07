@@ -162,7 +162,9 @@ public interface Task {
 	
 	public static Task timeout(long time, TimeUnit unit) {
 		final long wakeupMsTime = unit.toMillis(time);
-		return GlobalTimer.subscribeTimeoutTaskOnce(wakeupMsTime);
+		final Pair<Task, Runnable> tac = Task.completable();
+		GlobalTimer.subscribeTimeoutTaskOnce(wakeupMsTime, tac.getRight());
+		return tac.getLeft();
 	}
 	
 	public static Task awaitCondition(BooleanSupplier condition) {

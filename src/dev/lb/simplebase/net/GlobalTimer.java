@@ -5,6 +5,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.StampedLock;
@@ -16,7 +18,6 @@ import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.task.Task;
 import dev.lb.simplebase.net.util.InternalAccess;
 import dev.lb.simplebase.net.util.Lazy;
-import dev.lb.simplebase.net.util.Pair;
 
 /**
  * Handles the global connection state check.<p>
@@ -105,21 +106,55 @@ public class GlobalTimer {
 	 * <h2>Internal use only</h2>
 	 * <p>
 	 * This class is used internally by the API and the contained methods should not and can not be called directly.
-	 * </p><hr><p>
-	 * Cretates a task that completes after the given amount of time.
 	 * </p><p>
-	 * Use {@link Task#timeout(long, TimeUnit)} instead.
+	 * Use {@link Task#timeout(long, TimeUnit)} for fixed-time tasks instead.<br>
+	 * Use {@link GlobalTimer#delay(Runnable, long, TimeUnit)} to delay execution of arbitrary code.
+	 * </p><hr><p>
+	 * Registers a task completion source to be triggered after a certain amount of time
 	 * </p>
 	 * @param milliseconds The timeout in milliseconds
-	 * @return The requested {@link Task}
+	 * @param completion The task completion action
 	 */
 	@Internal
-	public static Task subscribeTimeoutTaskOnce(long milliseconds) {
+	@Deprecated
+	public static void subscribeTimeoutTaskOnce(long milliseconds, Runnable completion) {
 		InternalAccess.assertCaller(Task.class, 0, "Cannot call subscribeTimeoutTaskOnce() directly");
 		
-		Pair<Task, Runnable> task = Task.completable();
-		timer.get().schedule(new FunctionalTimerTask(task.getRight()), milliseconds);
-		return task.getLeft();
+		timer.get().schedule(new FunctionalTimerTask(completion), milliseconds);
+	}
+	
+	/**
+	 * Schedules a {@link Runnable} for delayed execution.
+	 * <p>
+	 * The {@code Runnable} will run on the global timer thread.<br>
+	 * If the {@code Runnable} contains blocking code, use {@link #delayAsync(Runnable, long, TimeUnit)} to
+	 * avoid blocking the timer processing thread.
+	 * </p>
+	 * @param action The {@link Runnable} that will run after the timeout
+	 * @param timeout The timeout value
+	 * @param unit The {@link TimeUnit} for the timeout value
+	 */
+	public static void delay(Runnable action, long timeout, TimeUnit unit) {
+		final long ms = unit.toMillis(timeout);
+		
+		timer.get().schedule(new FunctionalTimerTask(action), ms);
+	}
+	
+	/**
+	 * Schedules a {@link Runnable} for delayed execution.
+	 * <p>
+	 * The {@code Runnable} will run in the {@link ForkJoinPool#commonPool()} after the timeout expires.<br>
+	 * Use this instead of {@link #delay(Runnable, long, TimeUnit)} if the {@code Runnable} contains blocking code,
+	 * to avoid blocking the timer processing thread.
+	 * </p>
+	 * @param action The {@link Runnable} that will run after the timeout
+	 * @param timeout The timeout value
+	 * @param unit The {@link TimeUnit} for the timeout value
+	 */
+	public static void delayAsync(Runnable action, long timeout, TimeUnit unit) {
+		final long ms = unit.toMillis(timeout);
+		
+		timer.get().schedule(new FunctionalTimerTask(() -> CompletableFuture.runAsync(action)), ms);
 	}
 	
 	protected static void cleanup() {
