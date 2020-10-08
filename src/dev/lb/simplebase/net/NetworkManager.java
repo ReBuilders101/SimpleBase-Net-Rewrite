@@ -294,12 +294,12 @@ public final class NetworkManager {
 		
 		switch (actualType) {
 		case INTERNAL:
-			return register(new InternalNetworkManagerServer(serverLocal, copiedConfig, 0));
+			return register(new InternalNetworkManagerServer(serverLocal, copiedConfig));
 		case TCP_IO:
 		case UDP_IO:
 		case COMBINED_IO:
 			try {
-				return register(new SocketNetworkManagerServer(serverLocal, copiedConfig, 0));
+				return register(new SocketNetworkManagerServer(serverLocal, copiedConfig));
 			} catch (IOException e) {
 				LOGGER.error("Cannot create SocketNetworkManagerServer", e);
 				return null;
@@ -308,7 +308,7 @@ public final class NetworkManager {
 		case UDP_NIO:
 		case COMBINED_NIO:
 			try {
-				return register(new ChannelNetworkManagerServer(serverLocal, copiedConfig, 0));
+				return register(new ChannelNetworkManagerServer(serverLocal, copiedConfig));
 			} catch (IOException e) {
 				LOGGER.error("Cannot create ChannelNetworkManagerServer", e);
 				return null;

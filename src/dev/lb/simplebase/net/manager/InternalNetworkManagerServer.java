@@ -7,11 +7,11 @@ import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.task.Task;
 
 @Internal
-public class InternalNetworkManagerServer extends NetworkManagerServer {
+public final class InternalNetworkManagerServer extends NetworkManagerServer {
 
 	@Internal
-	public InternalNetworkManagerServer(NetworkID local, ServerConfig config, int depth) {
-		super(local, config, depth + 1);
+	public InternalNetworkManagerServer(NetworkID local, ServerConfig config) {
+		super(local, config, 1);
 		if(config.getServerType() != ServerType.INTERNAL)
 			throw new IllegalArgumentException("Invalid ServerConfig: ServerType must be INTERNAL");
 		if(!config.getRegisterInternalServer()) 

@@ -30,7 +30,7 @@ import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
 import dev.lb.simplebase.net.task.Task;
 
 @Internal
-public class ChannelNetworkManagerServer extends ExternalNetworkManagerServer implements SelectorManager {
+public final class ChannelNetworkManagerServer extends ExternalNetworkManagerServer implements SelectorManager {
 
 	private final SelectorThread selectorThread;
 	private final Selector selector;
@@ -45,8 +45,8 @@ public class ChannelNetworkManagerServer extends ExternalNetworkManagerServer im
 	private final PacketToByteConverter udp_toByteConverter;
 	
 	@Internal
-	public ChannelNetworkManagerServer(NetworkID local, ServerConfig config, int depth) throws IOException {
-		super(local, config, false, depth + 1);
+	public ChannelNetworkManagerServer(NetworkID local, ServerConfig config) throws IOException {
+		super(local, config, false, 1);
 		final ServerType actualType = ServerType.resolve(config.getServerType(), local);
 		if(actualType.useSockets()) throw new IllegalArgumentException("Invalid ServerConfig: ServerType must not use Sockets");
 

@@ -30,7 +30,7 @@ import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
 import dev.lb.simplebase.net.task.Task;
 
 @Internal
-public class SocketNetworkManagerServer extends ExternalNetworkManagerServer {
+public final class SocketNetworkManagerServer extends ExternalNetworkManagerServer {
 	
 	//NEW TCP SECTION//
 	private final ServerSocket tcp_serverSocket;
@@ -46,8 +46,8 @@ public class SocketNetworkManagerServer extends ExternalNetworkManagerServer {
 		n.ifFunction(NetworkIDFunction.CONNECT, r -> r.equals(i), false);
 	
 	@Internal
-	public SocketNetworkManagerServer(NetworkID local, ServerConfig config, int depth) throws IOException {
-		super(local, config, true, depth + 1);
+	public SocketNetworkManagerServer(NetworkID local, ServerConfig config) throws IOException {
+		super(local, config, true, 1);
 		
 		if(hasTcp) {
 			tcp_serverSocket = new ServerSocket();
