@@ -50,12 +50,12 @@ public interface NetworkManagerProperties {
 
 			@Override
 			public CoderThreadPool.Encoder getEncoderPool() {
-				return new CoderThreadPool.Encoder(this, onEncoderError);
+				return NetworkManagerCommon.stackHackE(config, onEncoderError);
 			}
 
 			@Override
 			public CoderThreadPool.Decoder getDecoderPool() {
-				return new CoderThreadPool.Decoder(this, onDecoderError);
+				return NetworkManagerCommon.stackHackD(config, onDecoderError);
 			}
 		};
 	}

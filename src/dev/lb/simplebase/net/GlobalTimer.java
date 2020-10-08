@@ -36,7 +36,7 @@ public class GlobalTimer {
 	/**
 	 * <h2>Internal use only</h2>
 	 * <p>
-	 * This class is used internally by the API and the contained methods should not and can not be called directly.
+	 * This method is used internally by the API and can not be called directly.
 	 * </p><hr><p>
 	 * Subscribes a manager to the global connection check mechanism.
 	 * This will regularly call {@link NetworkManagerCommon#updateConnectionStatus()} on the supplied manager.
@@ -56,7 +56,7 @@ public class GlobalTimer {
 	/**
 	 * <h2>Internal use only</h2>
 	 * <p>
-	 * This class is used internally by the API and the contained methods should not and can not be called directly.
+	 * This method is used internally by the API and can not be called directly.
 	 * </p><hr><p>
 	 * Unsubscribes a manager from the global connection check mechanism.
 	 * This will stop regularly calling {@link NetworkManagerCommon#updateConnectionStatus()} on the supplied manager.

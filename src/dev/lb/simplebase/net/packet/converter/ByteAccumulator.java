@@ -79,7 +79,7 @@ static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("packet-deco
 	
 	private void packetReady() {
 		final ByteBuffer readOnly = (ByteBuffer) buffer.asReadOnlyBuffer().flip();
-		if(managerLike.getDecoderPool().isValidEncoderThread()) {
+		if(managerLike.getDecoderPool().isValidCoderThread()) {
 			converter.convertAndPublish(readOnly, currentFormat, receiver);
 		} else {
 			managerLike.getDecoderPool().decodeAndSendPacket(receiver, converter, currentFormat, readOnly);

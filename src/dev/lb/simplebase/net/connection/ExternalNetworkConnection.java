@@ -51,7 +51,7 @@ public abstract class ExternalNetworkConnection extends NetworkConnection {
 
 	@Override
 	protected void sendPacketImpl(Packet packet) {
-		if(networkManager.getEncoderPool().isValidEncoderThread()) {
+		if(networkManager.getEncoderPool().isValidCoderThread()) {
 			final ByteBuffer encodedData = packetToByteConverter.convert(NetworkPacketFormats.PACKET, packet);
 			if(encodedData != null) {
 				sendRawByteData(encodedData);

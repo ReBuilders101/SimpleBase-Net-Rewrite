@@ -1,6 +1,7 @@
 package dev.lb.simplebase.net.manager;
 
 import java.util.Optional;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -97,8 +98,8 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 		PacketReceiveRejected = new EventAccessor<>(PacketReceiveRejectedEvent.class);
 		
 		dispatcher = new EventDispatcher(() -> getLocalID().getDescription());
-		encoderPool = new CoderThreadPool.Encoder(this, EventDispatchChain.P1(dispatcher, PacketSendingFailed, PacketSendingFailedEvent::new));
-		decoderPool = new CoderThreadPool.Decoder(this, EventDispatchChain.P1(dispatcher, PacketReceiveRejected, PacketReceiveRejectedEvent::new));
+		encoderPool = stackHackE(config, EventDispatchChain.P1(dispatcher, PacketSendingFailed, PacketSendingFailedEvent::new));
+		decoderPool = stackHackD(config, EventDispatchChain.P1(dispatcher, PacketReceiveRejected, PacketReceiveRejectedEvent::new));
 		singleThreadHandler = new AtomicReference<>(new EmptyPacketHandler());
 		if(config.getUseHandlerThread()) {
 			multiThreadHandler = new ThreadPacketHandler(singleThreadHandler, 
@@ -126,6 +127,18 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 		return provider;
 	}
 	
+	
+	//PACKAGE ONLY
+	@Internal
+	static CoderThreadPool.Encoder stackHackE(CommonConfig np, EventDispatchChain.P1<RejectedExecutionException, ?> p1) {
+		return new CoderThreadPool.Encoder(np, p1);
+	}
+
+	//PACKAGE ONLY
+	@Internal
+	static CoderThreadPool.Decoder stackHackD(CommonConfig np, EventDispatchChain.P1<RejectedExecutionException, ?> p1) {
+		return new CoderThreadPool.Decoder(np, p1);
+	}
 	
 	/**
 	 * Add a {@link PacketHandler} that receives incoming packets from all connections.<br>

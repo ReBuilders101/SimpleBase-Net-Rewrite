@@ -14,6 +14,9 @@ import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.manager.AcceptorThreadDeathReason;
 
+/**
+ * A {@link Thread} subclass that reads from a {@link DatagramSocket} until it is interrupted
+ */
 public class DatagramSocketReceiverThread extends Thread {
 	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("server-accept");
 	private static final AtomicInteger THREAD_ID = new AtomicInteger(0);
@@ -40,6 +43,7 @@ public class DatagramSocketReceiverThread extends Thread {
 		try {
 			while(!this.isInterrupted()) {
 				try {
+					//TODO switch from sockets to blocking channels to avoid this hack
 					socket.receive(receivePacket); //Actually reads into the backing array and not the buffer...
 					receiveBuffer.limit(receivePacket.getLength());//...so the limit must be adjusted manually
 					receiveBuffer.rewind();
