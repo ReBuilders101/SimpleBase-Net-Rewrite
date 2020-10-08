@@ -16,7 +16,7 @@ import java.util.function.BiPredicate;
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.config.ServerConfig;
-import dev.lb.simplebase.net.connection.DatagramSocketReceiverThread;
+import dev.lb.simplebase.net.connection.DatagramReceiverThread;
 import dev.lb.simplebase.net.connection.TcpSocketNetworkConnection;
 import dev.lb.simplebase.net.connection.UdpServerSocketNetworkConnection;
 import dev.lb.simplebase.net.id.NetworkID;
@@ -38,7 +38,7 @@ public final class SocketNetworkManagerServer extends ExternalNetworkManagerServ
 	
 	//NEW UDP SECTION//
 	private final DatagramSocket udp_serverSocket;
-	private final DatagramSocketReceiverThread udp_receiverThread;
+	private final DatagramReceiverThread udp_receiverThread;
 	private final AddressBasedDecoderPool udp_decoderPool;
 	private final PacketToByteConverter udp_toByteConverter;
 	
@@ -60,7 +60,7 @@ public final class SocketNetworkManagerServer extends ExternalNetworkManagerServ
 		if(hasUdp || hasLan) {
 			udp_serverSocket = new DatagramSocket(null);
 			udp_decoderPool = new AddressBasedDecoderPool(UdpAnonymousConnectionAdapter::new, this);
-			udp_receiverThread = new DatagramSocketReceiverThread(udp_serverSocket, this::decideUdpDataDestination,
+			udp_receiverThread = new DatagramReceiverThread(udp_serverSocket, this::decideUdpDataDestination,
 					this::notifyUdpReceiverThreadClosure, getConfig().getDatagramPacketMaxSize());
 			udp_toByteConverter = createToByteConverter();
 		} else {

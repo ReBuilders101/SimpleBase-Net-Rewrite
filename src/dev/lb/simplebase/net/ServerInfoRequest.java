@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 
 import dev.lb.simplebase.net.config.CommonConfig;
 import dev.lb.simplebase.net.config.ServerConfig;
-import dev.lb.simplebase.net.connection.DatagramSocketReceiverThread;
+import dev.lb.simplebase.net.connection.DatagramReceiverThread;
 import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.event.EventDispatchChain;
 import dev.lb.simplebase.net.id.NetworkID;
@@ -73,7 +73,7 @@ public final class ServerInfoRequest {
 	
 	private final DatagramChannel channel;
 	private final PacketToByteConverter encoder;
-	private final DatagramSocketReceiverThread thread;
+	private final DatagramReceiverThread thread;
 	private final AddressBasedDecoderPool pooledDecoders;
 	private final Map<InetSocketAddress, CompletableRequestToken> activeRequests;
 	private final ThreadsafeIterable<ServerInfoRequest, InetSocketAddress> threadsafe;
@@ -87,7 +87,7 @@ public final class ServerInfoRequest {
 		this.threadsafe = new MonitorBasedThreadsafeIterable<>(activeRequests, this, () -> activeRequests.keySet());
 		this.encoder = new PacketToByteConverter(manager);
 		this.pooledDecoders = new AddressBasedDecoderPool(Adapter::new, manager);
-		this.thread = new DatagramSocketReceiverThread(channel.socket(), pooledDecoders::decode, this::notifyAcceptorThreadDeath, config.getDatagramPacketMaxSize());
+		this.thread = new DatagramReceiverThread(channel.socket(), pooledDecoders::decode, this::notifyAcceptorThreadDeath, config.getDatagramPacketMaxSize());
 		//Just to be sure. Use it like a socket that accepts byte buffers
 		this.channel.configureBlocking(true);
 		this.channel.socket().setBroadcast(true);

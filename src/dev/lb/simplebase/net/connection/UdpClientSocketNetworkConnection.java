@@ -19,7 +19,7 @@ import dev.lb.simplebase.net.task.Task;
 public class UdpClientSocketNetworkConnection extends ExternalNetworkConnection {
 
 	private final DatagramSocket socket;
-	private final DatagramSocketReceiverThread thread;
+	private final DatagramReceiverThread thread;
 	private final SocketAddress remoteAddress;
 	
 	public UdpClientSocketNetworkConnection(NetworkManagerClient networkManager, NetworkID remoteID, Object customObject) {
@@ -31,7 +31,7 @@ public class UdpClientSocketNetworkConnection extends ExternalNetworkConnection 
 			STATE_LOGGER.fatal("Cannot bind DatagramSocket", e);
 			throw new RuntimeException(e);
 		}
-		this.thread = new DatagramSocketReceiverThread(socket, this::receiveRawByteData,
+		this.thread = new DatagramReceiverThread(socket, this::receiveRawByteData,
 				this::notifyReceiverThreadDeath, networkManager.getConfig().getDatagramPacketMaxSize());
 		this.remoteAddress = remoteID.getFunction(NetworkIDFunction.CONNECT);
 	}
