@@ -78,6 +78,7 @@ public final class ServerInfoRequest {
 	private final Map<InetSocketAddress, CompletableRequestToken> activeRequests;
 	private final ThreadsafeIterable<ServerInfoRequest, InetSocketAddress> threadsafe;
 	
+	@SuppressWarnings("deprecation")
 	private ServerInfoRequest(NetworkManagerProperties manager) throws IOException {
 		if(broadcastAddress == null) throw new IllegalStateException("Broadcast address not initialized");
 		
