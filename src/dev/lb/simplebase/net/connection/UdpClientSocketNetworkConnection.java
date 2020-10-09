@@ -8,23 +8,48 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 
+import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFunction;
 import dev.lb.simplebase.net.manager.AcceptorThreadDeathReason;
 import dev.lb.simplebase.net.manager.NetworkManagerClient;
+import dev.lb.simplebase.net.packet.PacketContext;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
 import dev.lb.simplebase.net.task.Task;
+import dev.lb.simplebase.net.util.InternalAccess;
 
+/**
+ * <h2>Internal use only</h2>
+ * <p>
+ * This class is used internally by the API and the contained methods should not and can not be called directly.
+ * </p><hr><p>
+ * A {@link NetworkConnection} implementation using a {@link DatagramSocket}. Can be used only on the client side.
+ * </p>
+ */
 public class UdpClientSocketNetworkConnection extends ExternalNetworkConnection {
 
 	private final DatagramSocket socket;
 	private final DatagramReceiverThread thread;
 	private final SocketAddress remoteAddress;
 	
+	/**
+	 * <h2>Internal use only</h2>
+	 * <p>
+	 * This constructor is used internally by the API and should not and can not be called directly.
+	 * </p><hr><p>
+	 * Create a new client-side connection implementation using a {@link DatagramSocket}.
+	 * </p>
+	 * @param networkManager The client manager used by this connection
+	 * @param remoteID The {@link NetworkID} of the remote side of the connection
+	 * @param customObject The costom data for the connection's {@link PacketContext}
+	 */
+	@Internal
+	@SuppressWarnings("deprecation")
 	public UdpClientSocketNetworkConnection(NetworkManagerClient networkManager, NetworkID remoteID, Object customObject) {
 		super(networkManager, remoteID, NetworkConnectionState.INITIALIZED,
 				networkManager.getConfig().getConnectionCheckTimeout(), false, customObject, false);
+		InternalAccess.assertCaller(NetworkManagerClient.class, 0, "Cannot instantiate UdpClientSocketNetworkConnection directly");
 		try {
 			this.socket = new DatagramSocket();
 		} catch (SocketException e) {
@@ -53,7 +78,7 @@ public class UdpClientSocketNetworkConnection extends ExternalNetworkConnection 
 	}
 	
 	private void receiveRawByteData(InetSocketAddress address, ByteBuffer buffer) {
-		byteToPacketConverter.acceptBytes(buffer);
+		byteAccumulator.acceptBytes(buffer);
 	}
 	
 	private void notifyReceiverThreadDeath(AcceptorThreadDeathReason reason) {

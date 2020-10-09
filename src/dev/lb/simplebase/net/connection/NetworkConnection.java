@@ -23,8 +23,7 @@ import dev.lb.simplebase.net.task.Task;
 import dev.lb.simplebase.net.util.ThreadsafeAction;
 
 /**
- * A {@link NetworkConnection} object exists for every client-to-server connection.
- * It can handle opening, closing and checking the status.
+ * A {@link NetworkConnection} represents one side of a client-server connection.
  */
 @Threadsafe
 public abstract class NetworkConnection {
@@ -71,16 +70,21 @@ public abstract class NetworkConnection {
 	}
 	
 	/**
-	 * Opens the connection to the remote partner. Opening can only happen from {@link NetworkConnectionState#INITIALIZED},
-	 * for all other states if will fail. If opening is attempted, the connection will move to the {@link NetworkConnectionState#OPENING} state.
+	 * If the current state reports that the connection can be opened ({@link NetworkConnectionState#canOpenConnection()}),
+	 * the state changes to {@link NetworkConnectionState#OPENING} and the opening procedure is initialized.
 	 * <p>
-	 * The opening process is not guaranteed to be completed when this method returns: The state after this method returns
-	 * can be {@link NetworkConnectionState#OPENING} if opening was not completed, but is still ongoing, {@link NetworkConnectionState#OPEN}
-	 * if opening was completed, and {@link NetworkConnectionState#CLOSING} or 
-	 * {@link NetworkConnectionState#CLOSED} when opening the connection failed.
-	 * <p>
-	 * When checking state before/after calling this method, make sure to do this in an {@link #action(Consumer)} block to
-	 * ensure thread safety.
+	 * Depending on the connection implementation, the opening process can be synchrounous or asynchrounous.
+	 * <ul>
+	 * <li>If the connection is internal, it will open immediately and return a completed {@link Task}.</li>
+	 * <li>If the connection is made to a remote server over the network, the method returns as soon as
+	 * the connection process has been initialized. The returned {@link Task} will complete when the connection has
+	 * been confirmed by the remote side.</li>
+	 * </ul>
+	 * </p><p>
+	 * The connection state will change to {@link NetworkConnectionState#OPEN} as soon as the connection is confirmed by
+	 * the remote side
+	 * </p>
+	 * @return A {@link Task} that will complete when the connection is confirmed
 	 */
 	public Task openConnection() {
 		synchronized (lockCurrentState) {
@@ -102,24 +106,34 @@ public abstract class NetworkConnection {
 	protected abstract Task openConnectionImpl();
 	
 	/**
-	 * Closes the connection to the remote partner, or marks this connection as closed if the
-	 * connection was never opened. A connection can be closed from any state except {@link NetworkConnectionState#CLOSED}
-	 * or {@link NetworkConnectionState#CLOSING} (because that means the connection is currently closing / has already been closed.
+	 * Closes this connection. The reason will be {@link ConnectionCloseReason#EXPECTED}.
 	 * <p>
-	 * The closing process is not guaranteed to be completed when this method returns: The state after this method returns
-	 * can be {@link NetworkConnectionState#CLOSING} of the closing process is not done, or {@link NetworkConnectionState#CLOSED}
-	 * if the process was completed.
-	 * <p>
-	 * Closing the connection will automatically remove it from the {@link NetworkManager}'s connection list and post a
-	 * {@link ConnectionClosedEvent} to that manager when the closing process is completed.
+	 * When closing a connection, the state changes to {@link NetworkConnectionState#CLOSING}.
+	 * In that state, the data receiver thread (if it exists for this implementation) is shut down,
+	 * the connection is removed from the server's connection list, and the remote peer is notified 
+	 * so that it can also shut down properly. A {@link ConnectionClosedEvent} will be posted to the
+	 * relevant network manager.
+	 * </p><p>
+	 * This method may return before the process of closing the connection is completed.
+	 * When that process completes, the state will change to {@link NetworkConnectionState#CLOSED}
+	 * and the returned task will complete.
+	 * </p>
+	 * @return A {@link Task} that will complete when the connection is fully closed. 
 	 */
 	public Task closeConnection() {
 		return closeConnection(ConnectionCloseReason.EXPECTED);
 	}
 	
 	/**
-	 * <b>Internal</b>
-	 * Close with a certain reason
+	 * <h2>Internal use only</h2>
+	 * <p>
+	 * This method is used internally by the API and should not be called directly.
+	 * </p><hr><p>
+	 * Closes the connection for a reason different from {@link ConnectionCloseReason#EXPECTED}.<br>
+	 * Use {@link #closeConnection()} to close connection normally.
+	 * </p>
+	 * @param reason The reason why the connection will be closed
+	 * @return A {@link Task} that will complete when the connection is fully closed. 
 	 */
 	@Internal
 	public Task closeConnection(ConnectionCloseReason reason) {
@@ -135,6 +149,11 @@ public abstract class NetworkConnection {
 		
 	}
 	
+	/**
+	 * Called after acquiring the server's exclusive lock (not necessary for clients).
+	 * @param reason The reason why the connection will be closed
+	 * @return A {@link Task} that will complete when the connection is fully closed. 
+	 */
 	private Task closeConnectionWithServerLock(ConnectionCloseReason reason) {
 		synchronized (lockCurrentState) {
 			if(currentState.hasBeenClosed()) {
@@ -162,15 +181,15 @@ public abstract class NetworkConnection {
 	 * The state will then change back to {@link NetworkConnectionState#OPEN} if the partner responded, 
 	 * or to {@link NetworkConnectionState#CLOSING} if the timeout ({@link #getCheckTimeout()}) expired.
 	 * It may also be closed for other reasons during the checking period.
-	 * <p>
+	 * </p><p>
 	 * The checking process is not guaranteed to be completed when this method returns: The state after this
 	 * method returns can be {@link NetworkConnectionState#CHECKING}, {@link NetworkConnectionState#OPEN}
 	 * and {@link NetworkConnectionState#CLOSING}. If the remote peer does not respond, the connection will
-	 * begin its closing routine as described in {@link #closeConnection()}. If the check succeeds, a {@link ConnectionCheckSuccessEvent}
-	 * will be posted to this connections manager.
-	 * @return  {@code true} if checking the connection was <b>attempted</b>, {@code false} if it was not attempted
-	 * because the connection was in a state where this is not possible.
-	 * The returned value does not contain any information about the success of the connection check.
+	 * begin its closing routine as described in {@link #closeConnection()} as soon as {@link #updateConnectionStatus()}
+	 * is called. This can be done automatically by enabling {@link CommonConfig#getGlobalConnectionCheck()}.
+	 * </p>
+	 * @return A {@link Task} that completes when the remote side has answered the ping
+	 * and the state has changed back to {@link NetworkConnectionState#OPEN}
 	 */
 	public Task checkConnection() {
 		synchronized (lockCurrentState) {
@@ -216,7 +235,7 @@ public abstract class NetworkConnection {
 	 * This method is fine for simply viewing the current state, but is not useful
 	 * to make decisions based on the current state, because the returned information may be
 	 * outdated as soon as the method returns.<br>
-	 * Use {@link #action(Consumer)} and {@link #getThreadsafeState()} in combination to
+	 * Use {@link #threadsafe()} and {@link #getThreadsafeState()} in combination to
 	 * avoid concurrent modification of the state.
 	 * @return The current connection state
 	 */
@@ -225,15 +244,22 @@ public abstract class NetworkConnection {
 		return currentState;
 	}
 	
+	/**
+	 * A {@link ThreadsafeAction} object that allows synchronized access to the connection object without
+	 * exposing the lock. 
+	 * @return A {@link ThreadsafeAction} view for this connection object
+	 */
 	public ThreadsafeAction<NetworkConnection> threadsafe() {
 		return threadsafeState;
 	}
 	
 	/**
-	 * The current {@link NetworkConnectionState} of this connection.<p>
+	 * The current {@link NetworkConnectionState} of this connection.
+	 * <p>
 	 * This method can only be used if the caller thread holds the state's monitor.
-	 * It is designed to be used inside a {@link #action(Consumer)} block when
+	 * It is designed to be used inside the {@link #threadsafe()}s methods when
 	 * concurrent modification should be prevented.
+	 * </p>
 	 * @return The current connection state
 	 * @throws IllegalStateException If the current thread does not hold the state's monitor
 	 */
@@ -246,8 +272,8 @@ public abstract class NetworkConnection {
 	}
 	
 	/**
-	 * The {@link NetworkID} of the local side of this connection. Identical to this
-	 * network managers local ID.
+	 * The {@link NetworkID} of the local side of this connection. Identical to the
+	 * local ID of this connection's network manager
 	 * @return The local connection ID
 	 */
 	public NetworkID getLocalID() {
@@ -255,8 +281,8 @@ public abstract class NetworkConnection {
 	}
 	
 	/**
-	 * The {@link NetworkID} of the remote side of this connection.
-	 * @return The remote sides connection ID
+	 * The {@link NetworkID} representing the remote side of this connection.
+	 * @return The remote connection ID
 	 */
 	public NetworkID getRemoteID() {
 		return remoteID;
@@ -265,7 +291,7 @@ public abstract class NetworkConnection {
 	/**
 	 * The {@link NetworkManagerCommon} that holds or held the connection.<br>
 	 * A connection can only ever be held by one manager. After the connection has been
-	 * closed, this method will still return the Network Manager instance that 
+	 * closed, this method will still return the network manager instance that 
 	 * once held this connection.
 	 * @return The network manager associated with this connection
 	 */
@@ -310,12 +336,14 @@ public abstract class NetworkConnection {
 	}
 	
 	/**
+	 * <p>
 	 * The last recorded delay between sending data and receiving the response in milliseconds.
 	 * This corresponds to the network ping plus the time to encode and decode the packets.<br>
 	 * Will be updated when calling {@link #checkConnection()} and receiving the matching response
-	 * <p>
+	 * </p><p>
 	 * This value is the time for request and response, so approximately <b>twice</b> the time
 	 * to send a packet to the remote side without awaiting a reply.
+	 * </p>
 	 * @return The last recorded send/receive delay, or {@code -1} if no delay has been recorded yet
 	 */
 	public int getLastConnectionDelay() {
@@ -323,10 +351,16 @@ public abstract class NetworkConnection {
 	}
 	
 	/**
-	 * The remote partner has sent a check message.
-	 * Reply with a check reply message
-	 * @param uuid
+	 * <h2>Internal use only</h2>
+	 * <p>
+	 * This method is used internally by the API and should not be called directly.
+	 * </p><hr><p>
+	 * Called when the remote side requested a connection check (ping). The connection implementation will
+	 * send the appropriate response.
+	 * </p>
+	 * @param uuid The id of the received request
 	 */
+	@Internal
 	public abstract void receiveConnectionCheck(int uuid);
 	
 	/**
@@ -365,7 +399,9 @@ public abstract class NetworkConnection {
 		getNetworkManager().removeConnectionSilently(this);
 	}
 	
-	//The context
+	/**
+	 * The {@link PacketContext} for {@link Packet}s received on this connection
+	 */
 	private class Context implements PacketContext {
 
 		private final Object customData;

@@ -2,6 +2,7 @@ package dev.lb.simplebase.net.connection;
 
 import java.nio.ByteBuffer;
 
+import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.event.EventDispatchChain;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.events.PacketSendingFailedEvent;
@@ -18,11 +19,16 @@ import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
 import dev.lb.simplebase.net.task.AwaitableTask;
 
 /**
- * A network connection that converts packets to/from bytes when sending them
+ * An abstract baseclass for any {@link NetworkConnection} implementation that sends networking data
+ * through a byte stream or channel.
+ * <p>
+ * Contains common features for packet<->byte encoding/decoding.
+ * </p>
  */
+@Internal
 public abstract class ExternalNetworkConnection extends NetworkConnection {
 
-	protected final ByteAccumulator byteToPacketConverter;
+	protected final ByteAccumulator byteAccumulator;
 	protected final PacketToByteConverter packetToByteConverter;
 	protected final ConnectionAdapter connectionAdapter;
 	protected final AwaitableTask openCompleted;
@@ -38,7 +44,7 @@ public abstract class ExternalNetworkConnection extends NetworkConnection {
 		this.openCompleted = new AwaitableTask();
 		this.connectionAdapter = new Adapter(udpWarning);
 		this.packetToByteConverter = networkManager.createToByteConverter();
-		this.byteToPacketConverter = new ByteAccumulator(networkManager, connectionAdapter);
+		this.byteAccumulator = new ByteAccumulator(networkManager, connectionAdapter);
 	}
 	
 	protected abstract void sendRawByteData(ByteBuffer buffer);
@@ -68,12 +74,27 @@ public abstract class ExternalNetworkConnection extends NetworkConnection {
 		sendRawByteData(packetToByteConverter.convert(NetworkPacketFormats.CHECKREPLY, uuid));
 	}
 	
+	/**
+	 * <b>Called only by the server manager</b> - Don't call manually
+	 * <p>
+	 * Notifies the remote side of the connection that a server has successfully accepted the connection
+	 * by sending a {@link NetworkPacketFormats#CONNECTED} message.
+	 * </p>
+	 */
 	public void sendConnectionAcceptedMessage() {
 		sendRawByteData(packetToByteConverter.convert(NetworkPacketFormats.CONNECTED, null));
 	}
 	
+	/**
+	 * Called by the receiver thread when data was received on the connection.
+	 * <p>
+	 * If called manually, it will simulate received data. If incomplete or invalid data
+	 * is supplied, packet decoding may stop decoding further packets.
+	 * </p>
+	 * @param data The received bytes
+	 */
 	public void decode(ByteBuffer data) {
-		byteToPacketConverter.acceptBytes(data);
+		byteAccumulator.acceptBytes(data);
 	}
 	
 	private void forwardServerInfoRequest() {

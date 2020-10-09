@@ -195,6 +195,9 @@ public interface ValueTask<V> extends Task {
 		return new PairTask<>(delegate);
 	}
 
+	public static boolean wasInitiallyCompleted(ValueTask<?> task) {
+		return task instanceof SuccessValueTask || task instanceof CancelledValueTask;
+	}
 
 	public static final class CompletionSource<V> {
 

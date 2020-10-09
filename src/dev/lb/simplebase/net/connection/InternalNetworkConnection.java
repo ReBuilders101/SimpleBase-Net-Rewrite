@@ -1,27 +1,69 @@
 package dev.lb.simplebase.net.connection;
 
+import java.util.Objects;
+
 import dev.lb.simplebase.net.InternalServerProvider;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
-import dev.lb.simplebase.net.manager.NetworkManagerCommon;
+import dev.lb.simplebase.net.id.NetworkIDFunction;
+import dev.lb.simplebase.net.manager.NetworkManagerClient;
+import dev.lb.simplebase.net.manager.NetworkManagerServer;
 import dev.lb.simplebase.net.packet.Packet;
+import dev.lb.simplebase.net.packet.PacketContext;
 import dev.lb.simplebase.net.task.Task;
+import dev.lb.simplebase.net.util.InternalAccess;
 
+/**
+ * A {@link NetworkConnection} implementation that connects a client and a server within the same application.
+ * <p>
+ * An {@link InternalNetworkConnection} does not encode/decode packets to/from bytes.
+ * </p>
+ */
 @Internal
 public class InternalNetworkConnection extends NetworkConnection {
 
 	private InternalNetworkConnection peer;
 	
-	public InternalNetworkConnection(NetworkManagerCommon networkManager, NetworkID remoteID, Object customObject) {
+	/**
+	 * <h2>Internal use only</h2>
+	 * <p>
+	 * This method is used internally by the API and can not be called directly.
+	 * </p><hr><p>
+	 * Creates an unconnected client-side {@link InternalNetworkConnection}.
+	 * </p>
+	 * @param networkManager The {@link NetworkManagerClient} that will hold this connection
+	 * @param remoteID The {@link NetworkID} of the remote connection side, must implement {@link NetworkIDFunction#INTERNAL}
+	 * @param customObject The object associated with this connection's {@link PacketContext}, may be {@code null}
+	 * @throws NullPointerException When {@code networkManager} or {@code remoteID} are {@code null}
+	 */
+	@Internal
+	public InternalNetworkConnection(NetworkManagerClient networkManager, NetworkID remoteID, Object customObject) {
 		super(networkManager, remoteID, NetworkConnectionState.INITIALIZED,
 				networkManager.getConfig().getConnectionCheckTimeout(), false, customObject);
+		InternalAccess.assertCaller(NetworkManagerClient.class, 0, "Cannot instantiate InternalNetworkConnection directly");
+		
 		this.peer = null;
 	}
 	
-	public InternalNetworkConnection(NetworkManagerCommon networkManager, InternalNetworkConnection peer, Object customObject) {
-		super(networkManager, peer.getLocalID(), NetworkConnectionState.OPEN, 
-				networkManager.getConfig().getConnectionCheckTimeout(), true, customObject);
+	/**
+	 * <h2>Internal use only</h2>
+	 * <p>
+	 * This method is used internally by the API and can not be called directly.
+	 * </p><hr><p>
+	 * Creates a connected server-side {@link InternalNetworkConnection}.
+	 * </p>
+	 * @param networkManager The {@link NetworkManagerServer} that will hold this connection
+	 * @param peer The {@link InternalNetworkConnection} that represents the remote (client) side of the connection
+	 * @param customObject The object associated with this connection's {@link PacketContext}, may be {@code null}
+	 * @throws NullPointerException When {@code networkManager} or {@code peer} are {@code null}
+	 */
+	@Internal
+	public InternalNetworkConnection(NetworkManagerServer networkManager, InternalNetworkConnection peer, Object customObject) {
+		super(networkManager,  Objects.requireNonNull(peer, "'peer' parameter must not be null").getLocalID(),
+				NetworkConnectionState.OPEN, networkManager.getConfig().getConnectionCheckTimeout(), true, customObject);
+		InternalAccess.assertCaller(InternalServerProvider.class, 0, "Cannot instantiate InternalNetworkConnection directly");
+		
 		this.peer = peer;
 	}
 

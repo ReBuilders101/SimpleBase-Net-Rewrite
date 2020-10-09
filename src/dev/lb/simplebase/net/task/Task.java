@@ -167,6 +167,10 @@ public interface Task {
 		return tac.getLeft();
 	}
 	
+	public static boolean wasInitiallyCompleted(Task task) {
+		return task instanceof CompletedTask;
+	}
+	
 	public static Task awaitCondition(BooleanSupplier condition) {
 		return new Task() {
 			

@@ -46,6 +46,7 @@ public final class SocketNetworkManagerServer extends ExternalNetworkManagerServ
 		n.ifFunction(NetworkIDFunction.CONNECT, r -> r.equals(i), false);
 	
 	@Internal
+	@SuppressWarnings("deprecation")
 	public SocketNetworkManagerServer(NetworkID local, ServerConfig config) throws IOException {
 		super(local, config, true, 1);
 		
@@ -73,17 +74,15 @@ public final class SocketNetworkManagerServer extends ExternalNetworkManagerServ
 
 	//STATE GET//
 	
+	/**
+	 * Whether this manager supports UDP/Datagram connections.
+	 * This does not apply to UDP server info request.
+	 * @return {@code true} if UDP connections are supported, {@code false} otherwise
+	 */
 	public boolean supportsUdp() {
 		return hasUdp;
 	}
 
-	public boolean supportsTcp() {
-		return hasTcp;
-	}
-
-	public boolean supportsDetection() {
-		return hasLan;
-	}
 	
 	//SERVER STARTUP IMPLEMENTATION//
 	

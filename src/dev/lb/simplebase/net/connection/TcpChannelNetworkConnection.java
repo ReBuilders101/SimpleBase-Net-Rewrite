@@ -3,26 +3,57 @@ package dev.lb.simplebase.net.connection;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 
+import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFunction;
-import dev.lb.simplebase.net.manager.NetworkManagerCommon;
+import dev.lb.simplebase.net.manager.ExternalNetworkManagerServer;
+import dev.lb.simplebase.net.manager.NetworkManagerServer;
 import dev.lb.simplebase.net.manager.SelectorManager;
+import dev.lb.simplebase.net.packet.PacketContext;
 import dev.lb.simplebase.net.task.Task;
+import dev.lb.simplebase.net.util.InternalAccess;
 
-public class TcpChannelNetworkConnection extends ExternalNetworkConnection implements ChannelConnection {
+/**
+ * <h2>Internal use only</h2>
+ * <p>
+ * This class is used internally by the API and the contained methods should not and can not be called directly.
+ * </p><hr><p>
+ * A {@link NetworkConnection} implementation using a non-blocking {@link SocketChannel}. This connection type
+ * is only used on the server side, and the {@link NetworkManagerServer} provides the {@link Selector} used for
+ * all connections of this type.
+ * </p>
+ */
+@Internal
+public final class TcpChannelNetworkConnection extends ExternalNetworkConnection implements ChannelConnection {
 	
 	private final SocketChannel channel;
 	private SelectionKey selectionKey; //Not final - only set while holding lock
 	private final SelectorManager selectorManager;
 	private final ByteBuffer receiveBuffer;
 	
-	public TcpChannelNetworkConnection(NetworkManagerCommon networkManager, SelectorManager selctorManager, NetworkID remoteID,
+	/**
+	 * <h2>Internal use only</h2>
+	 * <p>
+	 * This constructor is used internally by the API and should not and can not be called directly.
+	 * </p><hr><p>
+	 * Creates a new server-side connection implementation using a {@link SocketChannel}.
+	 * </p>
+	 * @param networkManager The server manager used by this connection
+	 * @param selctorManager The object that provides a {@link Selector}. Usually the same as the server manager
+	 * @param remoteID The {@link NetworkID} of the remote side of the connection
+	 * @param channel The {@link SocketChannel} to use for this connection. Will be set to non-blocking mode
+	 * @param customObject The costom data for the connection's {@link PacketContext}
+	 * @throws IOException When changing the channel to non-blocking mode throws an exception
+	 */
+	public TcpChannelNetworkConnection(NetworkManagerServer networkManager, SelectorManager selctorManager, NetworkID remoteID,
 			SocketChannel channel, Object customObject) throws IOException {
 		super(networkManager, remoteID, NetworkConnectionState.OPEN,
 				networkManager.getConfig().getConnectionCheckTimeout(), false, customObject, true);
+		InternalAccess.assertCaller(ExternalNetworkManagerServer.class, 1, "Cannot instantiate TcpChannelConnection directly");
 		
 		this.channel = channel;
 		this.channel.configureBlocking(false);
@@ -104,7 +135,7 @@ public class TcpChannelNetworkConnection extends ExternalNetworkConnection imple
 			}
 		}
 		receiveBuffer.flip();
-		byteToPacketConverter.acceptBytes(receiveBuffer);
+		byteAccumulator.acceptBytes(receiveBuffer);
 	}
 	
 }

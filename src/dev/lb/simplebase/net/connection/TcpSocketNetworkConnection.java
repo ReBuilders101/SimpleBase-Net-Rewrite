@@ -2,32 +2,73 @@ package dev.lb.simplebase.net.connection;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFunction;
-import dev.lb.simplebase.net.manager.NetworkManagerCommon;
+import dev.lb.simplebase.net.manager.ExternalNetworkManagerServer;
+import dev.lb.simplebase.net.manager.NetworkManagerClient;
+import dev.lb.simplebase.net.manager.NetworkManagerServer;
+import dev.lb.simplebase.net.packet.PacketContext;
 import dev.lb.simplebase.net.task.Task;
+import dev.lb.simplebase.net.util.InternalAccess;
 
+/**
+ * <h2>Internal use only</h2>
+ * <p>
+ * This class is used internally by the API and the contained methods should not and can not be called directly.
+ * </p><hr><p>
+ * A {@link NetworkConnection} implementation using a {@link Socket}. Can be used on client and server side.
+ * </p>
+ */
+@Internal
 public class TcpSocketNetworkConnection extends ExternalNetworkConnection {
 
 	private final DataReceiverThread thread;
 	private final Socket socket;
 	
-	public TcpSocketNetworkConnection(NetworkManagerCommon networkManager, NetworkID remoteID, Object customObject) {
+	/**
+	 * <h2>Internal use only</h2>
+	 * <p>
+	 * This constructor is used internally by the API and should not and can not be called directly.
+	 * </p><hr><p>
+	 * Create a new client-side connection implementation using a {@link Socket}.
+	 * </p>
+	 * @param networkManager The client manager used by this connection
+	 * @param remoteID The {@link NetworkID} of the remote side of the connection
+	 * @param customObject The costom data for the connection's {@link PacketContext}
+	 */
+	public TcpSocketNetworkConnection(NetworkManagerClient networkManager, NetworkID remoteID, Object customObject) {
 		super(networkManager, remoteID, NetworkConnectionState.INITIALIZED,
 				networkManager.getConfig().getConnectionCheckTimeout(), false, customObject, true);
+		InternalAccess.assertCaller(NetworkManagerClient.class, 0, "Cannot instantiate TcpSocketNetworkConnection directly");
 		this.socket = new Socket();
 		this.thread = new DataReceiverThread();
 	}
 	
-	public TcpSocketNetworkConnection(NetworkManagerCommon networkManager, NetworkID remoteID, Socket activeSocket,
+	/**
+	 * <h2>Internal use only</h2>
+	 * <p>
+	 * This constructor is used internally by the API and should not and can not be called directly.
+	 * </p><hr><p>
+	 * Create a new server-side connection implementation using a {@link Socket}.
+	 * </p>
+	 * @param networkManager The server manager used by this connection
+	 * @param remoteID The {@link NetworkID} of the remote side of the connection
+	 * @param activeSocket The socket created from the {@link ServerSocket} for this connection
+	 * @param customObject The costom data for the connection's {@link PacketContext}
+	 * @throws IOException When the supplied socket is in an incorrect state
+	 */
+	public TcpSocketNetworkConnection(NetworkManagerServer networkManager, NetworkID remoteID, Socket activeSocket,
 			Object customObject) throws IOException {
 		super(networkManager, remoteID, assertSocketState(activeSocket), 
 				networkManager.getConfig().getConnectionCheckTimeout(), true, customObject, true);
+		InternalAccess.assertCaller(ExternalNetworkManagerServer.class, 1, "Cannot instantiate TcpSocketNetworkConnection directly");
 		this.socket = activeSocket;
 		this.thread = new DataReceiverThread();
 		this.thread.start();
@@ -109,7 +150,7 @@ public class TcpSocketNetworkConnection extends ExternalNetworkConnection {
 							closeReason = ConnectionCloseReason.REMOTE;
 							return;
 						}
-						byteToPacketConverter.acceptByte((byte) (data & 0xFF));
+						byteAccumulator.acceptByte((byte) (data & 0xFF));
 					} catch (IOException e) {
 						if(isInterrupted()) { //Blocking read call was ended by this.interrupt()
 							closeReason = ConnectionCloseReason.INTERRUPTED;

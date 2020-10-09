@@ -34,11 +34,32 @@ import java.util.Objects;
  */
 public enum NetworkConnectionState {
 
+	/**
+	 * The connection has this state after being created, but not connected on the client side
+	 */
 	INITIALIZED(false, true, false, false),
+	/**
+	 * The connection has this state while the process of connecting has been started, but not completed.
+	 */
 	OPENING(false, false, true, false),
+	/**
+	 * The connection has this state while data can be sent and will be received.
+	 */
 	OPEN(true, false, true, false),
+	/**
+	 * The connection switches from {@link #OPEN} to this state when a ping check is in progress.
+	 * Data can still be sent and received in this state.
+	 */
 	CHECKING(true, false, true, false),
+	/**
+	 * The connection has this state when the closing process has begun, but not yet finished.
+	 * Data receivers are terminated and connections are deregistered from their managers in this phase.
+	 */
 	CLOSING(false, false, true, true),
+	/**
+	 * A connection in this state has been closed and can never be reopened. No data can be sent or received.
+	 * Closed connections are automatically removed from a server manager.
+	 */
 	CLOSED(false, false, true, true);
 	
 	private final boolean send, can, open, closed;
