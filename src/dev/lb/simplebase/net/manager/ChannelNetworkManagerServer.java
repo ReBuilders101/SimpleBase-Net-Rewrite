@@ -21,7 +21,7 @@ import dev.lb.simplebase.net.connection.ChannelConnection;
 import dev.lb.simplebase.net.connection.TcpChannelNetworkConnection;
 import dev.lb.simplebase.net.connection.UdpServerChannelNetworkConnection;
 import dev.lb.simplebase.net.id.NetworkID;
-import dev.lb.simplebase.net.id.NetworkIDFunction;
+import dev.lb.simplebase.net.id.NetworkIDFeature;
 import dev.lb.simplebase.net.packet.converter.AddressBasedDecoderPool;
 import dev.lb.simplebase.net.packet.converter.AnonymousServerConnectionAdapter;
 import dev.lb.simplebase.net.packet.converter.MutableAddressConnectionAdapter;
@@ -76,12 +76,12 @@ public final class ChannelNetworkManagerServer extends ExternalNetworkManagerSer
 	}
 
 	private void startTcpImpl() throws IOException {
-		tcp_serverChannel.bind(getLocalID().getFunction(NetworkIDFunction.BIND));
+		tcp_serverChannel.bind(getLocalID().getFeature(NetworkIDFeature.BIND));
 		tcp_serverChannel.register(selector, SelectionKey.OP_ACCEPT); //The key is stored on the channel
 	}
 	
 	private void startUdpLanImpl() throws IOException {
-		udp_serverChannel.bind(getLocalID().getFunction(NetworkIDFunction.BIND));
+		udp_serverChannel.bind(getLocalID().getFeature(NetworkIDFeature.BIND));
 		registerConnection(udp_serverChannel, SelectionKey.OP_READ, this::readUdpDataNow);
 	}
 	

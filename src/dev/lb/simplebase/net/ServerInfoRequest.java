@@ -27,7 +27,7 @@ import dev.lb.simplebase.net.connection.DatagramReceiverThread;
 import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.event.EventDispatchChain;
 import dev.lb.simplebase.net.id.NetworkID;
-import dev.lb.simplebase.net.id.NetworkIDFunction;
+import dev.lb.simplebase.net.id.NetworkIDFeature;
 import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.manager.AcceptorThreadDeathReason;
 import dev.lb.simplebase.net.manager.NetworkManagerProperties;
@@ -100,12 +100,12 @@ public final class ServerInfoRequest {
 	/**
 	 * Starts a request for a server info packet to the given {@link NetworkID}.
 	 * <ul>
-	 * <li>If the {@code NetworkID} implements {@link NetworkIDFunction#INTERNAL}, the internal server is looked up.<br>
+	 * <li>If the {@code NetworkID} implements {@link NetworkIDFeature#INTERNAL}, the internal server is looked up.<br>
 	 * If no server is found, the returned {@link ValueTask} will be cancelled with an {@link IllegalArgumentException}.<br>
 	 * If the server is found, but does not respond with a packet, the returned {@code ValueTask} will be
 	 * cancelled with an {@link UnsupportedOperationException}.<br>
 	 * Otherwise, thie returned task will be completed immediately with the response packet.</li>
-	 * <li>If the {@code NetworkID} implements {@link NetworkIDFunction#CONNECT} instead, a server info request will be sent
+	 * <li>If the {@code NetworkID} implements {@link NetworkIDFeature#CONNECT} instead, a server info request will be sent
 	 * to the server. The returned {@code ValueTask} will be lazily populated with the response packet once it arrives, or it will
 	 * be cancelled with an {@link IOException} when {@link #removeActiveRequest(InetSocketAddress)} is called for that address.</li>
 	 * <li>If neither function is implemented, the {@code NetworkID} is invalid and this method throws an {@link IllegalArgumentException}</li>
@@ -117,9 +117,9 @@ public final class ServerInfoRequest {
 	 */
 	public ValueTask<Packet> startRequest(NetworkID remote) {
 		Objects.requireNonNull(remote, "'remote' parameter must not be null");
-		if(remote.hasFunction(NetworkIDFunction.CONNECT)) {
-			return startRequest(remote.getFunction(NetworkIDFunction.CONNECT));
-		} else if(remote.hasFunction(NetworkIDFunction.INTERNAL)) {
+		if(remote.hasFeature(NetworkIDFeature.CONNECT)) {
+			return startRequest(remote.getFeature(NetworkIDFeature.CONNECT));
+		} else if(remote.hasFeature(NetworkIDFeature.INTERNAL)) {
 			final NetworkManagerServer server = InternalServerProvider.getServer(remote);
 			if(server == null) {
 				return ValueTask.cancelled(new IllegalArgumentException(

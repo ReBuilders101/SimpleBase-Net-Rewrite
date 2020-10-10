@@ -6,7 +6,7 @@ import dev.lb.simplebase.net.InternalServerProvider;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
-import dev.lb.simplebase.net.id.NetworkIDFunction;
+import dev.lb.simplebase.net.id.NetworkIDFeature;
 import dev.lb.simplebase.net.manager.NetworkManagerClient;
 import dev.lb.simplebase.net.manager.NetworkManagerServer;
 import dev.lb.simplebase.net.packet.Packet;
@@ -33,7 +33,7 @@ public class InternalNetworkConnection extends NetworkConnection {
 	 * Creates an unconnected client-side {@link InternalNetworkConnection}.
 	 * </p>
 	 * @param networkManager The {@link NetworkManagerClient} that will hold this connection
-	 * @param remoteID The {@link NetworkID} of the remote connection side, must implement {@link NetworkIDFunction#INTERNAL}
+	 * @param remoteID The {@link NetworkID} of the remote connection side, must implement {@link NetworkIDFeature#INTERNAL}
 	 * @param customObject The object associated with this connection's {@link PacketContext}, may be {@code null}
 	 * @throws NullPointerException When {@code networkManager} or {@code remoteID} are {@code null}
 	 */

@@ -1,10 +1,8 @@
 package dev.lb.simplebase.net.id;
 
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.Objects;
 
-import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.ValueType;
 
@@ -17,35 +15,23 @@ class ConnectNetworkID extends NetworkID {
 	//Only allow InetSocketAddress as a SocketAddress implementation
 	private final InetSocketAddress address;
 	
-	/**
-	 * Internal constructor. Use {@link NetworkManager} to create instances
-	 * Params must not be null!
-	 */
 	protected ConnectNetworkID(String description, InetSocketAddress address) {
 		super(description);
 		this.address = address;
 	}
 	
-	/**
-	 * The address that can be used to connect a socket to an endpoint.
-	 * @return The {@link SocketAddress} for this NetworkID
-	 */
-	protected SocketAddress getConnectAddress() {
-		return address;
-	}
-	
 	@Override
-	public boolean hasFunction(NetworkIDFunction<?> function) {
+	public boolean hasFeature(NetworkIDFeature<?> function) {
 		//Implements NETWORK and CONNECT
-		return function == NetworkIDFunction.NETWORK || function == NetworkIDFunction.CONNECT;
+		return function == NetworkIDFeature.NETWORK || function == NetworkIDFeature.CONNECT;
 	}
 	
 	@Override
 	@SuppressWarnings("unchecked")
-	public <E> E getFunction(NetworkIDFunction<E> function) {
-		if(function == NetworkIDFunction.NETWORK) {
-			return (E) NetworkIDFunction.CONNECT;
-		} else if(function == NetworkIDFunction.CONNECT) {
+	public <E> E getFeature(NetworkIDFeature<E> function) {
+		if(function == NetworkIDFeature.NETWORK) {
+			return (E) NetworkIDFeature.CONNECT;
+		} else if(function == NetworkIDFeature.CONNECT) {
 			return (E) address;
 		} else {
 			throw new UnsupportedOperationException("Unsupported NetworkID function: " + function);
@@ -69,7 +55,7 @@ class ConnectNetworkID extends NetworkID {
 	}
 
 	@Override
-	public NetworkID clone(String newDescription) {
+	public NetworkID cloneWith(String newDescription) {
 		return new ConnectNetworkID(newDescription, address);
 	}
 	

@@ -20,7 +20,7 @@ import dev.lb.simplebase.net.connection.DatagramReceiverThread;
 import dev.lb.simplebase.net.connection.TcpSocketNetworkConnection;
 import dev.lb.simplebase.net.connection.UdpServerSocketNetworkConnection;
 import dev.lb.simplebase.net.id.NetworkID;
-import dev.lb.simplebase.net.id.NetworkIDFunction;
+import dev.lb.simplebase.net.id.NetworkIDFeature;
 import dev.lb.simplebase.net.log.AbstractLogger;
 import dev.lb.simplebase.net.packet.converter.AddressBasedDecoderPool;
 import dev.lb.simplebase.net.packet.converter.AnonymousServerConnectionAdapter;
@@ -43,7 +43,7 @@ public final class SocketNetworkManagerServer extends ExternalNetworkManagerServ
 	private final PacketToByteConverter udp_toByteConverter;
 	
 	public static final BiPredicate<NetworkID, InetSocketAddress> matchRemoteAddress = (n, i) -> 
-		n.ifFunction(NetworkIDFunction.CONNECT, r -> r.equals(i), false);
+		n.ifFeature(NetworkIDFeature.CONNECT, r -> r.equals(i), false);
 	
 	@Internal
 	@SuppressWarnings("deprecation")
@@ -87,12 +87,12 @@ public final class SocketNetworkManagerServer extends ExternalNetworkManagerServ
 	//SERVER STARTUP IMPLEMENTATION//
 	
 	private void startTcpImpl() throws IOException {
-		tcp_serverSocket.bind(getLocalID().getFunction(NetworkIDFunction.BIND)); //Exception Here -> thread not yet started
+		tcp_serverSocket.bind(getLocalID().getFeature(NetworkIDFeature.BIND)); //Exception Here -> thread not yet started
 		tcp_acceptorThread.start();
 	}
 	
 	private void startUdpLanImpl() throws IOException {
-		udp_serverSocket.bind(getLocalID().getFunction(NetworkIDFunction.BIND));
+		udp_serverSocket.bind(getLocalID().getFeature(NetworkIDFeature.BIND));
 		udp_receiverThread.start();
 	}
 	

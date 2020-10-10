@@ -8,6 +8,7 @@ import java.util.function.Function;
 
 import dev.lb.simplebase.net.annotation.Immutable;
 import dev.lb.simplebase.net.annotation.ValueType;
+import dev.lb.simplebase.net.util.Cloneable2;
 
 /**
  * An Instance of NetworkID represents a network party and contains all necessary information to make a connection.
@@ -15,7 +16,7 @@ import dev.lb.simplebase.net.annotation.ValueType;
  */
 @ValueType
 @Immutable
-public abstract class NetworkID implements Cloneable {
+public abstract class NetworkID implements Cloneable2 {
 
 	protected final String description;
 	
@@ -24,8 +25,9 @@ public abstract class NetworkID implements Cloneable {
 	}
 	
 	/**
-	 * A text description/identifier for this NetworkID. Usually used as an unique identifier, but this
-	 * behavior must be guaranteed by the object that stores the NetworkIDs.
+	 * A text description/identifier for this NetworkID. Usually used as an unique identifier, but
+	 * uniqueness is not guaranteed by the API and must be enforced by the API user (e.g. by using
+	 * {@link #isUnique(Iterable, String)} before cretaing the new ID).
 	 * @return The description text for this NetworkID
 	 */
 	public final String getDescription() {
@@ -33,36 +35,39 @@ public abstract class NetworkID implements Cloneable {
 	}
 	
 	/**
-	 * Checks whether this NetworkID implements the requested optional functionality.
-	 * No NetworkID can implement the {@code null} function, so this method always returns {@code false}
+	 * Checks whether this NetworkID implements the requested optional feature.
+	 * No NetworkID can implement the {@code null} feature, so this method always returns {@code false}
 	 * if the parameter has the value {@code null}.
-	 * @param function The optional functionality that this NetworkID might implement
-	 * @return Whether this NetworkID implements the functionality.
+	 * @param feature The optional feature that this NetworkID might implement
+	 * @return {@code true} if this {@link NetworkID} implementation supports the requested feature, {@code false} otherwise
 	 */
-	public abstract boolean hasFunction(NetworkIDFunction<?> function);
+	public abstract boolean hasFeature(NetworkIDFeature<?> feature);
 	
 	/**
-	 * Gets a parameter from a functionality only if that functionality is implemented by this type
-	 * of NetworkID ({@link #hasFunction(NetworkIDFunction)}).
-	 * @param <E> The type of the functionality parameter value
-	 * @param function The functionality that contains the value
-	 * @return The value, if the functionality is implemented
-	 * @throws UnsupportedOperationException If the requested function is not implemented
+	 * Gets the value of a feature if that feature is implemented by this {@link NetworkID}.
+	 * <p>
+	 * To check whether a certain feature is supported by this {@code NetworkID}, {@link #hasFeature(NetworkIDFeature)}
+	 * can be used. Will throw an exception if the requested feature is not implemented.
+	 * </p>
+	 * @param <E> The type of the value for the feature
+	 * @param feature The the feature that holds the value
+	 * @return The value of the requested feature
+	 * @throws UnsupportedOperationException If the requested feature is not implemented
 	 */
-	public abstract <E> E getFunction(NetworkIDFunction<E> function);
+	public abstract <E> E getFeature(NetworkIDFeature<E> feature);
 	
 	/**
-	 * Runs the action only if the requested optional function is present for this {@link NetworkID}.
-	 * @param <E> The type of the functionality parameter value
+	 * Runs the action only if the requested optional feature is implemented by this {@link NetworkID}.
+	 * @param <E> The type of the value for the feature
 	 * @param <R> The return type of the action
-	 * @param function The functionality that contains the value
-	 * @param action The action to run if the function is present
-	 * @param otherwise The value to return if the function is not present
-	 * @return
+	 * @param feature The feature that this {@code NetworkID} might implement
+	 * @param action The action to run with the feature's value if the feature is present
+	 * @param otherwise The value to return if the feature is not present
+	 * @return The return value of the action, or the value of the {@code otherwise} parameter
 	 */
-	public <E, R> R ifFunction(NetworkIDFunction<E> function, Function<E, R> action, R otherwise) {
-		if(hasFunction(function)) {
-			return action.apply(getFunction(function));
+	public <E, R> R ifFeature(NetworkIDFeature<E> feature, Function<E, R> action, R otherwise) {
+		if(hasFeature(feature)) {
+			return action.apply(getFeature(feature));
 		} else {
 			return otherwise;
 		}
@@ -77,37 +82,24 @@ public abstract class NetworkID implements Cloneable {
 	 * @return A configurable String representation of this {@link NetworkID}
 	 */
 	public abstract String toString(boolean includeDetails);
+
 	
-	/**
-	 * All NetworkID implementations also implement the {@link Cloneable} interface and provide a public clone method.
-	 * @return A new instance of NetworkID with the same implementation class and the same member values
-	 */
 	@Override
 	public abstract NetworkID clone();
 	
-	/**
-	 * It is often desired that the description of a NetworkID uniquely identifies the instance.
-	 * This makes the normal {@link #clone()} method basically useless, since the description will be copied as well.<br>
-	 * This method can change the description while keeping the other members and the implementing class the same.
-	 * @param newDescription The new description for the cloned NetworkID instance.
-	 * @return A new NetworkID with identical member values except for the description
-	 */
-	public abstract NetworkID clone(String newDescription);
+	@Override
+	public final NetworkID copy() {
+		//All IDs are immutable, so this is valid
+		return this;
+	}
 	
 	/**
-	 * It is often desired that the description of a NetworkID uniquely identifies the instance.
-	 * This makes the normal {@link #clone()} method basically useless, since the description will be copied as well.<br>
-	 * This method can change the description while keeping the other members and the implementing class the same.
-	 * In some cases the new description will directly depend on the old one,
-	 * and this method can use a mapping function to generate the new description.
-	 * @param newDescription A function that maps the old description to the new one. The string passed to the mapping function will never be {@code null}.
-	 * @return A new NetworkID with identical member values except for the description
-	 * @throws NullPointerException if the mapping function is {@code null} or returns {@code null}.
+	 * Creates a new {@link NetworkID} that implements the same features with the same values,
+	 * but has a different description.
+	 * @param newDescription The new description for the cloned NetworkID instance.
+	 * @return A new NetworkID with identical values except for the description
 	 */
-	public NetworkID clone(Function<String, String> deriveDescription) {
-		Objects.requireNonNull(deriveDescription, "'derivedDescription' parameter must not be null");
-		return clone(deriveDescription.apply(description));
-	}
+	public abstract NetworkID cloneWith(String newDescription);
 	
 	@Override
 	public int hashCode() {
@@ -169,10 +161,11 @@ public abstract class NetworkID implements Cloneable {
 	
 	
 	/**
-	 * Creates a {@link NetworkID} that implements the {@link NetworkIDFunction#INTERNAL} functionality only.
-	 * Can be used to identify the local side of a connection, to to connect to internal servers
+	 * Creates a {@link NetworkID} that implements the {@link NetworkIDFeature#INTERNAL} feature only.
+	 * Can be used to identify the local side of a connection, to to connect to internal servers.
 	 * @param description The text description of the NetworkID
-	 * @return A new NetworkID instance
+	 * @return The new NetworkID instance
+	 * @throws NullPointerException When the {@code description} is {@code null}
 	 */
 	public static NetworkID createID(String description) {
 		Objects.requireNonNull(description, "'description' parameter must not be null");
@@ -180,12 +173,14 @@ public abstract class NetworkID implements Cloneable {
 	}
 	
 	/**
-	 * Creates a {@link NetworkID} that implements the {@link NetworkIDFunction#NETWORK} and
-	 * {@link NetworkIDFunction#BIND} functionalities.
+	 * Creates a {@link NetworkID} that implements the {@link NetworkIDFeature#NETWORK} and
+	 * {@link NetworkIDFeature#BIND} features.
 	 * Can be used to give a server a port to bind to.
 	 * @param description The text description of the NetworkID
 	 * @param port The port to bind to, in range 0 - 65535
-	 * @return A new NetworkID instance
+	 * @return The new NetworkID instance
+	 * @throws IllegalArgumentException When the port number is not in {@code ]0, 65535[}
+	 * @throws NullPointerException When the {@code description} is {@code null}
 	 */
 	public static NetworkID createID(String description, int port) {
 		Objects.requireNonNull(description, "'description' parameter must not be null");
@@ -194,12 +189,13 @@ public abstract class NetworkID implements Cloneable {
 	}
 	
 	/**
-	 * Creates a {@link NetworkID} that implements the {@link NetworkIDFunction#NETWORK} and
-	 * {@link NetworkIDFunction#CONNECT} functionalities.
+	 * Creates a {@link NetworkID} that implements the {@link NetworkIDFeature#NETWORK} and
+	 * {@link NetworkIDFeature#CONNECT} features.
 	 * Can be used to identify a remote endpoint to connect to.
 	 * @param description The text description of the NetworkID
 	 * @param address The {@link InetSocketAddress} that describes the endpoint to connect to
-	 * @return A new NetworkID instance
+	 * @return The new NetworkID instance
+	 * @throws NullPointerException When any of the parameters are {@code null}
 	 */
 	public static NetworkID createID(String description, InetSocketAddress address) {
 		Objects.requireNonNull(description, "'description' parameter must not be null");
@@ -208,13 +204,15 @@ public abstract class NetworkID implements Cloneable {
 	}
 	
 	/**
-	 * Creates a {@link NetworkID} that implements the {@link NetworkIDFunction#NETWORK} and
-	 * {@link NetworkIDFunction#CONNECT} functionalities.
+	 * Creates a {@link NetworkID} that implements the {@link NetworkIDFeature#NETWORK} and
+	 * {@link NetworkIDFeature#CONNECT} features.
 	 * Can be used to identify a remote endpoint to connect to.
 	 * @param description The text description of the NetworkID
 	 * @param address The {@link InetAddress} that describes the IP-Address/hostname of the endpoint to connect to
 	 * @param port The port of the endpoint to connect to, in range 0 - 65535
-	 * @return A new NetworkID instance
+	 * @return The new NetworkID instance
+	 * @throws IllegalArgumentException When the port number is not in {@code ]0, 65535[}
+	 * @throws NullPointerException When any of the parameters are {@code null}
 	 */
 	public static NetworkID createID(String description, InetAddress address, int port) {
 		//Don't check description, it is directly passed to createID(String, INSA) and validated there.
@@ -226,13 +224,16 @@ public abstract class NetworkID implements Cloneable {
 	}
 	
 	/**
-	 * Creates a {@link NetworkID} that implements the {@link NetworkIDFunction#NETWORK} and
-	 * {@link NetworkIDFunction#CONNECT} functionalities.
+	 * Creates a {@link NetworkID} that implements the {@link NetworkIDFeature#NETWORK} and
+	 * {@link NetworkIDFeature#CONNECT} features.
 	 * Can be used to identify a remote endpoint to connect to.
 	 * @param description The text description of the NetworkID
 	 * @param address A string representation of the IP-Address/hostname of the endpoint to connect to
 	 * @param port The port of the endpoint to connect to, in range 0 - 65535
 	 * @return A new NetworkID instance
+	 * @throws UnknownHostException When the {@code address} could not be resolved with {@link InetAddress#getByName(String)}
+	 * @throws IllegalArgumentException When the port number is not in {@code ]0, 65535[}
+	 * @throws NullPointerException When any of the parameters are {@code null}
 	 */
 	public static NetworkID createID(String description, String address, int port) throws UnknownHostException {
 		//Don't check description, it is directly passed to createID(String, INSA) and validated there.

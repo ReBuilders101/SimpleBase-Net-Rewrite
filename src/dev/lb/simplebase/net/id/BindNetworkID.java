@@ -5,7 +5,6 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Objects;
 
-import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.ValueType;
 
@@ -17,26 +16,22 @@ import dev.lb.simplebase.net.annotation.ValueType;
 class BindNetworkID extends NetworkID {
 	private final int port;
 	
-	/**
-	 * Internal constructor. Use {@link NetworkManager} to create instances
-	 * Params must not be null!
-	 */
 	protected BindNetworkID(String description, int port) {
 		super(description);
 		this.port = port;
 	}
 
 	@Override
-	public boolean hasFunction(NetworkIDFunction<?> function) {
-		return function == NetworkIDFunction.NETWORK || function == NetworkIDFunction.BIND;
+	public boolean hasFeature(NetworkIDFeature<?> function) {
+		return function == NetworkIDFeature.NETWORK || function == NetworkIDFeature.BIND;
 	}
 	
 	@Override
 	@SuppressWarnings("unchecked")
-	public <E> E getFunction(NetworkIDFunction<E> function) {
-		if(function == NetworkIDFunction.NETWORK) {
-			return (E) NetworkIDFunction.BIND;
-		} else if(function == NetworkIDFunction.BIND) {
+	public <E> E getFeature(NetworkIDFeature<E> function) {
+		if(function == NetworkIDFeature.NETWORK) {
+			return (E) NetworkIDFeature.BIND;
+		} else if(function == NetworkIDFeature.BIND) {
 			return (E) getBindAddress();
 		} else {
 			throw new UnsupportedOperationException("Unsupported NetworkID function: " + function);
@@ -63,7 +58,7 @@ class BindNetworkID extends NetworkID {
 	}
 
 	@Override
-	public NetworkID clone(String newDescription) {
+	public NetworkID cloneWith(String newDescription) {
 		return new BindNetworkID(newDescription, port);
 	}
 

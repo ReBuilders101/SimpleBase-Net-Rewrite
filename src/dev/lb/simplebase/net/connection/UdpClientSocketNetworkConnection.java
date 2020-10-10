@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
-import dev.lb.simplebase.net.id.NetworkIDFunction;
+import dev.lb.simplebase.net.id.NetworkIDFeature;
 import dev.lb.simplebase.net.manager.AcceptorThreadDeathReason;
 import dev.lb.simplebase.net.manager.NetworkManagerClient;
 import dev.lb.simplebase.net.packet.PacketContext;
@@ -58,7 +58,7 @@ public class UdpClientSocketNetworkConnection extends ExternalNetworkConnection 
 		}
 		this.thread = new DatagramReceiverThread(socket, this::receiveRawByteData,
 				this::notifyReceiverThreadDeath, networkManager.getConfig().getDatagramPacketMaxSize());
-		this.remoteAddress = remoteID.getFunction(NetworkIDFunction.CONNECT);
+		this.remoteAddress = remoteID.getFeature(NetworkIDFeature.CONNECT);
 	}
 
 	@Override

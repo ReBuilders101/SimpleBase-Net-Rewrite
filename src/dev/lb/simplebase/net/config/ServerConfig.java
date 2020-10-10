@@ -11,7 +11,7 @@ import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.annotation.ValueType;
 import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.id.NetworkID;
-import dev.lb.simplebase.net.id.NetworkIDFunction;
+import dev.lb.simplebase.net.id.NetworkIDFeature;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.manager.NetworkManagerServer;
 import dev.lb.simplebase.net.packet.Packet;
@@ -147,11 +147,11 @@ public class ServerConfig extends CommonConfig {
 	/**
 	 * Determines whether the {@link NetworkManagerServer} will be useable as an application-internal server.
 	 * <p>
-	 * If {@code true}, it can be connected to using a {@link NetworkID} with the {@link NetworkIDFunction#INTERNAL}
+	 * If {@code true}, it can be connected to using a {@link NetworkID} with the {@link NetworkIDFeature#INTERNAL}
 	 * and will be listed in {@link NetworkManager#getInternalServers()}.
 	 * </p>
 	 * <p>
-	 * If the {@code NetworkID} used to create the server implements {@link NetworkIDFunction#INTERNAL} or the
+	 * If the {@code NetworkID} used to create the server implements {@link NetworkIDFeature#INTERNAL} or the
 	 * {@link ServerType} used is {@link ServerType#INTERNAL}, 
 	 * this option <b>must</b> be enabled. For all other {@code NetworkID}s and {@code ServerType}s, this is optional
 	 * </p>
@@ -164,11 +164,11 @@ public class ServerConfig extends CommonConfig {
 	/**
 	 * Sets whether the {@link NetworkManagerServer} will be useable as an application-internal server.
 	 * <p>
-	 * If {@code true}, it can be connected to using a {@link NetworkID} with the {@link NetworkIDFunction#INTERNAL}
+	 * If {@code true}, it can be connected to using a {@link NetworkID} with the {@link NetworkIDFeature#INTERNAL}
 	 * and will be listed in {@link NetworkManager#getInternalServers()}.
 	 * </p>
 	 * <p>
-	 * If the {@code NetworkID} used to create the server implements {@link NetworkIDFunction#INTERNAL} or the
+	 * If the {@code NetworkID} used to create the server implements {@link NetworkIDFeature#INTERNAL} or the
 	 * {@link ServerType} used is {@link ServerType#INTERNAL}, 
 	 * this option <b>must</b> be enabled. For all other {@code NetworkID}s and {@code ServerType}s, this is optional
 	 * </p>

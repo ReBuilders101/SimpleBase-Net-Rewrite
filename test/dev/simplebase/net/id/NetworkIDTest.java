@@ -14,7 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import dev.lb.simplebase.net.id.NetworkID;
-import dev.lb.simplebase.net.id.NetworkIDFunction;
+import dev.lb.simplebase.net.id.NetworkIDFeature;
 
 class NetworkIDTest {
 
@@ -43,17 +43,17 @@ class NetworkIDTest {
 		assertNotEquals(local1, local3, "Ids are equal (1)");
 		assertNotEquals(local2, local3, "Ids are equal (2)");
 		
-		assertTrue(local1.hasFunction(NetworkIDFunction.INTERNAL), "No LOCAL function");
-		assertFalse(local1.hasFunction(NetworkIDFunction.NETWORK), "Unexpected NETWORK function");
-		assertFalse(local1.hasFunction(NetworkIDFunction.BIND), "Unexpected BIND function");
-		assertFalse(local1.hasFunction(NetworkIDFunction.CONNECT), "Unexpected CONNECT function");
-		assertFalse(local1.hasFunction(null), "Unexpected <null> function");
+		assertTrue(local1.hasFeature(NetworkIDFeature.INTERNAL), "No LOCAL function");
+		assertFalse(local1.hasFeature(NetworkIDFeature.NETWORK), "Unexpected NETWORK function");
+		assertFalse(local1.hasFeature(NetworkIDFeature.BIND), "Unexpected BIND function");
+		assertFalse(local1.hasFeature(NetworkIDFeature.CONNECT), "Unexpected CONNECT function");
+		assertFalse(local1.hasFeature(null), "Unexpected <null> function");
 		
-		assertEquals(local2.getFunction(NetworkIDFunction.INTERNAL), local2.getDescription(), "LOCAL does not match description");
-		assertThrows(UnsupportedOperationException.class, () -> local2.getFunction(NetworkIDFunction.NETWORK), "NETWORK get does not throw");
-		assertThrows(UnsupportedOperationException.class, () -> local2.getFunction(NetworkIDFunction.BIND), "BIND get does not throw");
-		assertThrows(UnsupportedOperationException.class, () -> local2.getFunction(NetworkIDFunction.CONNECT), "CONNECT get does not throw");
-		assertThrows(UnsupportedOperationException.class, () -> local2.getFunction(null), "<null> get does not throw");
+		assertEquals(local2.getFeature(NetworkIDFeature.INTERNAL), local2.getDescription(), "LOCAL does not match description");
+		assertThrows(UnsupportedOperationException.class, () -> local2.getFeature(NetworkIDFeature.NETWORK), "NETWORK get does not throw");
+		assertThrows(UnsupportedOperationException.class, () -> local2.getFeature(NetworkIDFeature.BIND), "BIND get does not throw");
+		assertThrows(UnsupportedOperationException.class, () -> local2.getFeature(NetworkIDFeature.CONNECT), "CONNECT get does not throw");
+		assertThrows(UnsupportedOperationException.class, () -> local2.getFeature(null), "<null> get does not throw");
 		
 		assertEquals(local3.getDescription(), "Local-AB", "Description incorrect");
 		assertEquals(local3.clone(), local3, "Clone not identical");
@@ -83,20 +83,20 @@ class NetworkIDTest {
 		assertNotEquals(bind2, bind3, "Ids are equal (1)");
 		assertNotEquals(bind3, bind4, "Ids are equal (2)");
 		
-		assertFalse(bind1.hasFunction(NetworkIDFunction.INTERNAL), "Unexpected LOCAL function");
-		assertTrue(bind1.hasFunction(NetworkIDFunction.NETWORK), "No NETWORK function");
-		assertTrue(bind1.hasFunction(NetworkIDFunction.BIND), "No BIND function");
-		assertFalse(bind1.hasFunction(NetworkIDFunction.CONNECT), "Unexpected CONNECT function");
-		assertFalse(bind1.hasFunction(null), "Unexpected <null> function");
+		assertFalse(bind1.hasFeature(NetworkIDFeature.INTERNAL), "Unexpected LOCAL function");
+		assertTrue(bind1.hasFeature(NetworkIDFeature.NETWORK), "No NETWORK function");
+		assertTrue(bind1.hasFeature(NetworkIDFeature.BIND), "No BIND function");
+		assertFalse(bind1.hasFeature(NetworkIDFeature.CONNECT), "Unexpected CONNECT function");
+		assertFalse(bind1.hasFeature(null), "Unexpected <null> function");
 		
-		assertThrows(UnsupportedOperationException.class, () -> bind2.getFunction(NetworkIDFunction.INTERNAL), "LOCAL get does not throw");
-		assertEquals(bind2.getFunction(NetworkIDFunction.NETWORK), NetworkIDFunction.BIND, "NETWORK does not match <BIND function>");
+		assertThrows(UnsupportedOperationException.class, () -> bind2.getFeature(NetworkIDFeature.INTERNAL), "LOCAL get does not throw");
+		assertEquals(bind2.getFeature(NetworkIDFeature.NETWORK), NetworkIDFeature.BIND, "NETWORK does not match <BIND function>");
 //		assertDoesNotThrow(() -> bind2.getFunction(NetworkIDFunction.BIND), "BIND throws exception");
-		assertTrue(bind2.getFunction(NetworkIDFunction.BIND) instanceof SocketAddress, "BIND does not match type <SocketAddress>");
-		assertThrows(UnsupportedOperationException.class, () -> bind2.getFunction(NetworkIDFunction.CONNECT), "CONNECT get does not throw");
-		assertThrows(UnsupportedOperationException.class, () -> bind2.getFunction(null), "<null> get does not throw");
+		assertTrue(bind2.getFeature(NetworkIDFeature.BIND) instanceof SocketAddress, "BIND does not match type <SocketAddress>");
+		assertThrows(UnsupportedOperationException.class, () -> bind2.getFeature(NetworkIDFeature.CONNECT), "CONNECT get does not throw");
+		assertThrows(UnsupportedOperationException.class, () -> bind2.getFeature(null), "<null> get does not throw");
 		
-		SocketAddress address1 = bind3.getFunction(NetworkIDFunction.BIND);
+		SocketAddress address1 = bind3.getFeature(NetworkIDFeature.BIND);
 		assertTrue(address1 instanceof InetSocketAddress, "Address is not a InetSocketAddress. Not an error, but tests have to be rewritten");
 		InetSocketAddress address2 = (InetSocketAddress) address1;
 		assertEquals(address2.getPort(), 4321, "Port not equal");
@@ -122,25 +122,25 @@ class NetworkIDTest {
 		assertNotEquals(connect2, connect3, "Ids are equal (1)");
 		assertNotEquals(connect3, connect4, "Ids are equal (2)");
 		
-		assertFalse(connect1.hasFunction(NetworkIDFunction.INTERNAL), "Unexpected LOCAL function");
-		assertTrue(connect1.hasFunction(NetworkIDFunction.NETWORK), "No NETWORK function");
-		assertFalse(connect1.hasFunction(NetworkIDFunction.BIND), "Unexpected BIND function");
-		assertTrue(connect1.hasFunction(NetworkIDFunction.CONNECT), "No CONNECT function");
-		assertFalse(connect1.hasFunction(null), "Unexpected <null> function");
+		assertFalse(connect1.hasFeature(NetworkIDFeature.INTERNAL), "Unexpected LOCAL function");
+		assertTrue(connect1.hasFeature(NetworkIDFeature.NETWORK), "No NETWORK function");
+		assertFalse(connect1.hasFeature(NetworkIDFeature.BIND), "Unexpected BIND function");
+		assertTrue(connect1.hasFeature(NetworkIDFeature.CONNECT), "No CONNECT function");
+		assertFalse(connect1.hasFeature(null), "Unexpected <null> function");
 		
-		assertThrows(UnsupportedOperationException.class, () -> connect2.getFunction(NetworkIDFunction.INTERNAL), "LOCAL get does not throw");
-		assertEquals(connect2.getFunction(NetworkIDFunction.NETWORK), NetworkIDFunction.CONNECT, "NETWORK does not match <CONNECT function>");
+		assertThrows(UnsupportedOperationException.class, () -> connect2.getFeature(NetworkIDFeature.INTERNAL), "LOCAL get does not throw");
+		assertEquals(connect2.getFeature(NetworkIDFeature.NETWORK), NetworkIDFeature.CONNECT, "NETWORK does not match <CONNECT function>");
 //		assertDoesNotThrow(() -> connect2.getFunction(NetworkIDFunction.CONNECT), "CONNECT throws exception");
-		assertTrue(connect2.getFunction(NetworkIDFunction.CONNECT) instanceof SocketAddress, "CONNECT does not match type <SocketAddress>");
-		assertThrows(UnsupportedOperationException.class, () -> connect2.getFunction(NetworkIDFunction.BIND), "BIND get does not throw");
-		assertThrows(UnsupportedOperationException.class, () -> connect2.getFunction(null), "<null> get does not throw");
+		assertTrue(connect2.getFeature(NetworkIDFeature.CONNECT) instanceof SocketAddress, "CONNECT does not match type <SocketAddress>");
+		assertThrows(UnsupportedOperationException.class, () -> connect2.getFeature(NetworkIDFeature.BIND), "BIND get does not throw");
+		assertThrows(UnsupportedOperationException.class, () -> connect2.getFeature(null), "<null> get does not throw");
 		
-		SocketAddress address1 = connect2.getFunction(NetworkIDFunction.CONNECT);
+		SocketAddress address1 = connect2.getFeature(NetworkIDFeature.CONNECT);
 		assertTrue(address1 instanceof InetSocketAddress, "Address is not a InetSocketAddress. Not an error, but tests have to be rewritten");
 		InetSocketAddress address2 = (InetSocketAddress) address1;
 		assertEquals(address2.getAddress(), InetAddress.getLocalHost(), "Address is not localhost");
 		assertEquals(address2.getPort(), 1234, "Port is not 1234");
-		assertTrue(((InetSocketAddress) connect3.getFunction(NetworkIDFunction.CONNECT)).getAddress().isAnyLocalAddress(), "Not a wildcard");
+		assertTrue(((InetSocketAddress) connect3.getFeature(NetworkIDFeature.CONNECT)).getAddress().isAnyLocalAddress(), "Not a wildcard");
 		
 //		assertDoesNotThrow(() -> connect4.getFunction(connect4.getFunction(NetworkIDFunction.NETWORK)), "Could not get socketaddress function");
 	}

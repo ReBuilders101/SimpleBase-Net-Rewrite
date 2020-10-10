@@ -7,7 +7,7 @@ import java.nio.channels.DatagramChannel;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
-import dev.lb.simplebase.net.id.NetworkIDFunction;
+import dev.lb.simplebase.net.id.NetworkIDFeature;
 import dev.lb.simplebase.net.manager.ChannelNetworkManagerServer;
 import dev.lb.simplebase.net.manager.ExternalNetworkManagerServer;
 import dev.lb.simplebase.net.packet.PacketContext;
@@ -45,7 +45,7 @@ public class UdpServerChannelNetworkConnection extends ExternalNetworkConnection
 		super(networkManager, remoteID, NetworkConnectionState.OPEN, networkManager.getConfig().getConnectionCheckTimeout(), true, customObject, false);
 		InternalAccess.assertCaller(ExternalNetworkManagerServer.class, 1, "Cannot instanitate UdpServerChanneLNetworkConnection directly");
 		this.server = networkManager;
-		this.remoteAddress = remoteID.getFunction(NetworkIDFunction.CONNECT);
+		this.remoteAddress = remoteID.getFeature(NetworkIDFeature.CONNECT);
 		openCompleted.release();
 	}
 

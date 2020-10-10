@@ -9,7 +9,7 @@ import java.nio.channels.SocketChannel;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
-import dev.lb.simplebase.net.id.NetworkIDFunction;
+import dev.lb.simplebase.net.id.NetworkIDFeature;
 import dev.lb.simplebase.net.manager.ExternalNetworkManagerServer;
 import dev.lb.simplebase.net.manager.NetworkManagerServer;
 import dev.lb.simplebase.net.manager.SelectorManager;
@@ -84,7 +84,7 @@ public final class TcpChannelNetworkConnection extends ExternalNetworkConnection
 	@Override
 	protected Task openConnectionImpl() {
 		try {
-			channel.connect(remoteID.getFunction(NetworkIDFunction.CONNECT));
+			channel.connect(remoteID.getFeature(NetworkIDFeature.CONNECT));
 			selectionKey = selectorManager.registerConnection(channel, SelectionKey.OP_CONNECT, this);
 			if(selectionKey == null) {
 				STATE_LOGGER.error("Cannot open channel connection: No selection key");

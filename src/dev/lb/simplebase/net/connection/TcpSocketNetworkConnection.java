@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
-import dev.lb.simplebase.net.id.NetworkIDFunction;
+import dev.lb.simplebase.net.id.NetworkIDFeature;
 import dev.lb.simplebase.net.manager.ExternalNetworkManagerServer;
 import dev.lb.simplebase.net.manager.NetworkManagerClient;
 import dev.lb.simplebase.net.manager.NetworkManagerServer;
@@ -83,7 +83,7 @@ public class TcpSocketNetworkConnection extends ExternalNetworkConnection {
 	@Override
 	protected Task openConnectionImpl() {
 		try {
-			socket.connect(remoteID.getFunction(NetworkIDFunction.CONNECT));
+			socket.connect(remoteID.getFeature(NetworkIDFeature.CONNECT));
 			thread.start();
 			return openCompleted;
 		} catch (IOException e) {

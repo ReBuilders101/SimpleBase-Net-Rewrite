@@ -7,7 +7,7 @@ import dev.lb.simplebase.net.event.EventDispatchChain;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.events.PacketSendingFailedEvent;
 import dev.lb.simplebase.net.id.NetworkID;
-import dev.lb.simplebase.net.id.NetworkIDFunction;
+import dev.lb.simplebase.net.id.NetworkIDFeature;
 import dev.lb.simplebase.net.manager.ExternalNetworkManagerServer;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.Packet;
@@ -98,8 +98,8 @@ public abstract class ExternalNetworkConnection extends NetworkConnection {
 	}
 	
 	private void forwardServerInfoRequest() {
-		if(networkManager instanceof ExternalNetworkManagerServer && remoteID.hasFunction(NetworkIDFunction.CONNECT)) {
-			((ExternalNetworkManagerServer) networkManager).receiveServerInfoRequest(remoteID.getFunction(NetworkIDFunction.CONNECT));
+		if(networkManager instanceof ExternalNetworkManagerServer && remoteID.hasFeature(NetworkIDFeature.CONNECT)) {
+			((ExternalNetworkManagerServer) networkManager).receiveServerInfoRequest(remoteID.getFeature(NetworkIDFeature.CONNECT));
 		} else {
 			RECEIVE_LOGGER.warning("Unexpected packet: Received ServerInfoRequest for an invalid manager type");
 		}

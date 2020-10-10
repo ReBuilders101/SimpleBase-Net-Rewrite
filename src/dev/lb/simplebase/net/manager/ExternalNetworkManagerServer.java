@@ -17,7 +17,7 @@ import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
 import dev.lb.simplebase.net.events.FilterRawConnectionEvent;
 import dev.lb.simplebase.net.id.NetworkID;
-import dev.lb.simplebase.net.id.NetworkIDFunction;
+import dev.lb.simplebase.net.id.NetworkIDFeature;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.converter.AddressBasedDecoderPool;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
@@ -139,7 +139,7 @@ public abstract class ExternalNetworkManagerServer extends NetworkManagerServer 
 	
 	protected void decideUdpDataDestination(InetSocketAddress address, AddressBasedDecoderPool pool, ByteBuffer buffer) {
 		final ExternalNetworkConnection connection = getConnectionImplementation(ExternalNetworkConnection.class, 
-				n -> n.ifFunction(NetworkIDFunction.CONNECT, i -> i.equals(address), null));
+				n -> n.ifFeature(NetworkIDFeature.CONNECT, i -> i.equals(address), null));
 		if(connection != null) { //Yes, this is not locked: Exclusive locks are too expensive for all packets
 			connection.decode(buffer);
 		} else {

@@ -161,9 +161,8 @@ public interface Task {
 	}
 	
 	public static Task timeout(long time, TimeUnit unit) {
-		final long wakeupMsTime = unit.toMillis(time);
 		final Pair<Task, Runnable> tac = Task.completable();
-		GlobalTimer.subscribeTimeoutTaskOnce(wakeupMsTime, tac.getRight());
+		GlobalTimer.delay(tac.getRight(), time, unit);
 		return tac.getLeft();
 	}
 	

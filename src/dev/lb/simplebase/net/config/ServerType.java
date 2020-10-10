@@ -9,7 +9,7 @@ import java.nio.channels.SocketChannel;
 import java.util.Objects;
 
 import dev.lb.simplebase.net.id.NetworkID;
-import dev.lb.simplebase.net.id.NetworkIDFunction;
+import dev.lb.simplebase.net.id.NetworkIDFeature;
 import dev.lb.simplebase.net.manager.NetworkManagerServer;
 
 /**
@@ -20,12 +20,12 @@ import dev.lb.simplebase.net.manager.NetworkManagerServer;
  * </p>
  * <table>
  * <caption>{@code ServerType} and {@code ConnectionType} compatibility:</caption>
- * <tr><th>{@code ServerType}</th><th>Client {@code ConnectionType}</th><th>Required {@link NetworkIDFunction}</th></tr>
- * <tr><td>{@link #INTERNAL}</td><td>{@link ConnectionType#INTERNAL}</td><td>{@link NetworkIDFunction#INTERNAL}</td></tr>
- * <tr><td>{@link #TCP_IO} or {@link #TCP_NIO}</td><td>{@link ConnectionType#TCP}</td><td>{@link NetworkIDFunction#BIND}</td></tr>
- * <tr><td>{@link #UDP_IO} or {@link #UDP_NIO}</td><td>{@link ConnectionType#UDP}</td><td>{@link NetworkIDFunction#BIND}</td></tr>
+ * <tr><th>{@code ServerType}</th><th>Client {@code ConnectionType}</th><th>Required {@link NetworkIDFeature}</th></tr>
+ * <tr><td>{@link #INTERNAL}</td><td>{@link ConnectionType#INTERNAL}</td><td>{@link NetworkIDFeature#INTERNAL}</td></tr>
+ * <tr><td>{@link #TCP_IO} or {@link #TCP_NIO}</td><td>{@link ConnectionType#TCP}</td><td>{@link NetworkIDFeature#BIND}</td></tr>
+ * <tr><td>{@link #UDP_IO} or {@link #UDP_NIO}</td><td>{@link ConnectionType#UDP}</td><td>{@link NetworkIDFeature#BIND}</td></tr>
  * <tr><td>{@link #COMBINED_IO} or {@link #COMBINED_NIO}</td><td>{@link ConnectionType#TCP} or {@link ConnectionType#UDP}</td>
- * <td>{@link NetworkIDFunction#BIND}</td></tr>
+ * <td>{@link NetworkIDFeature#BIND}</td></tr>
  * </table>
  * <h2>Special case: {@link #DEFAULT}</h2>
  * <p>
@@ -232,14 +232,14 @@ public enum ServerType {
 		Objects.requireNonNull(id, "'id' parameter must not be null");
 		
 		if(type == DEFAULT) {
-			if(id.hasFunction(NetworkIDFunction.INTERNAL)) return INTERNAL;
-			if(id.hasFunction(NetworkIDFunction.NETWORK)) return NET_DEFAULT;
+			if(id.hasFeature(NetworkIDFeature.INTERNAL)) return INTERNAL;
+			if(id.hasFeature(NetworkIDFeature.NETWORK)) return NET_DEFAULT;
 			throw new IllegalArgumentException("Server NetworkID must either implement INTERNAL or NETWORK function");
 		} else if(type == INTERNAL) {
-			if(!id.hasFunction(NetworkIDFunction.INTERNAL))
+			if(!id.hasFeature(NetworkIDFeature.INTERNAL))
 				throw new IllegalArgumentException("Server NetworkID must implement INTERNAL if that server type is used");
 		} else { //Any network
-			if(!id.hasFunction(NetworkIDFunction.NETWORK) || !id.hasFunction(NetworkIDFunction.BIND))
+			if(!id.hasFeature(NetworkIDFeature.NETWORK) || !id.hasFeature(NetworkIDFeature.BIND))
 				throw new IllegalArgumentException("Server NetworkID must implement NETWORK and BIND if any network server type is used");
 		}
 		return type;

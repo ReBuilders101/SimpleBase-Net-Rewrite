@@ -3,7 +3,7 @@ package dev.lb.simplebase.net.event;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-public class ReflectionEventHandler<E extends Event> extends AbstractEventHandler<E> {
+class ReflectionEventHandler<E extends Event> extends AbstractEventHandler<E> {
 	
 	private final Method methodHandler;
 	

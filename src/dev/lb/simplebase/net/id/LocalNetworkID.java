@@ -1,6 +1,5 @@
 package dev.lb.simplebase.net.id;
 
-import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.ValueType;
 
@@ -12,24 +11,20 @@ import dev.lb.simplebase.net.annotation.ValueType;
 class LocalNetworkID extends NetworkID {
 	//Stores the NetworkIDs description; immutable
 	
-	/**
-	 * Internal constructor. Use {@link NetworkManager} to create instances.
-	 * Param must not be null!
-	 */
 	protected LocalNetworkID(String description) {
 		super(description);
 	}
 
 	@Override
-	public boolean hasFunction(NetworkIDFunction<?> function) {
+	public boolean hasFeature(NetworkIDFeature<?> function) {
 		//Only return true if the function is LOCAL.
-		return function == NetworkIDFunction.INTERNAL;
+		return function == NetworkIDFeature.INTERNAL;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <E> E getFunction(NetworkIDFunction<E> function) {
-		if(function == NetworkIDFunction.INTERNAL) {
+	public <E> E getFeature(NetworkIDFeature<E> function) {
+		if(function == NetworkIDFeature.INTERNAL) {
 			return (E) description;
 		} else {
 			throw new UnsupportedOperationException("Unsupported NetworkID function: " + function);
@@ -62,7 +57,7 @@ class LocalNetworkID extends NetworkID {
 	}
 
 	@Override
-	public NetworkID clone(String newDescription) {
+	public NetworkID cloneWith(String newDescription) {
 		return new LocalNetworkID(newDescription);
 	}
 }

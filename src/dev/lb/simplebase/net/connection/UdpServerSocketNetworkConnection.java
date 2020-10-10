@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.id.NetworkID;
-import dev.lb.simplebase.net.id.NetworkIDFunction;
+import dev.lb.simplebase.net.id.NetworkIDFeature;
 import dev.lb.simplebase.net.manager.ExternalNetworkManagerServer;
 import dev.lb.simplebase.net.manager.SocketNetworkManagerServer;
 import dev.lb.simplebase.net.packet.PacketContext;
@@ -47,7 +47,7 @@ public class UdpServerSocketNetworkConnection extends ExternalNetworkConnection 
 		InternalAccess.assertCaller(ExternalNetworkManagerServer.class, 1, "Cannot instantiate UdpServerSocketNetworkConnection directly");
 		if(!networkManager.supportsUdp()) throw new IllegalArgumentException("Managers for UdpServerSocketNetworkConnections must have a UdpModule");
 		this.socketServer = networkManager;
-		this.remoteAddress = remoteID.getFunction(NetworkIDFunction.CONNECT);
+		this.remoteAddress = remoteID.getFeature(NetworkIDFeature.CONNECT);
 		openCompleted.release(); //Already open
 	}
 
