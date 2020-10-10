@@ -42,18 +42,18 @@ public enum ConnectionType {
 	DEFAULT,
 	/**
 	 * Creates an internal connection. The used server {@link NetworkID} must 
-	 * implement {@link NetworkIDFunction#INTERNAL}.
+	 * implement {@link NetworkIDFeature#INTERNAL}.
 	 */
 	INTERNAL,
 	/**
 	 * Uses a {@link Socket} to establish a TCP connection to the server.
-	 * The used remote {@link NetworkID} must implement {@link NetworkIDFunction#CONNECT}.<br>
+	 * The used remote {@link NetworkID} must implement {@link NetworkIDFeature#CONNECT}.<br>
 	 * The server must be compatible according to the table in the class description.
 	 */
 	TCP,
 	/**
 	 * Uses a {@link DatagramSocket} to establish a UDP connection to the server.
-	 * The used remote {@link NetworkID} must implement {@link NetworkIDFunction#CONNECT}.<br>
+	 * The used remote {@link NetworkID} must implement {@link NetworkIDFeature#CONNECT}.<br>
 	 * The server must be compatible according to the table in the class description.
 	 */
 	UDP;
