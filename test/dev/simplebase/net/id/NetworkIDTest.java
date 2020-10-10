@@ -59,17 +59,11 @@ class NetworkIDTest {
 		assertEquals(local3.clone(), local3, "Clone not identical");
 		assertEquals(local3.clone().hashCode(), local3.hashCode(), "Clone hash not identical");
 		
-		NetworkID local4 = local3.clone("Test");
+		NetworkID local4 = local3.cloneWith("Test");
 		assertEquals(local4.getDescription(), "Test", "Cloned description not equal");
 		assertNotEquals(local3, local4, "Cloned derived ids are equal");
 		NetworkID local5 = NetworkID.createID("Test");
 		assertEquals(local4, local5, "Ids are not equal (2)");
-		
-		NetworkID local6 = local5.clone((s) -> s + "_Test");
-		assertEquals(local6.getDescription(), "Test_Test", "Cloned description not equal");
-		assertNotEquals(local5, local6, "Cloned derived ids are equal");
-		NetworkID local7 = NetworkID.createID("Test_Test");
-		assertEquals(local6, local7, "Ids are not equal (2)");
 	}
 	
 	@Test
@@ -102,7 +96,7 @@ class NetworkIDTest {
 		assertEquals(address2.getPort(), 4321, "Port not equal");
 		assertTrue(address2.getAddress().isAnyLocalAddress(), "Not a local wildcard");
 		
-		NetworkID bind5 = bind4.clone("NewTitle");
+		NetworkID bind5 = bind4.cloneWith("NewTitle");
 		NetworkID bind6 = NetworkID.createID("NewTitle", 4321);
 		assertEquals(bind4, bind4.clone(), "Cloned id is not equal");
 		assertNotEquals(bind4, bind5, "Cloned derived id is equal");
