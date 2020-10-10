@@ -5,11 +5,12 @@ import java.util.Objects;
 
 /**
  * Depending on how a {@link NetworkID} was created an what network object it represents,
- * it can have different functions. A NetworkID can have more than one function, but not all combinations are possible.
+ * it can have different features. A {@code NetworkID} can have more than one feature, but not all combinations are possible.
  * <p>
- * Every {@link NetworkIDFeature} encodes a parameter for a NetworkID if present. It
+ * Every {@link NetworkIDFeature} encodes a value for a NetworkID if present. It
  * can be accessed through {@link NetworkID#getFeature(NetworkIDFeature)}.
- * @param <E> 
+ * </p>
+ * @param <E> The type of the encoded value
  */
 public final class NetworkIDFeature<E> {
 	
@@ -18,6 +19,7 @@ public final class NetworkIDFeature<E> {
 	 * for the local side of a connection.<br>Cannot be combined with any other NetworkIDFunction.
 	 * <p> 
 	 * Its parameter is the description string of the NetworkID, as this is the only information
+	 * </p>
 	 * stored by a local ID.
 	 */
 	public static final NetworkIDFeature<String> INTERNAL = new NetworkIDFeature<>("INTERNAL");
@@ -28,6 +30,7 @@ public final class NetworkIDFeature<E> {
 	 * <p>
 	 * Its parameter is the {@link NetworkIDFeature} it is combined with, either {@link #CONNECT} or
 	 * {@link #BIND}.
+	 * </p>
 	 */
 	public static final NetworkIDFeature<NetworkIDFeature<InetSocketAddress>> NETWORK = new NetworkIDFeature<>("NETWORK");
 	
@@ -36,6 +39,7 @@ public final class NetworkIDFeature<E> {
 	 * Always combined with {@link #NETWORK}.
 	 * <p>
 	 * Its parameter is the the address that the socket should be connected to.
+	 * </p>
 	 */
 	public static final NetworkIDFeature<InetSocketAddress> CONNECT = new NetworkIDFeature<>("CONNECT");
 	
@@ -43,6 +47,7 @@ public final class NetworkIDFeature<E> {
 	 * The NetworkID contains all networking information necessary to bind a server socket to a local endpoint.
 	 * <p>
 	 * Its parameter is the address that the socket should be bound to.
+	 * </p>
 	 */
 	public static final NetworkIDFeature<InetSocketAddress> BIND = new NetworkIDFeature<>("BIND");
 	
