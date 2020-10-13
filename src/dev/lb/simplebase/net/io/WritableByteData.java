@@ -11,59 +11,77 @@ import java.time.temporal.TemporalAccessor;
 import java.util.UUID;
 
 /**
- * This interface provides additional methods for writing primitives and strings. All methods
- * depend on the {@link #writeByte(byte)} method, which is defined by the implementation. by default,
- * data is encoded as Little Endian. Methods may be overridden by implementing classes, as long as compatibility is not broken.
- * <br>This interface is fully compatible to the data that should be read by the {@link ReadableByteData} interface and all valid implementations.
+ * The {@link WritableByteData} interface provides methods to write different primitives and basic objects to a stream of bytes.
+ * <p>
+ * The created byte stream is usually later parsed with {@link ReadableByteData}, which has corresponding read methods to every
+ * write method defined in this interface.
+ * </p><p>
+ * The underlying byte array, buffer or stream can have a finite size. An attempt to write past the available capacity
+ * will usually result in an exception of some type, although the exact behavior is not defined.
+ * </p>
  */
 public interface WritableByteData {
 
 	/**
-	 * Writes a maximum of 8 boolean values, encoded as a byte, to the end of the byte sequence.
-	 * If the array has more than 8 elements, the additional elements are ignored, and <code>false</code> is returned. 
-	 * @param flags The boolean values that should be written
-	 * @return True if all values could be written
+	 * Stores up to eight boolean values as bits of a single byte and writes that byte to the stream.
+	 * <p>
+	 * If more than eight values are passed into the varargs parameter, the first eight are written and the rest is ignored
+	 * </p>
+	 * @param values Up to eight boolean values
+	 * @return {@code true} if all values were written, {@code false} if some had to be truncated
 	 */
-	public default boolean writeFlags(boolean...flags) {
+	public default boolean writeFlags(boolean...values) {
 		byte b = 0;
-		int max = flags.length > 8 ? 8 : flags.length; //sent amount of flags, length of array, but max 8
+		int max = values.length > 8 ? 8 : values.length; //sent amount of flags, length of array, but max 8
 		for(int i = 0; i < max; i++) { //iterate over array
-			if(flags[i]) b |= (1 << i); //if flag is set, |= with the current power of 2
+			if(values[i]) b |= (1 << i); //if flag is set, |= with the current power of 2
 		}
 		writeByte(b); //Write the byte
-		return flags.length <= 8; //if <= 8 -> all fit -> ok -> true 
+		return values.length <= 8; //if <= 8 -> all fit -> ok -> true 
 	}
 	
 	/**
-	 * Writes a single boolean value, represented by a <code>0</code> for <code>false</code>
-	 * and a <code>1</code> for <code>true</code>.<br>
-	 * This method uses a whole byte to save the boolean information. If more than one <code>boolean</code>
-	 * value has to be written, consider using {@link #writeFlags(boolean...)} to send up to 8 boolean values
-	 * with a single byte.
-	 * @param b The <code>boolean</code> value that should be written
+	 * Converts the boolean value to a byte and writes it to the stream.
+	 * {@code true} will be encoded as 1, and {@code false} will be encoded as 0.
+	 * @param value The boolean value to write to the stream
 	 */
-	public default void writeBoolean(boolean b) {
-		writeByte(b ? (byte) 1 : (byte) 0); 
+	public default void writeBoolean(boolean value) {
+		writeByte(value ? (byte) 1 : (byte) 0); 
 	}
 	
 	/**
-	 * Writes a single <code>byte</code> value at the end of the current byte sequence. 
-	 * @param b The <code>byte</code> that should be written
+	 * Writes a single byte to the stream.
+	 * @param value The byte value to write to the stream
 	 */
-	public void writeByte(byte b);
+	public void writeByte(byte value);
 	
 	/**
-	 * Writes a <code>char</code> value at the end of the current byte sequence, using two <code>byte</code> values. 
-	 * @param c The <code>char</code> that should be written
+	 * Writes a single unsigned byte to the stream. The integer is assumed to be in the range
+	 * [0, 255]. If it is not, it will be masked with a {@code 0xFF} bitmask before converting
+	 * it to a byte.
+	 * @param value The unsigned byte value
 	 */
-	public default void writeChar(char c) {
-		writeByte((byte) (c & 0xFF));
-		writeByte((byte) ((c >>> 8) & 0xFF));
+	public default void writeByteU(int value) {
+		writeByte((byte) (value & 0xFF));
 	}
 	
-	public default void writeUUID(UUID uuid) {
-		writeLong(uuid.getMostSignificantBits());
-		writeLong(uuid.getLeastSignificantBits());
+	/**
+	 * Converts the char to two bytes and writes them to the stream.
+	 * @param value The char to write to the stream
+	 */
+	public default void writeChar(char value) {
+		writeByte((byte) (value & 0xFF));
+		writeByte((byte) ((value >>> 8) & 0xFF));
+	}
+	
+	/**
+	 * Converts the {@link UUID} to 16 bytes by writing two 8-byte {@code long} values
+	 * for the UUIDs most and least significant bits.
+	 * @param value The {@link UUID} to write to the stream
+	 */
+	public default void writeUUID(UUID value) {
+		writeLong(value.getMostSignificantBits());
+		writeLong(value.getLeastSignificantBits());
 	}
 	
 	public default void writeTimeInstant(Instant instant) {

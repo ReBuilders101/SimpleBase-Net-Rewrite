@@ -4,6 +4,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import dev.lb.simplebase.net.annotation.StaticType;
+import dev.lb.simplebase.net.packet.Packet;
 
 /**
  * Contains helper methods to restrict access to certain internal APIs depending on the caller class.
@@ -25,20 +26,32 @@ public class InternalAccess {
 		Objects.requireNonNull(callerClass, "'callerClass' parameter must not be null");
 		if(popExtraFrames < 0) throw new IllegalArgumentException("'popExtraFrames' must not be negative");
 		
+		assertCaller(callerClass.getName(), popExtraFrames, errorMessage);
+	}
+	
+	private static void assertCaller(String className, int popExtraFrames, String errorMessage) {
 		final StackTraceElement[] stacktrace = Thread.currentThread().getStackTrace();
 		//Pop: this method, the method that called this, 1 for getStackTrace() method
 		final int actualPop = 3 + popExtraFrames;
 		
 		if(actualPop < stacktrace.length) {
 			final StackTraceElement element = stacktrace[actualPop];
-			if(Objects.equals(element.getClassName(), callerClass.getName())) {
+			if(Objects.equals(element.getClassName(), className)) {
 				return; //success - valid caller
 			} else {
-				throw new InternalAPIException(errorMessage, element.getClassName(),  callerClass.getName());
+				throw new InternalAPIException(errorMessage, element.getClassName(),  className);
 			}
 		} else {
 			throw new RuntimeException("Not enough stack frames to pop");
 		}
+	}
+	
+	/**
+	 * Can be used in {@link Packet#readData(dev.lb.simplebase.net.io.ReadableByteData)} to assert that a
+	 * call has been made from a valid location.
+	 */
+	public static void assertPacketRead() {
+		assertCaller("dev.lb.simplebase.net.packet.format.NetworkPacketFormat1Packet", 0, "Cannot call Packet.readData() manually");
 	}
 	
 	/**
@@ -114,7 +127,7 @@ public class InternalAccess {
 		if(staticBool.getAndSet(true)) throw new IllegalStateException(message);
 	}
 	
-	public static void freeSingleton(AtomicBoolean staticBool, String message) {
+	public static void freeSingleton(AtomicBoolean staticBool, String message) throws IllegalStateException {
 		if(!staticBool.getAndSet(false)) throw new IllegalStateException(message);
 	}
 	

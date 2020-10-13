@@ -45,8 +45,9 @@ public final class ByteDataHelper {
 	
 	/**
 	 * Writes a <code>int</code> value into the byte array, using four <code>byte</code> values. 
-	 * @param i The <code>int</code> that should be written
-	 * @param target The array to write into, must have length 4
+	 * @param value The <code>int</code> that should be written
+	 * @param target The array to write into
+	 * @param offset The index to start writing at
 	 */
 	public static void cInt(int value, byte[] target, int offset) {
 		if(target.length - offset < 4) throw new IllegalArgumentException("Array length must be exactly 4");
@@ -60,7 +61,7 @@ public final class ByteDataHelper {
 	/**
 	 * Writes a <code>int</code> value into the byte buffer, using four <code>byte</code> values. 
 	 * Writes in 4 <b>relative</b> byte puts
-	 * @param i The <code>int</code> that should be written
+	 * @param value The <code>int</code> that should be written
 	 * @param target The buffer to write into
 	 */
 	public static void cInt(int value, ByteBuffer target) {
@@ -71,8 +72,9 @@ public final class ByteDataHelper {
 	}
 	
 	/**
-	 * Writes a <code>int</code> value into the byte array, using four <code>byte</code> values. 
-	 * @param i The <code>int</code> that should be written
+	 * Writes a <code>int</code> value into a new byte array, using four <code>byte</code> values
+	 * and returns the array
+	 * @param value The <code>int</code> that should be written
 	 * @return The byte array with length 4
 	 */
 	public static byte[] cInt(int value) {
