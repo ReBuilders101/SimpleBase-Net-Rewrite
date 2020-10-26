@@ -56,7 +56,7 @@ class ValueLazy<T> implements Lazy<T> {
 
 	@Override
 	public void ifPresent(Consumer<? super T> action) {
-		if(value != null) { //This will never change as there is no unGet() or sth
+		if(supplier == null) { //This will never change as there is no unGet() or sth
 			action.accept(value);
 		}
 	}

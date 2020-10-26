@@ -59,8 +59,20 @@ class CloseableLazy<T> implements Lazy.Closeable<T> {
 
 	@Override
 	public void ifPresent(Consumer<? super T> action) {
-		if(value != null) { //This will never change as there is no unGet() or sth
+		if(supplier == null) { //This will never change as there is no unGet() or sth
 			action.accept(value);
+		}
+	}
+
+	@Override
+	public void ifOpen(Consumer<? super T> action) {
+		if(supplier == null) {
+			if(closed) return;
+			synchronized (lock) {
+				if(!closed) {
+					action.accept(value);
+				}
+			}
 		}
 	}
 }

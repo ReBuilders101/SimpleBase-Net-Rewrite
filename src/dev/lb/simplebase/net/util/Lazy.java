@@ -30,7 +30,21 @@ public interface Lazy<T> {
 		});
 	}
 	
+	public static <T> Lazy.Inline<T> inline() {
+		return new InlineLazy<>();
+	}
+	
+	public static <T> Lazy<T> inline(Class<T> type) {
+		return inline();
+	}
+	
+	public static interface Inline<T> extends Lazy<T> {
+		public T getInline(Supplier<? extends T> supplier);
+		public boolean isDefined();
+	}
+	
 	public static interface Closeable<T> extends Lazy<T>, java.io.Closeable {
 		@Override public void close(); //Redeclare without exception
+		public void ifOpen(Consumer<? super T> action);
 	}
 }

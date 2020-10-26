@@ -6,6 +6,7 @@ import java.util.function.Function;
 class DelegateLazy<V, D> implements Lazy<V> {
 
 	private Lazy<D> delegate;
+	private final Lazy<D> finalDelegate;
 	private V value;
 	
 	private final Function<D, V> mapper;
@@ -13,6 +14,7 @@ class DelegateLazy<V, D> implements Lazy<V> {
 	
 	DelegateLazy(Lazy<D> delegate, Function<D, V> mapper) {
 		this.delegate = delegate;
+		this.finalDelegate = delegate;
 		this.value = null;
 		this.mapper = mapper;
 	}
@@ -35,12 +37,14 @@ class DelegateLazy<V, D> implements Lazy<V> {
 
 	@Override
 	public <R> Lazy<R> map(Function<V, R> mapper) {
-		return new DelegateLazy<>(delegate, mapper.compose(this.mapper));
+		return new DelegateLazy<>(finalDelegate, mapper.compose(this.mapper));
 	}
 
 	@Override
 	public void ifPresent(Consumer<? super V> action) {
-		delegate.ifPresent(a -> action.accept(mapper.apply(a)));
+		if(delegate != null) { //This will never change as there is no unGet() or sth
+			action.accept(value);
+		}
 	}
 
 }
