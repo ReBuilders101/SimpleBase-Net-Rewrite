@@ -55,6 +55,7 @@ class InlineLazy<T> implements Lazy.Inline<T> {
 			synchronized (lock) {
 				if(!initialized) {
 					this.supplier = supplier;
+					this.initialized = true;
 				}
 			}
 		}
