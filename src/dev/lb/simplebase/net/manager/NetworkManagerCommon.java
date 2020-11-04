@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
 import dev.lb.simplebase.net.GlobalTimer;
 import dev.lb.simplebase.net.NetworkManager;
@@ -13,7 +14,6 @@ import dev.lb.simplebase.net.config.CommonConfig;
 import dev.lb.simplebase.net.connection.CoderThreadPool;
 import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.event.EventAccessor;
-import dev.lb.simplebase.net.event.EventDispatchChain;
 import dev.lb.simplebase.net.event.EventDispatcher;
 import dev.lb.simplebase.net.events.ConnectionClosedEvent;
 import dev.lb.simplebase.net.events.PacketSendingFailedEvent;
@@ -98,12 +98,11 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 		PacketReceiveRejected = new EventAccessor<>(PacketReceiveRejectedEvent.class);
 		
 		dispatcher = new EventDispatcher(() -> getLocalID().getDescription());
-		encoderPool = stackHackE(config, EventDispatchChain.P1(dispatcher, PacketSendingFailed, PacketSendingFailedEvent::new));
-		decoderPool = stackHackD(config, EventDispatchChain.P1(dispatcher, PacketReceiveRejected, PacketReceiveRejectedEvent::new));
+		encoderPool = stackHackE(config, dispatcher.p1Dispatcher(PacketSendingFailed, PacketSendingFailedEvent::new));
+		decoderPool = stackHackD(config, dispatcher.p1Dispatcher(PacketReceiveRejected, PacketReceiveRejectedEvent::new));
 		singleThreadHandler = new AtomicReference<>(new EmptyPacketHandler());
 		if(config.getUseHandlerThread()) {
-			multiThreadHandler = new ThreadPacketHandler(singleThreadHandler, 
-					EventDispatchChain.P2(dispatcher, PacketReceiveRejected, 
+			multiThreadHandler = new ThreadPacketHandler(singleThreadHandler, dispatcher.p2Dispatcher(PacketReceiveRejected, 
 					(packet, context) -> new PacketReceiveRejectedEvent(context.getRemoteID(), packet.getClass())));
 			managedThread = Optional.of(multiThreadHandler.getOutputThread());
 		} else {
@@ -130,13 +129,13 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 	
 	//PACKAGE ONLY
 	@Internal
-	static CoderThreadPool.Encoder stackHackE(CommonConfig np, EventDispatchChain.P1<RejectedExecutionException, ?> p1) {
+	static CoderThreadPool.Encoder stackHackE(CommonConfig np, Predicate<RejectedExecutionException> p1) {
 		return new CoderThreadPool.Encoder(np, p1);
 	}
 
 	//PACKAGE ONLY
 	@Internal
-	static CoderThreadPool.Decoder stackHackD(CommonConfig np, EventDispatchChain.P1<RejectedExecutionException, ?> p1) {
+	static CoderThreadPool.Decoder stackHackD(CommonConfig np, Predicate<RejectedExecutionException> p1) {
 		return new CoderThreadPool.Decoder(np, p1);
 	}
 	

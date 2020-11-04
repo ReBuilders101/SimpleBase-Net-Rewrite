@@ -1,9 +1,9 @@
 package dev.lb.simplebase.net.connection;
 
 import java.nio.ByteBuffer;
+import java.util.function.Predicate;
 
 import dev.lb.simplebase.net.annotation.Internal;
-import dev.lb.simplebase.net.event.EventDispatchChain;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.events.PacketSendingFailedEvent;
 import dev.lb.simplebase.net.id.NetworkID;
@@ -32,15 +32,14 @@ public abstract class ExternalNetworkConnection extends NetworkConnection {
 	protected final PacketToByteConverter packetToByteConverter;
 	protected final ConnectionAdapter connectionAdapter;
 	protected final AwaitableTask openCompleted;
-	protected final EventDispatchChain.P1<Packet, ?> sendingFailed;
+	protected final Predicate<Packet> sendingFailed;
 	
 	protected ExternalNetworkConnection(NetworkManagerCommon networkManager, NetworkID remoteID,
 			NetworkConnectionState initialState, int checkTimeoutMS, boolean serverSide, Object customObject, boolean udpWarning) {
 		super(networkManager, remoteID, initialState, checkTimeoutMS, serverSide, customObject);
 		
-		EventDispatchChain.P2<NetworkID, Packet, ?> edc = EventDispatchChain.P2(networkManager.getEventDispatcher(),
-				networkManager.PacketSendingFailed, PacketSendingFailedEvent::new);
-		this.sendingFailed = edc.bind(remoteID);
+		this.sendingFailed = networkManager.getEventDispatcher().p1Dispatcher(networkManager.PacketSendingFailed,
+				(p) -> new PacketSendingFailedEvent(remoteID, p));
 		this.openCompleted = new AwaitableTask();
 		this.connectionAdapter = new Adapter(udpWarning);
 		this.packetToByteConverter = networkManager.createToByteConverter();
@@ -62,7 +61,7 @@ public abstract class ExternalNetworkConnection extends NetworkConnection {
 			if(encodedData != null) {
 				sendRawByteData(encodedData);
 			} else {
-				sendingFailed.post(packet);
+				sendingFailed.test(packet);
 			}
 		} else {
 			networkManager.getEncoderPool().encodeAndSendPacket(this, packet);

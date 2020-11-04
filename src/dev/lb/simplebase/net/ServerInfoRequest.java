@@ -15,7 +15,6 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -25,7 +24,7 @@ import dev.lb.simplebase.net.config.CommonConfig;
 import dev.lb.simplebase.net.config.ServerConfig;
 import dev.lb.simplebase.net.connection.DatagramReceiverThread;
 import dev.lb.simplebase.net.connection.NetworkConnection;
-import dev.lb.simplebase.net.event.EventDispatchChain;
+import dev.lb.simplebase.net.event.EventDispatcher;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFeature;
 import dev.lb.simplebase.net.log.AbstractLogger;
@@ -722,8 +721,10 @@ public final class ServerInfoRequest {
 	 * @return A new {@link ServerInfoRequest} with those settings
 	 */
 	public static ServerInfoRequest create(PacketIDMappingProvider mappings, CommonConfig config) {
-		return create(NetworkManagerProperties.of(config, mappings, EventDispatchChain.P1(RejectedExecutionException.class),
-				EventDispatchChain.P1(RejectedExecutionException.class)));
+		return create(NetworkManagerProperties.of(config, mappings, 
+				EventDispatcher.emptyDispatcher().p1Dispatcher(null, null),
+				EventDispatcher.emptyDispatcher().p1Dispatcher(null, null)		
+		));
 	}
 	
 	/**

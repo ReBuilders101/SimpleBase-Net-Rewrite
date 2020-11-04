@@ -1,7 +1,12 @@
 package dev.lb.simplebase.net.event;
 
 import java.util.Objects;
+import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import dev.lb.simplebase.net.NetworkManager;
@@ -101,6 +106,18 @@ public class EventDispatcher {
 	 */
 	public <E extends Event> Consumer<E> postTask(EventAccessor<E> handler) {
 		return (event) -> post(handler, event);
+	}
+	
+	public <E extends Event> BooleanSupplier p0Dispatcher(EventAccessor<E> target, Supplier<E> constructor) {
+		return () -> post(target, constructor.get());
+	}
+	
+	public <T, E extends Event> Predicate<T> p1Dispatcher(EventAccessor<E> target, Function<T, E> constructor) {
+		return (t) -> post(target, constructor.apply(t));
+	}
+	
+	public <T1, T2, E extends Event> BiPredicate<T1, T2> p2Dispatcher(EventAccessor<E> target, BiFunction<T1, T2, E> constructor) {
+		return (t1, t2) -> post(target, constructor.apply(t1, t2));
 	}
 	
 	/**

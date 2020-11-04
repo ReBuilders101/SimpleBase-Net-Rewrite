@@ -6,11 +6,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.config.CommonConfig;
-import dev.lb.simplebase.net.event.EventDispatchChain;
-import dev.lb.simplebase.net.event.EventDispatchChain.P1;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
@@ -26,7 +25,7 @@ import dev.lb.simplebase.net.util.InternalAccess;
 public abstract class CoderThreadPool {
 
 	protected final ExecutorService service;
-	protected final EventDispatchChain.P1<RejectedExecutionException, ?> rejectedHandler;
+	protected final Predicate<RejectedExecutionException> rejectedHandler;
 	private final boolean usePool;
 	private final String logPrefix;
 	
@@ -36,7 +35,7 @@ public abstract class CoderThreadPool {
 	 * @param useThisPool Whether this pool was enabled in the configs
 	 * @param rejectedHandler What happens when a task could not be accepted by the thread pool
 	 */
-	protected CoderThreadPool(String logPrefix, boolean useThisPool, EventDispatchChain.P1<RejectedExecutionException, ?> rejectedHandler) {
+	protected CoderThreadPool(String logPrefix, boolean useThisPool, Predicate<RejectedExecutionException> rejectedHandler) {
 		InternalAccess.assertCaller(NetworkManagerCommon.class, 1, "Cannot instantiate any type of CoderThreadPool");
 		
 		this.service = Executors.newCachedThreadPool(new MarkedThreadFactory());
@@ -123,7 +122,7 @@ public abstract class CoderThreadPool {
 		 * @param rejectedHandler The handler that processes cases where a task could not be accepted by the pool
 		 */
 		@Internal
-		public Encoder(CommonConfig config, P1<RejectedExecutionException, ?> rejectedHandler) {
+		public Encoder(CommonConfig config, Predicate<RejectedExecutionException> rejectedHandler) {
 			super("En", config.getUseEncoderThreadPool(), rejectedHandler);
 		}
 		
@@ -144,7 +143,7 @@ public abstract class CoderThreadPool {
 					connection.sendPacket(packet);
 				});
 			} catch (RejectedExecutionException e) {
-				rejectedHandler.post(e);
+				rejectedHandler.test(e);
 			}
 		}
 	}
@@ -166,7 +165,7 @@ public abstract class CoderThreadPool {
 		 * @param config The config used to determine whether the decoder pool is active
 		 * @param rejectedHandler The handler that processes cases where a task could not be accepted by the pool
 		 */
-		public Decoder(CommonConfig config, P1<RejectedExecutionException, ?> rejectedHandler) {
+		public Decoder(CommonConfig config, Predicate<RejectedExecutionException> rejectedHandler) {
 			super("De", config.getUseDecoderThreadPool(), rejectedHandler);
 		}
 		
@@ -190,7 +189,7 @@ public abstract class CoderThreadPool {
 					converter.convertAndPublish(data, format, connection);
 				});
 			} catch (RejectedExecutionException e) {
-				rejectedHandler.post(e);
+				rejectedHandler.test(e);
 			}
 		}
 	}
