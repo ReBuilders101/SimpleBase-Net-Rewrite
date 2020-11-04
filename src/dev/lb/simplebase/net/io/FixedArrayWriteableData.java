@@ -1,18 +1,17 @@
-package dev.lb.simplebase.net.io.write;
+package dev.lb.simplebase.net.io;
 
 import dev.lb.simplebase.net.annotation.Internal;
-import dev.lb.simplebase.net.io.WritableByteData;
 
 /**
  * Implementation of {@link WritableByteData}, internally used to serialize packets
  */
 @Internal
-public class FixedArrayWriteableData implements WritableArrayData {
+final class FixedArrayWriteableData implements WritableArrayData {
 
 	private final byte[] data;
 	private int currentIndex;
 	
-	public FixedArrayWriteableData(int size) {
+	protected FixedArrayWriteableData(int size) {
 		data = new byte[size];
 		currentIndex = 0;
 	}

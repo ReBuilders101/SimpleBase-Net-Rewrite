@@ -1,19 +1,18 @@
-package dev.lb.simplebase.net.io.write;
+package dev.lb.simplebase.net.io;
 
 import java.nio.ByteBuffer;
 import dev.lb.simplebase.net.annotation.Internal;
-import dev.lb.simplebase.net.io.WritableByteData;
 
 /**
  * Implementation of {@link WritableByteData}, internally used to serialize packets
  */
 @Internal
-public class DynamicNIOWritableData implements WritableNIOData {
+final class DynamicNIOWritableData implements WritableNIOData {
 
 	private ByteBuffer data;
 	private final int sizeIncrement;
 	
-	public DynamicNIOWritableData(int initialSize) {
+	protected DynamicNIOWritableData(int initialSize) {
 		this.data = ByteBuffer.allocate(initialSize);
 		this.sizeIncrement = initialSize;
 	}

@@ -19,8 +19,8 @@ public class EventDispatcher {
 	private final Supplier<String> sourceDescription;
 	
 	/**
-	 * Creates a new {@link EventDispatcher}.
-	 * @param sourceDescription The network manager that generates the posted events
+	 * Creates a new synchronous {@link EventDispatcher}.
+	 * @param sourceDescription A string description of the object posting to this dispatcher, used for logging only.
 	 */
 	public EventDispatcher(Supplier<String> sourceDescription) {
 		this.sourceDescription = sourceDescription;
@@ -28,13 +28,15 @@ public class EventDispatcher {
 	
 	/**
 	 * Post the event to the handler using this dispatcher.
-	 * The exact way the handlers are executed depends on the dispatcher implementation
 	 * <p>
-	 * the method is synchronized to ensure that the
+	 * The handlers will run on the thread that calls this method. Only one
+	 * event can be handled at a time, and any subsequent invocation of this method
+	 * from any thread will block until all handlers have completed.
+	 * </p>
 	 * @param <E> The type of event
-	 * @param handler The event handler(s)
-	 * @param event The event to post
-	 * @return Whether the event was cancelled 
+	 * @param handler The event accessor storing the handlers
+	 * @param event The event instance to post
+	 * @return Whether the event was cancelled by a handler 
 	 */
 	public synchronized <E extends Event> boolean post(EventAccessor<E> handler, E event) {
 		Objects.requireNonNull(handler, "'handler' parameter must not be null");
@@ -57,6 +59,7 @@ public class EventDispatcher {
 	 * @param taskIfCancelled The task to run if the event is canecelled
 	 * @param taskIfNot The task to run if the event is not canecelled
 	 */
+	@Deprecated
 	public synchronized <E extends Event> void postAndRun(EventAccessor<E> handler, E event, Runnable taskIfCancelled, Runnable taskIfNot) {
 		post(handler, event);
 		if(event.isCancelled()) {
@@ -79,6 +82,7 @@ public class EventDispatcher {
 	 * @param valueIfNot The value to return if the event is not canecelled
 	 * @return The value depending on the cancel flag
 	 */
+	@Deprecated
 	public synchronized <E extends Event, R> R postAndReturn(EventAccessor<E> handler, E event, R valueIfCancelled, R valueIfNot) {
 		post(handler, event);
 		if(event.isCancelled()) {
@@ -89,7 +93,7 @@ public class EventDispatcher {
 	}
 	
 	/**
-	 * Creates an event handler that accepts an event instance and passes it to the
+	 * Creates a functional interface that accepts an event instance and passes it to the
 	 * specified accessor using this dispatchers {@link #post(EventAccessor, Event)} method.
 	 * @param <E> The type of event
 	 * @param handler The {@link EventAccessor} that contians the handlers
@@ -100,7 +104,8 @@ public class EventDispatcher {
 	}
 	
 	/**
-	 * A dispatcher that discards all posted events silently
+	 * A dispatcher implementation that discards all posted events silently.
+	 * @return An empty {@link EventDispatcher}
 	 */
 	public static EventDispatcher emptyDispatcher() {
 		return new EventDispatcher(() -> "") {

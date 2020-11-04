@@ -6,10 +6,8 @@ import java.util.function.BiConsumer;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.io.ByteDataHelper;
 import dev.lb.simplebase.net.io.ReadableByteData;
-import dev.lb.simplebase.net.io.read.NIOReadableData;
-import dev.lb.simplebase.net.io.write.DynamicNIOWritableData;
-import dev.lb.simplebase.net.io.write.FixedNIOWritableData;
-import dev.lb.simplebase.net.io.write.WritableNIOData;
+import dev.lb.simplebase.net.io.WritableByteData;
+import dev.lb.simplebase.net.io.WritableNIOData;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketIDMapping;
 import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
@@ -49,7 +47,7 @@ class NetworkPacketFormat1Packet<Connection> extends NetworkPacketFormat<Connect
 		final int type = ByteDataHelper.cInt(allBytes);
 		allBytes.position(8); //Start of data
 		//type and length are already skipped
-		final ReadableByteData readableData = new NIOReadableData(allBytes);
+		final ReadableByteData readableData = ReadableByteData.of(allBytes);
 		final PacketIDMapping mapping = context.findMapping(type);
 
 		if(mapping == null) {
@@ -75,13 +73,7 @@ class NetworkPacketFormat1Packet<Connection> extends NetworkPacketFormat<Connect
 		}
 		final int packetId = mapping.getPacketID();
 		final int expectedSize = data.getByteSize();
-		final WritableNIOData writableData;
-		
-		if(expectedSize < 0) {
-			writableData = new DynamicNIOWritableData(bufferSize);
-		} else {
-			writableData = new FixedNIOWritableData(expectedSize);
-		}
+		final WritableNIOData writableData = WritableByteData.ofBuffer(expectedSize < 0 ? bufferSize : expectedSize, expectedSize < 0);
 		
 		data.writeData(writableData);
 		final ByteBuffer buffer = writableData.getBuffer(); //Buffer is ready for read

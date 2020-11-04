@@ -1,10 +1,12 @@
 package dev.lb.simplebase.net.io;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.io.UncheckedIOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
@@ -84,71 +86,87 @@ public interface WritableByteData {
 		writeLong(value.getLeastSignificantBits());
 	}
 	
+	/**
+	 * Converts the {@link Instant} parameter to a {@link String} using the {@link DateTimeFormatter#ISO_INSTANT}
+	 * and writes this string prfixed with its length (as defined in {@link #writeShortStringWithLength(CharSequence)}).
+	 * <p>
+	 * Use {@link #writeTime(TemporalAccessor, DateTimeFormatter)} for alternate time 
+	 * representations and formats.
+	 * </p>
+	 * @param instant The {@link Instant} to write
+	 */
 	public default void writeTimeInstant(Instant instant) {
 		writeTime(instant, DateTimeFormatter.ISO_INSTANT);
 	}
 	
+	/**
+	 * Converts the {@link TemporalAccessor} to a {@link String} using the supplied {@link DateTimeFormatter}
+	 * and writes this string prfixed with its length (as defined in {@link #writeShortStringWithLength(CharSequence)}).
+	 * @param time The {@link TemporalAccessor} containing the time value
+	 * @param formatter The {@link DateTimeFormatter} used to encode the {@link TemporalAccessor}
+	 */
 	public default void writeTime(TemporalAccessor time, DateTimeFormatter formatter) {
 		final String serialized = formatter.format(time);
 		writeShortStringWithLength(serialized);
 	}
 	
 	/**
-	 * Writes a <code>short</code> value at the end of the current byte sequence, using two <code>byte</code> values. 
-	 * @param s The <code>short</code> that should be written
+	 * Converts the short to two bytes and writes them to the stream.
+	 * @param value The short to write to the stream
 	 */
-	public default void writeShort(short s) {
-		writeByte((byte) (s & 0xFF));
-		writeByte((byte) ((s >>> 8) & 0xFF));
+	public default void writeShort(short value) {
+		writeByte((byte) (value & 0xFF));
+		writeByte((byte) ((value >>> 8) & 0xFF));
 	}	
 	
 	/**
-	 * Writes a <code>int</code> value at the end of the current byte sequence, using four <code>byte</code> values. 
-	 * @param i The <code>int</code> that should be written
+	 * Converts the int to four bytes and writes them to the stream.
+	 * @param value The int to write to the stream
 	 */
-	public default void writeInt(int i) {
-		writeByte((byte) (i & 0xFF));
-		writeByte((byte) ((i >>> 8 ) & 0xFF));
-		writeByte((byte) ((i >>> 16) & 0xFF));
-		writeByte((byte) ((i >>> 24) & 0xFF));
+	public default void writeInt(int value) {
+		writeByte((byte) (value & 0xFF));
+		writeByte((byte) ((value >>> 8 ) & 0xFF));
+		writeByte((byte) ((value >>> 16) & 0xFF));
+		writeByte((byte) ((value >>> 24) & 0xFF));
 	}	
 	
 	/**
-	 * Writes a <code>long</code> value at the end of the current byte sequence, using eight <code>byte</code> values. 
-	 * @param l The <code>long</code> that should be written
+	 * Converts the long to eight bytes and writes them to the stream.
+	 * @param value The long to write to the stream
 	 */
-	public default void writeLong(long l) {
-		writeByte((byte) (l & 0xFF));
-		writeByte((byte) ((l >>> 8 ) & 0xFF));
-		writeByte((byte) ((l >>> 16) & 0xFF));
-		writeByte((byte) ((l >>> 24) & 0xFF));
-		writeByte((byte) ((l >>> 32) & 0xFF));
-		writeByte((byte) ((l >>> 40) & 0xFF));
-		writeByte((byte) ((l >>> 48) & 0xFF));
-		writeByte((byte) ((l >>> 56) & 0xFF));
+	public default void writeLong(long value) {
+		writeByte((byte) (value & 0xFF));
+		writeByte((byte) ((value >>> 8 ) & 0xFF));
+		writeByte((byte) ((value >>> 16) & 0xFF));
+		writeByte((byte) ((value >>> 24) & 0xFF));
+		writeByte((byte) ((value >>> 32) & 0xFF));
+		writeByte((byte) ((value >>> 40) & 0xFF));
+		writeByte((byte) ((value >>> 48) & 0xFF));
+		writeByte((byte) ((value >>> 56) & 0xFF));
 	}
 	
 	/**
-	 * Writes a <code>float</code> value at the end of the current byte sequence by encoding it as an <code>int</code>
-	 * with the {@link Float#floatToRawIntBits(float)} method. 
-	 * @param f The <code>float</code> that should be written
+	 * Converts the float into four bytes using {@link Float#floatToRawIntBits(float)} and
+	 * writes them to the stream.
+	 * @param value The float to write to the stream
 	 */
-	public default void writeFloat(float f) {
-		writeInt(Float.floatToRawIntBits(f));
+	public default void writeFloat(float value) {
+		writeInt(Float.floatToRawIntBits(value));
 	}
 	
 	/**
-	 * Writes a <code>double</code> value at the end of the current byte sequence by encoding it as a <code>long</code>
-	 * with the {@link Double#doubleToRawLongBits(double)} method. 
-	 * @param d The <code>double</code> that should be written
+	 * Converts the double into eight bytes using {@link Double#doubleToRawLongBits(double)} and
+	 * writes them to the stream.
+	 * @param value The double to write to the stream
 	 */
-	public default void writeDouble(double d) {
-		writeLong(Double.doubleToRawLongBits(d));
+	public default void writeDouble(double value) {
+		writeLong(Double.doubleToRawLongBits(value));
 	}
 	
 	/**
-	 * Writes all bytes in the byte array at the end of the current byte sequence
-	 * @param data The byte data that should be written
+	 * Writes all bytes in the byte array to the stream.
+	 * No additional information (such as length of the array) is written.
+	 * @param data The byte data to write to the stream
 	 */
 	public default void write(byte[] data) {
 		for(byte b : data) {
@@ -157,46 +175,66 @@ public interface WritableByteData {
 	}
 	
 	/**
-	 * Writes a {@link CharSequence} to the end of the current byte sequence, by converting it to a {@link String} using 
-	 * {@link CharSequence#toString()} and the to a byte array using {@link String#getBytes()}.
-	 * @param cs The {@link CharSequence} that should be written
-	 * @see #writeStringWithLength(CharSequence)
+	 * Writes all bytes in the specified range to the stream.
+	 * <br>
+	 * The array offsets and indices are not validated before attempting to write.
+	 * An exception may cause the write to fail in a partially completed state.
+	 * @param data The byte data to (partially) write to the stream
+	 * @param offset The index at which to start writing
+	 * @param length The amount of bytes to write
 	 */
-	public default void writeString(CharSequence cs) {
-		write(cs.toString().getBytes());
-	}
-	
-	/**
-	 * Writes a {@link CharSequence} to the end of the current byte sequence, by converting it to a {@link String} using 
-	 * {@link CharSequence#toString()} and the to a byte array using {@link String#getBytes()}.<br>
-	 * Additionally, the length of the {@link CharSequence} is written as an <code>int</code> in front of the {@link CharSequence}'s
-	 * byte data.
-	 * @param cs The {@link CharSequence} that should be written
-	 * @see #writeString(CharSequence)
-	 */
-	public default void writeStringWithLength(CharSequence cs) {
-		writeInt(cs.length());
-		writeString(cs);
-	}
-	
-	/**
-	 * Writes a {@link CharSequence} to the end of the current byte sequence, by converting it to a {@link String} using 
-	 * {@link CharSequence#toString()} and the to a byte array using {@link String#getBytes()}.<br>
-	 * Additionally, the length of the {@link CharSequence} is written as an <code>byte</code> in front of the {@link CharSequence}'s
-	 * byte data.<br>
-	 * <b>If the CharSequence is longer than 255 chars, it will be cut at 255 chars.</b>
-	 * @param cs The {@link CharSequence} that should be written
-	 * @see #writeString(CharSequence)
-	 */
-	public default void writeShortStringWithLength(CharSequence cs) {
-		writeByte((byte) cs.length());
-		if(cs.length() > 255) {
-			writeString(cs.subSequence(0, 255));
-		} else {
-			writeString(cs);
+	public default void write(byte[] data, int offset, int length) {
+		for(int i = 0; i < length; i++) {
+			writeByte(data[offset + 1]);
 		}
 	}
 	
+	/**
+	 * Converts the {@link CharSequence} to bytes using {@link String#getBytes(java.nio.charset.Charset)} with
+	 * the {@link StandardCharsets#UTF_8} charset and writes the bytes to the stream.
+	 * @param value The {@link CharSequence} to write to the stream
+	 * @see #writeStringWithLength(CharSequence)
+	 */
+	public default void writeString(CharSequence value) {
+		write(value.toString().getBytes(StandardCharsets.UTF_8));
+	}
+	
+	/**
+	 * Writes the length of the string's byte representation as a prefix using and int value (4 bytes), followed
+	 * by the string's byte representation as defined in {@link #writeString(CharSequence)}.
+	 * @param value The {@link CharSequence} to write to the stream
+	 */
+	public default void writeStringWithLength(CharSequence value) {
+		byte[] data = value.toString().getBytes(StandardCharsets.UTF_8);
+		writeInt(data.length);
+		write(data);
+	}
+	
+	/**
+	 * Writes the length of the string's byte representation as a prefix using and single byte value, followed
+	 * by the string's byte representation as defined in {@link #writeString(CharSequence)}.
+	 * <br>
+	 * If the {@link CharSequence}'s byte representation is longer than 255 bytes, it will be truncated at that
+	 * length. 
+	 * @param value The {@link CharSequence} to write to the stream
+	 */
+	public default void writeShortStringWithLength(CharSequence value) {
+		byte[] data = value.toString().getBytes(StandardCharsets.UTF_8);
+		if(data.length > 255) {
+			writeByteU(255);
+			write(data, 0, 255);
+		} else {
+			writeByteU(data.length);
+			write(data);
+		}
+	}
+	
+	/**
+	 * Serializes the {@link Serializable} using Java's default serialization 
+	 * method ({@link ObjectOutputStream}) and writes the serialized bytes to the stream.
+	 * @param object The object to serialize
+	 * @return {@code false} if an {@link IOException} occurred while writing the object, {@code true} otherwise
+	 */
 	public default boolean writeObject(Serializable object) {
 		try(ObjectOutputStream oos = new ObjectOutputStream(getOutStream())) {
 			oos.writeObject(object);
@@ -208,26 +246,30 @@ public interface WritableByteData {
 	}
 	
 	/**
-	 * An {@link OutputStream} that delegates all write() calls to this {@link WritableByteData}
-	 * @return An {@link OutputStream} for this object
+	 * Creates an {@link OutputStream} that delegates all calls to {@link OutputStream#write(int)}
+	 * to {@link #writeByteU(int)}.
+	 * @return A new {@link OutputStream} delegating to this interface
 	 */
 	public default OutputStream getOutStream() {
 		return new OutputStream() {
-			
 			@Override
-			public void write(int var1) throws IOException {
-				writeByte( (byte) (var1 & 0xFF) );
+			public void write(int value) throws IOException {
+				writeByteU(value);
 			}
 		}; 
 	}
 	
 	/**
-	 * Wraps a {@link WritableByteData} around a Java OutputStream.
-	 * It only partially implements {@link ByteData}: The {@link #getAsArray()} and {@link #getAsArrayFast()} methods
-	 * will return null except when the stream is a {@link ByteArrayOutputStream}.
-	 * @param out The {@link OutputStream}
-	 * @return The wrapped object
+	 * Wraps an {@link OutputStream} in a {@link WritableByteData} interface by redirecting all
+	 * calls to the {@link WritableByteData#writeByte(byte)} method to the
+	 * stream's {@link OutputStream#write(int)} method.<p>
+	 * Any {@link IOException}s caused by the write operation on the stream will be
+	 * wrapped in an {@link UncheckedIOException} and rethrown.</p>
+	 * @param out The {@link OutputStream} to wrap
+	 * @return A {@link WritableByteData} implementation wrapping the stream.
+	 * @deprecated Outdated exception model
 	 */
+	@Deprecated
 	public static WritableByteData wrap(final OutputStream out) {
 		return new WritableByteData() {
 			
@@ -236,9 +278,29 @@ public interface WritableByteData {
 				try {
 					out.write(b & 0xFF);
 				} catch (IOException e) {
-					e.printStackTrace();
+					throw new UncheckedIOException(e);
 				}
 			}
 		};
+	}
+	
+	/**
+	 * Creates an empty {@link WritableByteData} instance that is backed by a byte array.
+	 * @param initialCapacity The initial size of the array
+	 * @param dynamic If {@code true}, the size of the backing array can dynamically increase
+	 * @return A {@link WritableArrayData} instance
+	 */
+	public static WritableArrayData ofArray(int initialCapacity, boolean dynamic) {
+		return dynamic ? new DynamicArrayWritableData(initialCapacity) : new FixedArrayWriteableData(initialCapacity);
+	}
+	
+	/**
+	 * Creates an empty {@link WritableByteData} instance that is backed by a {@link ByteBuffer}.
+	 * @param initialCapacity The initial size of the buffer
+	 * @param dynamic If {@code true}, the size of the backing buffer can dynamically increase
+	 * @return A {@link WritableNIOData} instance
+	 */
+	public static WritableNIOData ofBuffer(int initialCapacity, boolean dynamic) {
+		return dynamic ? new DynamicNIOWritableData(initialCapacity) : new FixedNIOWritableData(initialCapacity);
 	}
 }

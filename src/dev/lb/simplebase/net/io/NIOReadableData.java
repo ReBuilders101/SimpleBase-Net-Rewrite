@@ -1,19 +1,18 @@
-package dev.lb.simplebase.net.io.read;
+package dev.lb.simplebase.net.io;
 
 import java.nio.ByteBuffer;
 
 import dev.lb.simplebase.net.annotation.Internal;
-import dev.lb.simplebase.net.io.ReadableByteData;
 
 /**
  * Implementation of {@link ReadableByteData}, internally used to deserialize packets
  */
 @Internal
-public class NIOReadableData implements ReadableByteData {
+final class NIOReadableData implements ReadableByteData {
 
 	private final ByteBuffer data;
 	
-	public NIOReadableData(ByteBuffer data) {
+	protected NIOReadableData(ByteBuffer data) {
 		this.data = data;
 	}
 	

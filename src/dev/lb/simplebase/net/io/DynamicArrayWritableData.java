@@ -1,15 +1,15 @@
-package dev.lb.simplebase.net.io.write;
+package dev.lb.simplebase.net.io;
 
 import dev.lb.simplebase.net.annotation.Internal;
 
 @Internal
-public class DynamicArrayWritableData implements WritableArrayData {
+final class DynamicArrayWritableData implements WritableArrayData {
 
 	private byte[] data;
 	private int currentIndex;
 	private final int sizeIncrement;
 	
-	public DynamicArrayWritableData(int initialSize) {
+	protected DynamicArrayWritableData(int initialSize) {
 		data = new byte[initialSize];
 		currentIndex = 0;
 		sizeIncrement = initialSize;

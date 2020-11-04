@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
@@ -246,7 +247,7 @@ public interface ReadableByteData {
 	 * @return The decoded {@link String}
 	 */
 	public default String readShortStringWithLength() {
-		return readString(readByte() & 0xFF);
+		return readString(readByteU());
 	}
 	
 	/**
@@ -340,5 +341,26 @@ public interface ReadableByteData {
 				return readByte() & 0xFF;
 			}
 		};
+	}
+	
+	/**
+	 * Creates a {@link ReadableByteData} instance that is a view of a byte array.
+	 * Every created instance maintains its own read pointer.
+	 * @param arraydata The array holding the data
+	 * @return A view of the array data
+	 */
+	public static ReadableByteData of(byte[] arraydata) {
+		return new ArrayReadableData(arraydata);
+	}
+	
+	/**
+	 * Creates a {@link ReadableByteData} instance that is a view of a byte buffer.
+	 * The {@link ByteBuffer}'s position property is used as the read pointer, and
+	 * if more than one instance is created for the same buffer, they will share a read pointer.
+	 * @param bufferdata The {@link ByteBuffer} holding the data
+	 * @return A view of the buffer data
+	 */
+	public static ReadableByteData of(ByteBuffer bufferdata) {
+		return new NIOReadableData(bufferdata);
 	}
 }

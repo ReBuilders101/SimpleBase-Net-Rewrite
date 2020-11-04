@@ -16,9 +16,9 @@ import java.util.stream.Collectors;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 
 /**
- * Provides access to the handlers of an event for a specific object.<br>
- * Comparable to a .NET event member
- * @param <E> The event type for this accessor
+ * Provides access to an event dispatch location.
+ * Handlers for an event can be registered here.
+ * @param <E> The type of {@link Event} received by the handlers
  */
 @Threadsafe
 public final class EventAccessor<E extends Event> { //NOT Iterable on purpose!!
@@ -28,6 +28,11 @@ public final class EventAccessor<E extends Event> { //NOT Iterable on purpose!!
 	private final Set<AbstractEventHandler<E>> handlers;
 	private final Class<E> eventClass;
 	
+	/**
+	 * Creates a new {@link EventAccessor} with no handlers for the
+	 * requested event type.
+	 * @param eventClass The {@link Class} of the event type that will be posted to the handlers.
+	 */
 	public EventAccessor(Class<E> eventClass) {
 		Objects.requireNonNull(eventClass, "'eventClass' Parameter must not be null");
 		this.eventClass = eventClass;
@@ -46,7 +51,6 @@ public final class EventAccessor<E extends Event> { //NOT Iterable on purpose!!
 	
 	/**
 	 * Adds a handler that will be called when this event is posted.<br>
-	 * This method behaves like {@link Set#add(Object)}
 	 * @param handler The new handler
 	 * @param priority The {@link EventHandlerPriority} of the handler
 	 * @param receiveCancelled If {@code true}, the handler will also be called for cancelled events
@@ -61,7 +65,6 @@ public final class EventAccessor<E extends Event> { //NOT Iterable on purpose!!
 	
 	/**
 	 * Adds a handler that will be called when this event is posted. It will not receive cancelled events.<br>
-	 * This method behaves like {@link Set#add(Object)}
 	 * @param handler The new handler
 	 * @param priority The {@link EventHandlerPriority} of the handler
 	 * @return {@code true} when the handler was added
@@ -72,7 +75,6 @@ public final class EventAccessor<E extends Event> { //NOT Iterable on purpose!!
 	
 	/**
 	 * Adds a handler that will be called when this event is posted. It will have {@code NORMAL} priority.<br>
-	 * This method behaves like {@link Set#add(Object)}
 	 * @param handler The new handler
 	 * @param receiveCancelled If {@code true}, the handler will also be called for cancelled events
 	 * @return {@code true} when the handler was added
@@ -84,7 +86,6 @@ public final class EventAccessor<E extends Event> { //NOT Iterable on purpose!!
 	/**
 	 * Adds a handler that will be called when this event is posted. 
 	 * It will not receive cancelled events and have {@code NORMAL} priority.<br>
-	 * This method behaves like {@link Set#add(Object)}
 	 * @param handler The new handler
 	 * @return {@code true} when the handler was added
 	 */
@@ -94,7 +95,6 @@ public final class EventAccessor<E extends Event> { //NOT Iterable on purpose!!
 	
 	/**
 	 * Removes all handlers from this event.<br>
-	 * This method behaves like {@link Set#clear()}
 	 */
 	public void clearHandlers() {
 		try {
