@@ -77,7 +77,6 @@ public final class ServerInfoRequest {
 	private final Map<InetSocketAddress, CompletableRequestToken> activeRequests;
 	private final ThreadsafeIterable<ServerInfoRequest, InetSocketAddress> threadsafe;
 	
-	@SuppressWarnings("deprecation")
 	private ServerInfoRequest(NetworkManagerProperties manager) throws IOException {
 		if(broadcastAddress == null) throw new IllegalStateException("Broadcast address not initialized");
 		
@@ -87,7 +86,7 @@ public final class ServerInfoRequest {
 		this.threadsafe = new MonitorBasedThreadsafeIterable<>(activeRequests, this, () -> activeRequests.keySet());
 		this.encoder = new PacketToByteConverter(manager);
 		this.pooledDecoders = new AddressBasedDecoderPool(Adapter::new, manager);
-		this.thread = new DatagramReceiverThread(channel.socket(), pooledDecoders::decode, this::notifyAcceptorThreadDeath, config.getDatagramPacketMaxSize());
+		this.thread = new DatagramReceiverThread(null, channel, pooledDecoders::decode, this::notifyAcceptorThreadDeath, config.getDatagramPacketMaxSize());
 		//Just to be sure. Use it like a socket that accepts byte buffers
 		this.channel.configureBlocking(true);
 		this.channel.socket().setBroadcast(true);

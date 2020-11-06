@@ -170,6 +170,7 @@ public interface Task {
 		return task instanceof CompletedTask;
 	}
 	
+	@Deprecated
 	public static Task awaitCondition(BooleanSupplier condition) {
 		return new Task() {
 			

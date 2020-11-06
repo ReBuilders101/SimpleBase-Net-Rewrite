@@ -3,6 +3,7 @@ package dev.lb.simplebase.net.events;
 import java.io.IOException;
 import java.net.Socket;
 
+import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.connection.NetworkConnectionState;
 import dev.lb.simplebase.net.manager.NetworkManagerServer;
 
@@ -11,7 +12,7 @@ import dev.lb.simplebase.net.manager.NetworkManagerServer;
  */
 public enum ConnectionCloseReason {
 	/**
-	 * The connection was closed because the close method was called on the {@link AbstractNetworkConnection} on the local side
+	 * The connection was closed because the close method was called on the {@link NetworkConnection} on the local side
 	 */
 	EXPECTED,
 	/**

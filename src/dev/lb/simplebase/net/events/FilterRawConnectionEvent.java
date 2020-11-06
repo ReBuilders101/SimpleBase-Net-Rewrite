@@ -4,6 +4,9 @@ import java.net.InetSocketAddress;
 
 import dev.lb.simplebase.net.event.Event;
 
+/**
+ * 
+ */
 public class FilterRawConnectionEvent extends Event {
 
 	private final InetSocketAddress address;

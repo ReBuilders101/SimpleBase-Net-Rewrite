@@ -108,14 +108,50 @@ public class EventDispatcher {
 		return (event) -> post(handler, event);
 	}
 	
+	/**
+	 * Creates a {@link BooleanSupplier} that will create an event instance using the {@code constructor}
+	 * parameter and then will post the event to the {@code target} using this dispatcher.
+	 * <p>
+	 * The result of the {@link BooleanSupplier#getAsBoolean()} method will be {@code true}
+	 * if the posted event has been cancelled by any handlers, and {@code false} otherwise.
+	 * @param <E> The type of {@link Event} that will be posted
+	 * @param target The {@link EventAccessor} holding the handlers for the event
+	 * @param constructor The parameterless constructor for the event instance
+	 * @return A {@link BooleanSupplier} that will post the event and report the {@link Event#isCancelled()} state when invoked.
+	 */
 	public <E extends Event> BooleanSupplier p0Dispatcher(EventAccessor<E> target, Supplier<E> constructor) {
 		return () -> post(target, constructor.get());
 	}
 	
+	/**
+	 * Creates a {@link Predicate} that will create an event instance using the {@code constructor}
+	 * parameter and then will post the event to the {@code target} using this dispatcher.
+	 * <p>
+	 * The result of the {@link Predicate#test(Object)} method will be {@code true}
+	 * if the posted event has been cancelled by any handlers, and {@code false} otherwise.
+	 * @param <E> The type of {@link Event} that will be posted
+	 * @param <T> The type of the event constructor's parameter
+	 * @param target The {@link EventAccessor} holding the handlers for the event
+	 * @param constructor The constructor for the event instance taking one parameter of type {@code T}
+	 * @return A {@link Predicate} that will post the event and report the {@link Event#isCancelled()} state when invoked.
+	 */
 	public <T, E extends Event> Predicate<T> p1Dispatcher(EventAccessor<E> target, Function<T, E> constructor) {
 		return (t) -> post(target, constructor.apply(t));
 	}
 	
+	/**
+	 * Creates a {@link BiPredicate} that will create an event instance using the {@code constructor}
+	 * parameter and then will post the event to the {@code target} using this dispatcher.
+	 * <p>
+	 * The result of the {@link BiPredicate#test(Object, Object)} method will be {@code true}
+	 * if the posted event has been cancelled by any handlers, and {@code false} otherwise.
+	 * @param <E> The type of {@link Event} that will be posted
+	 * @param <T1> The type of the event constructor's first parameter
+	 * @param <T2> The type of the event constructor's second parameter
+	 * @param target The {@link EventAccessor} holding the handlers for the event
+	 * @param constructor The constructor for the event instance taking two parameters of type {@code T1} and {@code T2}
+	 * @return A {@link BiPredicate} that will post the event and report the {@link Event#isCancelled()} state when invoked.
+	 */
 	public <T1, T2, E extends Event> BiPredicate<T1, T2> p2Dispatcher(EventAccessor<E> target, BiFunction<T1, T2, E> constructor) {
 		return (t1, t2) -> post(target, constructor.apply(t1, t2));
 	}
