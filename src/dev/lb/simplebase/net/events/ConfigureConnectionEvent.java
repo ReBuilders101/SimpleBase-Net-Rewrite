@@ -14,6 +14,8 @@ import dev.lb.simplebase.net.packet.handler.PacketHandler;
  * <p>
  * The main purpose of this event is to attach a custom object to the new connection's {@link PacketContext} that
  * is available in all {@link PacketHandler}s.
+ * </p><p>
+ * If the event is cancelled, the connection will be closed as soon as possible and not added to the server.
  * </p>
  */
 public class ConfigureConnectionEvent extends Event {

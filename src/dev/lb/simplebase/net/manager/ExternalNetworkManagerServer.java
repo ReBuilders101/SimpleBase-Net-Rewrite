@@ -65,7 +65,7 @@ public abstract class ExternalNetworkManagerServer extends NetworkManagerServer 
 		}
 
 		//post and handle the event
-		final FilterRawConnectionEvent event1 = new FilterRawConnectionEvent(remoteAddress, 
+		final FilterRawConnectionEvent event1 = new FilterRawConnectionEvent(this, remoteAddress, 
 				generateNetworkIdName("RemoteId-"));
 		getEventDispatcher().post(FilterRawConnection, event1);
 		if(event1.isCancelled()) {
@@ -108,7 +108,7 @@ public abstract class ExternalNetworkManagerServer extends NetworkManagerServer 
 		}
 		
 		
-		final FilterRawConnectionEvent event1 = new FilterRawConnectionEvent(remoteAddress, 
+		final FilterRawConnectionEvent event1 = new FilterRawConnectionEvent(this, remoteAddress, 
 				generateNetworkIdName("RemoteId-"));
 		getEventDispatcher().post(FilterRawConnection, event1);
 		if(event1.isCancelled()) {
