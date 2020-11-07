@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import java.util.function.IntFunction;
 
 import dev.lb.simplebase.net.NetworkManager;
-import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.log.Logger;
 import dev.lb.simplebase.net.manager.NetworkManagerProperties;
 import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormat;
@@ -16,7 +16,7 @@ import dev.lb.simplebase.net.packet.format.NetworkPacketFormat;
  * Call {@code accept...} methods from only one thread.
  */
 public final class ByteToPacketConverter {
-	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("packet-decode");
+	static final Logger LOGGER = NetworkManager.getModuleLogger("packet-decode");
 	
 	private final PacketIDMappingProvider provider;
 	private final IntFunction<ByteInflater> chooseInflater;

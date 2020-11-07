@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.UUID;
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.id.NetworkID;
-import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.log.Logger;
 import dev.lb.simplebase.net.manager.NetworkManagerClient;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.Packet;
@@ -14,7 +14,7 @@ import dev.lb.simplebase.net.task.ValueTask;
 import dev.lb.simplebase.net.util.Pair;
 
 public class RRNetHandler implements PacketHandler {
-	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("packet-handler");
+	static final Logger LOGGER = NetworkManager.getModuleLogger("packet-handler");
 	
 	//Use a HashMap to quickly lokkup uuids:
 	private final HashMap<UUID, RequestDetails<?>> activeRequests;
@@ -39,7 +39,6 @@ public class RRNetHandler implements PacketHandler {
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
 	public <ResponseType extends RRPacket> ValueTask.PairTask<ResponseType, PacketContext> sendPacket(NetworkID target, RRPacket.Request<ResponseType> packet) {
 		final RequestDetails<ResponseType> details = new RequestDetails<>(packet.getUUID(), target, packet.getResponsePacketClass());
 		
@@ -54,7 +53,8 @@ public class RRNetHandler implements PacketHandler {
 					return details.getTask();
 				} else {
 					LOGGER.warning("Cannot send packet to " + target);
-					return ValueTask.ofPair((ValueTask<Pair<ResponseType, PacketContext>>) ValueTask.cancelled(new Exception("Packet was not sent (see log)")));
+					final Pair<ResponseType, PacketContext> dummy = null; //Prevents unchecked cast
+					return ValueTask.ofPair(ValueTask.cancelled(new Exception("Packet was not sent (see log)"), dummy));
 				}
 			}
 		}

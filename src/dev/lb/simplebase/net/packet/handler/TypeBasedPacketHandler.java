@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Threadsafe;
-import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.log.Logger;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
 
@@ -27,7 +27,7 @@ import dev.lb.simplebase.net.packet.PacketContext;
  */
 @Threadsafe
 public class TypeBasedPacketHandler implements PacketHandler {
-	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("packet-handler");
+	static final Logger LOGGER = NetworkManager.getModuleLogger("packet-handler");
 	
 	private final Map<Class<? extends Packet>, PacketHandler> handlers;
 	private final AtomicReference<PacketHandler> defaultHandler;

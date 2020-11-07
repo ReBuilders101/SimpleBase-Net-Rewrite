@@ -145,6 +145,10 @@ public interface ValueTask<V> extends Task {
 		return new CancelledValueTask<>(cause);
 	}
 	
+	public static <V> ValueTask<V> cancelled(Throwable cause, V expectedValueDummy) {
+		return new CancelledValueTask<>(cause);
+	}
+	
 	public static <V> ValueTask<V> successAfter(Supplier<V> value, long timeout, TimeUnit unit) {
 		final Pair<ValueTask<V>, ValueTask.CompletionSource<V>> task = ValueTask.completable();
 		GlobalTimer.delay(() -> task.getRight().success(value.get()), timeout, unit);

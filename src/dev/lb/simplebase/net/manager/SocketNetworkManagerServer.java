@@ -21,7 +21,7 @@ import dev.lb.simplebase.net.connection.TcpSocketNetworkConnection;
 import dev.lb.simplebase.net.connection.UdpServerSocketNetworkConnection;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFeature;
-import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.log.Logger;
 import dev.lb.simplebase.net.packet.converter.AddressBasedDecoderPool;
 import dev.lb.simplebase.net.packet.converter.AnonymousServerConnectionAdapter;
 import dev.lb.simplebase.net.packet.converter.MutableAddressConnectionAdapter;
@@ -188,7 +188,7 @@ public final class SocketNetworkManagerServer extends ExternalNetworkManagerServ
 		sendRawUdpByteData(remoteAddress, udp_toByteConverter.convert(NetworkPacketFormats.LOGOUT, null));
 	}
 	
-	static final AbstractLogger SAT_LOGGER = NetworkManager.getModuleLogger("server-accept");
+	static final Logger SAT_LOGGER = NetworkManager.getModuleLogger("server-accept");
 	private static final AtomicInteger SAT_THREAD_ID = new AtomicInteger(0);
 	
 	/**

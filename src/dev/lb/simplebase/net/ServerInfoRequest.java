@@ -27,7 +27,7 @@ import dev.lb.simplebase.net.connection.NetworkConnection;
 import dev.lb.simplebase.net.event.EventDispatcher;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.id.NetworkIDFeature;
-import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.log.Logger;
 import dev.lb.simplebase.net.manager.AcceptorThreadDeathReason;
 import dev.lb.simplebase.net.manager.NetworkManagerProperties;
 import dev.lb.simplebase.net.manager.NetworkManagerServer;
@@ -56,7 +56,7 @@ import dev.lb.simplebase.net.util.ThreadsafeIterable;
  * </p>
  */
 public final class ServerInfoRequest {
-	private static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("server-info");
+	private static final Logger LOGGER = NetworkManager.getModuleLogger("server-info");
 	private static final InetAddress broadcastAddress;
 	
 	static {

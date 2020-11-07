@@ -25,7 +25,7 @@ import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
 import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.events.FilterRawConnectionEvent;
 import dev.lb.simplebase.net.id.NetworkID;
-import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.log.Logger;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.task.Task;
 import dev.lb.simplebase.net.util.LockBasedThreadsafeIterable;
@@ -34,7 +34,7 @@ import dev.lb.simplebase.net.util.ThreadsafeIterable;
 
 @Threadsafe
 public abstract class NetworkManagerServer extends NetworkManagerCommon {
-	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("server-manager");
+	static final Logger LOGGER = NetworkManager.getModuleLogger("server-manager");
 	
 	private final Map<NetworkID, NetworkConnection> connections;
 	protected volatile ServerManagerState currentState;

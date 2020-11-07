@@ -10,7 +10,7 @@ import dev.lb.simplebase.net.config.ServerConfig;
 import dev.lb.simplebase.net.connection.InternalNetworkConnection;
 import dev.lb.simplebase.net.events.ConfigureConnectionEvent;
 import dev.lb.simplebase.net.id.NetworkID;
-import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.log.Logger;
 import dev.lb.simplebase.net.manager.NetworkManagerServer;
 import dev.lb.simplebase.net.util.InternalAccess;
 
@@ -26,7 +26,7 @@ import dev.lb.simplebase.net.util.InternalAccess;
  */
 @Internal
 public final class InternalServerProvider {
-	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("internal-servers");
+	static final Logger LOGGER = NetworkManager.getModuleLogger("internal-servers");
 	
 	private static final Map<NetworkID, NetworkManagerServer> serverList = new HashMap<>();
 	

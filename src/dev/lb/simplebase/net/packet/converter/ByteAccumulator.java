@@ -4,14 +4,14 @@ import java.nio.ByteBuffer;
 
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.io.ByteDataHelper;
-import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.log.Logger;
 import dev.lb.simplebase.net.manager.NetworkManagerProperties;
 import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormat;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
 
 public class ByteAccumulator {
-static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("packet-decode");
+static final Logger LOGGER = NetworkManager.getModuleLogger("packet-decode");
 	
 	private final ConnectionAdapter receiver;
 	private final int bufferSize;

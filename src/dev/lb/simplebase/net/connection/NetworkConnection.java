@@ -13,7 +13,7 @@ import dev.lb.simplebase.net.events.ConnectionCloseReason;
 import dev.lb.simplebase.net.events.ConnectionClosedEvent;
 import dev.lb.simplebase.net.events.PacketSendingFailedEvent;
 import dev.lb.simplebase.net.id.NetworkID;
-import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.log.Logger;
 import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.manager.NetworkManagerServer;
 import dev.lb.simplebase.net.packet.Packet;
@@ -27,9 +27,9 @@ import dev.lb.simplebase.net.util.ThreadsafeAction;
  */
 @Threadsafe
 public abstract class NetworkConnection {
-	protected static final AbstractLogger RECEIVE_LOGGER = NetworkManager.getModuleLogger("connection-receive");
-	protected static final AbstractLogger SEND_LOGGER = NetworkManager.getModuleLogger("connection-send");
-	protected static final AbstractLogger STATE_LOGGER = NetworkManager.getModuleLogger("connection-state");
+	protected static final Logger RECEIVE_LOGGER = NetworkManager.getModuleLogger("connection-receive");
+	protected static final Logger SEND_LOGGER = NetworkManager.getModuleLogger("connection-send");
+	protected static final Logger STATE_LOGGER = NetworkManager.getModuleLogger("connection-state");
 	
 	//Sync/state
 	protected volatile NetworkConnectionState currentState;

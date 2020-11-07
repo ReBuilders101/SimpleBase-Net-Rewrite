@@ -5,7 +5,7 @@ import java.util.function.IntFunction;
 
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.io.ByteDataHelper;
-import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.log.Logger;
 import dev.lb.simplebase.net.manager.NetworkManagerProperties;
 import dev.lb.simplebase.net.packet.PacketIDMapping;
 import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
@@ -15,7 +15,7 @@ import dev.lb.simplebase.net.packet.format.NetworkPacketFormat;
  * Converts packets to bytes
  */
 public final class PacketToByteConverter {
-	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("packet-encode");
+	static final Logger LOGGER = NetworkManager.getModuleLogger("packet-encode");
 	
 	private final NetworkManagerProperties managerLike;
 	private final int bufferSize;
@@ -70,5 +70,5 @@ public final class PacketToByteConverter {
 	 * This is stored here because you can't have a private/package static member in interfaces (WHY?)<br>
 	 * Belongs to {@link SingleConnectionAdapter}.
 	 */
-	static final AbstractLogger CONNECTION_LOGGER = NetworkManager.getModuleLogger("connection-receive");
+	static final Logger CONNECTION_LOGGER = NetworkManager.getModuleLogger("connection-receive");
 }

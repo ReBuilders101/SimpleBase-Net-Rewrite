@@ -1,10 +1,10 @@
 package dev.lb.simplebase.net;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,12 +21,10 @@ import dev.lb.simplebase.net.config.ServerConfig;
 import dev.lb.simplebase.net.config.ServerType;
 import dev.lb.simplebase.net.id.NetworkID;
 import dev.lb.simplebase.net.log.AbstractLogLevel;
-import dev.lb.simplebase.net.log.AbstractLogger;
-import dev.lb.simplebase.net.log.DelegateFormattableLogger;
-import dev.lb.simplebase.net.log.Formatter;
+import dev.lb.simplebase.net.log.Logger;
 import dev.lb.simplebase.net.log.LogLevel;
-import dev.lb.simplebase.net.log.Loggers;
-import dev.lb.simplebase.net.log.PrintStreamLogger;
+import dev.lb.simplebase.net.log.LogManager;
+import dev.lb.simplebase.net.log.SimplePrefixFormat;
 import dev.lb.simplebase.net.manager.ChannelNetworkManagerServer;
 import dev.lb.simplebase.net.manager.InternalNetworkManagerServer;
 import dev.lb.simplebase.net.manager.NetworkManagerClient;
@@ -49,19 +47,26 @@ public final class NetworkManager {
 	//LOGGERS ###############################################################################
 	
 	/**
-	 * The {@link AbstractLogger} used by the API to give information to the user.<br>
-	 * Call {@link AbstractLogger#setLogLevel(AbstractLogLevel)} to set detail level.
+	 * The {@link Logger} used by the API to give information to the user.<br>
+	 * Call {@link Logger#setLogLevel(AbstractLogLevel)} to set detail level.
 	 */
-	private static final PrintStreamLogger NET_LOG = Loggers.printSysOut(LogLevel.METHOD,
-			Formatter.getPrefix(
-					Formatter.getStaticText("Net-Simplebase"),
-					Formatter.getLogLevel(),
-					Formatter.getCurrentTime(),
-					Formatter.getThreadName()),
-			Formatter.getDefault());
+	private static final Logger NET_LOG = 
+			LogManager.standardDynamic(LogLevel.LOWEST, LogLevel.ERROR,
+					SimplePrefixFormat.forString("Net-Simplebase"),
+					SimplePrefixFormat.forLogLevel(),
+					SimplePrefixFormat.forTime(DateTimeFormatter.ISO_LOCAL_TIME),
+					SimplePrefixFormat.forThread());
+//			
+//			Loggers.printSysOut(LogLevel.METHOD,
+//			Formatter.getPrefix(
+//					Formatter.getStaticText("Net-Simplebase"),
+//					Formatter.getLogLevel(),
+//					Formatter.getCurrentTime(),
+//					Formatter.getThreadName()),
+//			Formatter.getDefault());
 	
-	private static final Map<String, AbstractLogger> existingDelegateLoggers = new HashMap<>();
-	static final AbstractLogger LOGGER = getModuleLogger("net-core");
+	private static final Map<String, Logger> existingDelegateLoggers = new HashMap<>();
+	static final Logger LOGGER = getModuleLogger("net-core");
 	
 	/**
 	 * Gets a logger for a custom subsystem. Loggers are cached, and re-calling this method with the same
@@ -69,10 +74,17 @@ public final class NetworkManager {
 	 * @param moduleName The name of the subsystem. Will appear as a prefix for every log message
 	 * @return The custom logger
 	 */
-	public static AbstractLogger getModuleLogger(String moduleName) {
+	public static Logger getModuleLogger(String moduleName) {
 		synchronized (existingDelegateLoggers) {
 			return existingDelegateLoggers.computeIfAbsent(moduleName, 
-					(name) -> new DelegateFormattableLogger(NET_LOG, Formatter.getStaticText(name)));
+					(name) -> LogManager.derive(NET_LOG, (array) -> {
+						SimplePrefixFormat[] newFormat = new SimplePrefixFormat[array.length + 1];
+						System.arraycopy(array, 0, newFormat, 1, array.length);
+						newFormat[0] = SimplePrefixFormat.forString(moduleName);
+						return newFormat;
+					}
+				)
+			);
 		}
 	}
 	
@@ -83,15 +95,6 @@ public final class NetworkManager {
 	 */
 	public static void setLogLevel(AbstractLogLevel level) {
 		NET_LOG.setLogLevel(level);
-	}
-	
-	/**
-	 * Sets the {@link PrintStream} for all loggers created with {@link #getModuleLogger(String)}.
-	 * Messages will pe printed to this stream 
-	 * @param stream The new {@link PrintStream}
-	 */
-	public static void setPrintStream(PrintStream stream) {
-		NET_LOG.setPrintStream(stream);
 	}
 	
 	//CLEANUP #################################################################################

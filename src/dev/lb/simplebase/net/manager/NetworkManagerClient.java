@@ -12,7 +12,7 @@ import dev.lb.simplebase.net.connection.TcpSocketNetworkConnection;
 import dev.lb.simplebase.net.connection.UdpClientSocketNetworkConnection;
 import dev.lb.simplebase.net.event.EventAccessor;
 import dev.lb.simplebase.net.id.NetworkID;
-import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.log.Logger;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.task.Task;
 import dev.lb.simplebase.net.util.ThreadsafeAction;
@@ -26,7 +26,7 @@ import dev.lb.simplebase.net.util.ThreadsafeAction;
  */
 @Threadsafe
 public final class NetworkManagerClient extends NetworkManagerCommon {
-	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("client-manager");
+	static final Logger LOGGER = NetworkManager.getModuleLogger("client-manager");
 
 	private final NetworkID remoteID;
 	private final NetworkConnection connection;

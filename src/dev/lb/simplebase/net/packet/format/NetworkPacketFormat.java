@@ -3,7 +3,7 @@ package dev.lb.simplebase.net.packet.format;
 import java.nio.ByteBuffer;
 
 import dev.lb.simplebase.net.NetworkManager;
-import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.log.Logger;
 
 /**
  * A pattern to decode bytes into packet-representing objects
@@ -12,7 +12,7 @@ import dev.lb.simplebase.net.log.AbstractLogger;
  * @param <Data> The object produced by decoding
  */
 public abstract class NetworkPacketFormat<Connection, DecodeContext, Data> {	
-	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("packet-decode");
+	static final Logger LOGGER = NetworkManager.getModuleLogger("packet-decode");
 	
 	private final int uuid;
 	private final String name;

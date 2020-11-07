@@ -2,7 +2,7 @@ package dev.lb.simplebase.net.packet.handler;
 
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
-import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.log.Logger;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
 
@@ -14,7 +14,7 @@ import dev.lb.simplebase.net.packet.PacketContext;
  */
 @Internal
 public final class EmptyPacketHandler implements PacketHandler {
-	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("packet-handler");
+	static final Logger LOGGER = NetworkManager.getModuleLogger("packet-handler");
 	
 	@Override
 	public void handlePacket(Packet packet, PacketContext context) {}

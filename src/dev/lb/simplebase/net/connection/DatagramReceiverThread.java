@@ -13,7 +13,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import dev.lb.simplebase.net.NetworkManager;
-import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.log.Logger;
 import dev.lb.simplebase.net.manager.AcceptorThreadDeathReason;
 
 /**
@@ -29,7 +29,7 @@ import dev.lb.simplebase.net.manager.AcceptorThreadDeathReason;
  * </p>
  */
 public class DatagramReceiverThread extends Thread {
-	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("server-accept");
+	static final Logger LOGGER = NetworkManager.getModuleLogger("server-accept");
 	private static final AtomicInteger THREAD_ID = new AtomicInteger(0);
 	
 	private final DatagramSocket socket;

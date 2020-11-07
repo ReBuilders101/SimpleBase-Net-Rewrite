@@ -11,7 +11,7 @@ import java.util.function.Supplier;
 
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Threadsafe;
-import dev.lb.simplebase.net.log.AbstractLogger;
+import dev.lb.simplebase.net.log.Logger;
 
 /**
  * An {@link EventDispatcher} posts events to their handlers (stored as {@link EventAccessor}s).
@@ -19,7 +19,7 @@ import dev.lb.simplebase.net.log.AbstractLogger;
  */
 @Threadsafe
 public class EventDispatcher {
-	static final AbstractLogger LOGGER = NetworkManager.getModuleLogger("event-system");
+	static final Logger LOGGER = NetworkManager.getModuleLogger("event-system");
 	
 	private final Supplier<String> sourceDescription;
 	
