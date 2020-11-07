@@ -1,8 +1,12 @@
 package dev.lb.simplebase.net.log;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.StaticType;
@@ -33,19 +37,19 @@ final class DefaultLoggerDelegates {
 	}
 	
 	static Logger.LoggerDelegate forFormattedSingleStream(PrintStream stream, SimplePrefixFormat[] formats) {
-		return new FormattingLoggerDelegate(forSingleStream(stream), formats);
+		return new FormattingLoggerDelegate(forSingleStream(stream), Arrays.asList(formats));
 	}
 	
 	static Logger.LoggerDelegate forFormattedDualStream(PrintStream lower, PrintStream higher, AbstractLogLevel limit, SimplePrefixFormat[] formats) {
-		return new FormattingLoggerDelegate(forDualStream(lower, higher, limit), formats);
+		return new FormattingLoggerDelegate(forDualStream(lower, higher, limit), Arrays.asList(formats));
 	}
 
 	static final class FormattingLoggerDelegate implements Logger.LoggerDelegate {
-		final SimplePrefixFormat[] prefixes;
+		final Collection<SimplePrefixFormat> prefixes;
 		final LoggerDelegate base;
 		
-		FormattingLoggerDelegate(LoggerDelegate base, SimplePrefixFormat[] prefixes) {
-			this.prefixes = prefixes;
+		FormattingLoggerDelegate(LoggerDelegate base, Collection<SimplePrefixFormat> prefixes) {
+			this.prefixes = Collections.unmodifiableCollection(new ArrayList<>(prefixes));
 			this.base = base;
 		}
 		@Override
@@ -61,8 +65,10 @@ final class DefaultLoggerDelegates {
 		return new String(array);
 	}
 	
-	private static String buildPrefix(AbstractLogLevel level, SimplePrefixFormat[] format) {
-		return Arrays.stream(format).flatMap((f) -> f.getPrefix(level)).collect(Collectors.joining(" ", "", ": "));
+	private static String buildPrefix(AbstractLogLevel level, Collection<SimplePrefixFormat> format) {
+		return format.stream().flatMap(f -> 
+			Stream.concat(f.getPrefix(level), Stream.of(" ")))
+				.collect(Collectors.joining());
 	}
 	
 }

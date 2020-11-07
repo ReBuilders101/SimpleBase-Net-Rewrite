@@ -26,7 +26,7 @@ public class InternalAccess {
 		Objects.requireNonNull(callerClass, "'callerClass' parameter must not be null");
 		if(popExtraFrames < 0) throw new IllegalArgumentException("'popExtraFrames' must not be negative");
 		
-		assertCaller(callerClass.getName(), popExtraFrames, errorMessage);
+		assertCaller(callerClass.getName(), popExtraFrames + 1, errorMessage);
 	}
 	
 	private static void assertCaller(String className, int popExtraFrames, String errorMessage) {

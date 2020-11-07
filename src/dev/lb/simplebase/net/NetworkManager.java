@@ -77,10 +77,10 @@ public final class NetworkManager {
 	public static Logger getModuleLogger(String moduleName) {
 		synchronized (existingDelegateLoggers) {
 			return existingDelegateLoggers.computeIfAbsent(moduleName, 
-					(name) -> LogManager.derive(NET_LOG, (array) -> {
-						SimplePrefixFormat[] newFormat = new SimplePrefixFormat[array.length + 1];
-						System.arraycopy(array, 0, newFormat, 1, array.length);
-						newFormat[0] = SimplePrefixFormat.forString(moduleName);
+					(name) -> LogManager.derive(NET_LOG, (list) -> {
+						List<SimplePrefixFormat> newFormat = new ArrayList<>();
+						newFormat.add(SimplePrefixFormat.forString(moduleName));
+						newFormat.addAll(list);
 						return newFormat;
 					}
 				)
