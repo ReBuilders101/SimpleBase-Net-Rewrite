@@ -1,6 +1,5 @@
 package dev.lb.simplebase.net.log;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.stream.Stream;

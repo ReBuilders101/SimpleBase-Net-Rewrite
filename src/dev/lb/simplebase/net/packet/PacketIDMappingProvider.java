@@ -18,6 +18,9 @@ import dev.lb.simplebase.net.util.ThreadsafeIterable;
 @Threadsafe
 public class PacketIDMappingProvider {
 
+	/**
+	 * Creates an empty {@link PacketIDMappingProvider}.
+	 */
 	public PacketIDMappingProvider() {
 		mappings = new HashSet<>(); //Will be manually synchronized
 		threadsafe = new MonitorBasedThreadsafeIterable<>(this, this, () -> mappings);
@@ -36,7 +39,7 @@ public class PacketIDMappingProvider {
 	
 	/**
 	 * Adds a {@link PacketIDMapping} to the collection.
-	 * @param mapping The mapping to add
+	 * @param newMapping The mapping to add
 	 * @throws NullPointerException If mapping is null and the implementation does not allow null elements
 	 * @throws IllegalArgumentException If a mapping with the same ID or Class already exists in this set and the implementation does not allow duplicate elements
 	 */
@@ -65,7 +68,7 @@ public class PacketIDMappingProvider {
 	 * Adds several {@link PacketIDMapping} to the collection.<br>
 	 * If the method exits with an exception, some of the mappings may have been inserted while others have not.<br>
 	 * Iteration over the array (or varargs array) will not be synchronized for that array, but thread safety of this object is guaranteed.
-	 * @param mappings The mappings to add
+	 * @param newMappings The mappings to add
 	 * @throws NullPointerException If one of the mappings is null and the implementation does not allow null elements
 	 * @throws IllegalArgumentException If a mapping with the same ID or Class as one those to add already exists in this set and the implementation does not allow duplicate elements
 	 */

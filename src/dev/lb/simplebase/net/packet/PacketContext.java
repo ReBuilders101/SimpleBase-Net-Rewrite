@@ -50,5 +50,9 @@ public interface PacketContext {
 	 */
 	public <T> T getCustomData(Class<T> dataType);
 	
+	/**
+	 * The {@link NetworkConnection} that received the packet that is handled with this {@link PacketContext}.
+	 * @return The {@link NetworkConnection} associated with this context
+	 */
 	public NetworkConnection getConnection();
 }

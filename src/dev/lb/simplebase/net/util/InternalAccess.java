@@ -1,5 +1,6 @@
 package dev.lb.simplebase.net.util;
 
+import java.io.Closeable;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -127,10 +128,34 @@ public class InternalAccess {
 		if(staticBool.getAndSet(true)) throw new IllegalStateException(message);
 	}
 	
+	/**
+	 * Signals that the instance of a singleton was disposed of, and that a new instance may be created.
+	 * <p>
+	 * The {@link AtomicBoolean} should be created as stated in {@link InternalAccess#createSingleton()}.
+	 * This method should the be called as soon as a new instance is allowed to exist (e.g. in a {@link Closeable#close()} method.
+	 * It will return on success, or simply throw an unchecked exception to immediately exit the constructor.
+	 * </p><p>
+	 * If the method returns normally, the {@code AtomicBoolean} will have been updated to {@code false}.
+	 * <p>
+	 * @param staticBool The static {@link AtomicBoolean} of the class
+	 * @param message The error message for the thrown exception
+	 * @throws IllegalStateException When no instance currently exists
+	 */
 	public static void freeSingleton(AtomicBoolean staticBool, String message) throws IllegalStateException {
 		if(!staticBool.getAndSet(false)) throw new IllegalStateException(message);
 	}
 	
+	/**
+	 * Checks whether the {@link AtomicBoolean} controlling the creation of singleton
+	 * currently has one.
+	 * <p>
+	 * The {@link AtomicBoolean} should be created as stated in {@link InternalAccess#createSingleton()}.
+	 * This method should the be called as soon as a new instance is allowed to exist (e.g. in a {@link Closeable#close()} method.
+	 * It will return on success, or simply throw an unchecked exception to immediately exit the constructor.
+	 * </p>
+	 * @param staticBool The static {@link AtomicBoolean} of the class
+	 * @return {@code true} if a singleton currently exists, {@code false} otherwise
+	 */
 	public static boolean hasSingleton(AtomicBoolean staticBool) {
 		return staticBool.get();
 	}

@@ -11,11 +11,10 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiPredicate;
-
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.config.ServerConfig;
+import dev.lb.simplebase.net.config.ServerType;
 import dev.lb.simplebase.net.connection.DatagramReceiverThread;
 import dev.lb.simplebase.net.connection.TcpSocketNetworkConnection;
 import dev.lb.simplebase.net.connection.UdpServerSocketNetworkConnection;
@@ -29,27 +28,45 @@ import dev.lb.simplebase.net.packet.converter.PacketToByteConverter;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
 import dev.lb.simplebase.net.task.Task;
 
+/**
+ * Internal implementation class of a {@link NetworkManagerServer} that uses (blocking) sockets for its IO operations.
+ * <p>
+ * Can be created using {@link NetworkManager#createServer(NetworkID, ServerConfig)} when choosing
+ * {@link ServerType#TCP_IO}, {@link ServerType#UDP_IO} or {@link ServerType#COMBINED_IO} in the {@link ServerConfig}.
+ * </p>
+ */
 @Internal
 public final class SocketNetworkManagerServer extends ExternalNetworkManagerServer {
-	
+
 	//NEW TCP SECTION//
 	private final ServerSocket tcp_serverSocket;
 	private final ServerSocketAcceptorThread tcp_acceptorThread; 
-	
+
 	//NEW UDP SECTION//
 	private final DatagramSocket udp_serverSocket;
 	private final DatagramReceiverThread udp_receiverThread;
 	private final AddressBasedDecoderPool udp_decoderPool;
 	private final PacketToByteConverter udp_toByteConverter;
-	
-	public static final BiPredicate<NetworkID, InetSocketAddress> matchRemoteAddress = (n, i) -> 
-		n.ifFeature(NetworkIDFeature.CONNECT, r -> r.equals(i), false);
-	
+
+//	private static final BiPredicate<NetworkID, InetSocketAddress> matchRemoteAddress = (n, i) -> 
+//		n.ifFeature(NetworkIDFeature.CONNECT, r -> r.equals(i), false);
+
+	/**
+	 * <h2>Internal use only</h2>
+	 * <p>
+	 * This method is used internally by the API and can not be called directly.
+	 * </p><hr><p>
+	 * Creates a new {@link SocketNetworkManagerServer}.
+	 * </p>
+	 * @param local The local {@link NetworkID} of the server
+	 * @param config The {@link ServerConfig} for the server
+	 * @throws IOException When a required socket cannot be created
+	 */
 	@Internal
 	@SuppressWarnings("deprecation")
 	public SocketNetworkManagerServer(NetworkID local, ServerConfig config) throws IOException {
 		super(local, config, true, 1);
-		
+
 		if(hasTcp) {
 			tcp_serverSocket = new ServerSocket();
 			tcp_acceptorThread = new ServerSocketAcceptorThread();
@@ -57,7 +74,7 @@ public final class SocketNetworkManagerServer extends ExternalNetworkManagerServ
 			tcp_serverSocket = null;
 			tcp_acceptorThread = null;
 		}
-		
+
 		if(hasUdp || hasLan) {
 			udp_serverSocket = new DatagramSocket(null);
 			udp_decoderPool = new AddressBasedDecoderPool(UdpAnonymousConnectionAdapter::new, this);
@@ -73,7 +90,7 @@ public final class SocketNetworkManagerServer extends ExternalNetworkManagerServ
 	}
 
 	//STATE GET//
-	
+
 	/**
 	 * Whether this manager supports UDP/Datagram connections.
 	 * This does not apply to UDP server info request.
@@ -83,19 +100,19 @@ public final class SocketNetworkManagerServer extends ExternalNetworkManagerServ
 		return hasUdp;
 	}
 
-	
+
 	//SERVER STARTUP IMPLEMENTATION//
-	
+
 	private void startTcpImpl() throws IOException {
 		tcp_serverSocket.bind(getLocalID().getFeature(NetworkIDFeature.BIND)); //Exception Here -> thread not yet started
 		tcp_acceptorThread.start();
 	}
-	
+
 	private void startUdpLanImpl() throws IOException {
 		udp_serverSocket.bind(getLocalID().getFeature(NetworkIDFeature.BIND));
 		udp_receiverThread.start();
 	}
-	
+
 
 	@Override
 	protected Task startServerImpl() {
@@ -127,19 +144,19 @@ public final class SocketNetworkManagerServer extends ExternalNetworkManagerServ
 		return Task.completed();
 	}
 
-	
+
 	//SERVER SHUTDOWN IMPLEMENTATIONS//
-	
+
 	private void stopTcpImpl() {
 		//this also closes the socket
 		tcp_acceptorThread.interrupt();
 	}
-	
+
 	private void stopUdpLanImpl() {
 		//Will also close the associated socket
 		udp_receiverThread.interrupt();
 	}
-	
+
 	@Override
 	protected Task stopServerImpl() {
 		if(hasTcp) {
@@ -171,26 +188,26 @@ public final class SocketNetworkManagerServer extends ExternalNetworkManagerServ
 			LOGGER.warning("SocketNetworkManagerServer was notified of receiver thread death despite not managing a UDP module");
 		}
 	}
-	
+
 	@Override
 	protected void sendDatagram(SocketAddress address, ByteBuffer buffer) throws IOException {
 		final byte[] array = new byte[buffer.remaining()];
 		buffer.get(array);
 		udp_serverSocket.send(new DatagramPacket(array, array.length, address));
 	}
-	
+
 	private void decideUdpDataDestination(InetSocketAddress address, ByteBuffer buffer) {
 		decideUdpDataDestination(address, udp_decoderPool, buffer);
 	}
-	
+
 	@Override
 	protected void sendUdpLogout(SocketAddress remoteAddress) {
 		sendRawUdpByteData(remoteAddress, udp_toByteConverter.convert(NetworkPacketFormats.LOGOUT, null));
 	}
-	
+
 	static final Logger SAT_LOGGER = NetworkManager.getModuleLogger("server-accept");
 	private static final AtomicInteger SAT_THREAD_ID = new AtomicInteger(0);
-	
+
 	/**
 	 * Listens for incoming socket connections for a server.<p>
 	 * End the thread by interrupting it ({@link #interrupt()}).
@@ -210,7 +227,7 @@ public final class SocketNetworkManagerServer extends ExternalNetworkManagerServ
 					try {
 						final Socket socket = tcp_serverSocket.accept();
 						acceptIncomingRawTcpConnection(socket, (id, data) ->
-							new TcpSocketNetworkConnection(SocketNetworkManagerServer.this, id, socket, data));
+						new TcpSocketNetworkConnection(SocketNetworkManagerServer.this, id, socket, data));
 					} catch (SocketException e) {
 						if(this.isInterrupted()) {
 							deathReason = AcceptorThreadDeathReason.INTERRUPTED;
@@ -249,7 +266,7 @@ public final class SocketNetworkManagerServer extends ExternalNetworkManagerServ
 			}
 		}
 	}
-	
+
 	private class UdpAnonymousConnectionAdapter implements AnonymousServerConnectionAdapter, MutableAddressConnectionAdapter {
 
 		private final ReferenceCounter counter;
@@ -264,7 +281,7 @@ public final class SocketNetworkManagerServer extends ExternalNetworkManagerServ
 		public void receiveUdpLogin() {
 			if(hasUdp) {
 				acceptIncomingRawUdpConnection(address, (id, data) ->
-					new UdpServerSocketNetworkConnection(SocketNetworkManagerServer.this, id, data));
+				new UdpServerSocketNetworkConnection(SocketNetworkManagerServer.this, id, data));
 			} else {
 				LOGGER.debug("Received a UDP-Login for server %s, but UDP module is disabled", getLocalID().getDescription());
 			}

@@ -4,30 +4,32 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.SocketTimeoutException;
 
+import dev.lb.simplebase.net.connection.TcpSocketNetworkConnection;
+
 /**
- * Contains options for reasons why a {@link ServerSocketAcceptorThread} ends.<br>
- * Can be passed to the {@link NetworkManagerServer} that handled the {@link ServerSocket}.
+ * Contains the reason why a the receiver thread of a {@link TcpSocketNetworkConnection} dies.<br>
  */
 public enum AcceptorThreadDeathReason {
+	
 	/**
-	 * The thread endend because the underlying {@link ServerSocket} was closed/made unusable by non-API code
+	 * The thread died because the underlying {@link ServerSocket} was closed/made unusable by non-API code
 	 */
 	EXTERNAL,
 	/**
-	 * The thread ended because it was interrupted by calling the {@link Thread#interrupt()} method.<br>
-	 * This is considered the only non-exceptional way to end this thread.
+	 * The thread died because it was interrupted by calling the {@link Thread#interrupt()} method.<br>
+	 * This is considered the only non-exceptional way to end the receiver thread.
 	 */
 	INTERRUPTED,
 	/**
-	 * The thread endend because the underlying {@link ServerSocket} threw an {@link IOException}.
+	 * The thread died because the underlying {@link ServerSocket} threw an {@link IOException}.
 	 */
 	IOEXCEPTION,
 	/**
-	 * The thread endend because the underlying {@link ServerSocket} threw a {@link SocketTimeoutException}.
+	 * The thread died because the underlying {@link ServerSocket} threw a {@link SocketTimeoutException}.
 	 */
 	TIMEOUT,
 	/**
-	 * The thread endend for a reason that could not be determined.
+	 * The thread died for a reason that could not be determined.
 	 */
 	UNKNOWN;
 }

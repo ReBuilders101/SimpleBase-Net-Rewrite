@@ -14,6 +14,7 @@ import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.config.ServerConfig;
 import dev.lb.simplebase.net.config.ServerType;
@@ -29,6 +30,14 @@ import dev.lb.simplebase.net.packet.converter.PacketToByteConverter;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
 import dev.lb.simplebase.net.task.Task;
 
+/**
+ * Internal implementation class of a {@link NetworkManagerServer} that uses NIO non-blocking channels and
+ * selectors for its IO operations.
+ * <p>
+ * Can be created using {@link NetworkManager#createServer(NetworkID, ServerConfig)} when choosing
+ * {@link ServerType#TCP_NIO}, {@link ServerType#UDP_NIO} or {@link ServerType#COMBINED_NIO} in the {@link ServerConfig}.
+ * </p>
+ */
 @Internal
 public final class ChannelNetworkManagerServer extends ExternalNetworkManagerServer implements SelectorManager {
 
@@ -44,6 +53,17 @@ public final class ChannelNetworkManagerServer extends ExternalNetworkManagerSer
 	private final AddressBasedDecoderPool udp_decoderPool;
 	private final PacketToByteConverter udp_toByteConverter;
 	
+	/**
+	 * <h2>Internal use only</h2>
+	 * <p>
+	 * This method is used internally by the API and can not be called directly.
+	 * </p><hr><p>
+	 * Creates a new {@link ChannelNetworkManagerServer}.
+	 * </p>
+	 * @param local The local {@link NetworkID} of the server
+	 * @param config The {@link ServerConfig} for the server
+	 * @throws IOException When a required selector or channel cannot be opened
+	 */
 	@Internal
 	public ChannelNetworkManagerServer(NetworkID local, ServerConfig config) throws IOException {
 		super(local, config, false, 1);

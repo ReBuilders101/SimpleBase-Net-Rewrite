@@ -23,7 +23,7 @@ public interface PacketIDMapping {
 	
 	/**
 	 * Creates a new, uninitialized instance of the packet type represented by this mapping.
-	 * The instances will be filled with data through the {@link Packet#readData(lb.simplebase.io.ReadableByteData)}
+	 * The instances will be filled with data through the {@link Packet#readData(dev.lb.simplebase.net.io.ReadableByteData)}
 	 * method after creation. Usually only called by the API itself
 	 * @return A new packet instance for this packet type
 	 */

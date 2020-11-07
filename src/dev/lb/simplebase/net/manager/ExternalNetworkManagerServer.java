@@ -1,12 +1,14 @@
 package dev.lb.simplebase.net.manager;
 
 import java.io.IOException;
+import java.net.DatagramPacket;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 
+import dev.lb.simplebase.net.ServerInfoRequest;
 import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.config.ServerConfig;
 import dev.lb.simplebase.net.config.ServerConfig.InfoPacketFactory;
@@ -22,6 +24,9 @@ import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.converter.AddressBasedDecoderPool;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
 
+/**
+ * An abstract subtype of {@link NetworkManagerServer} that supports connections over network sockets/channels
+ */
 @Internal
 public abstract class ExternalNetworkManagerServer extends NetworkManagerServer {
 
@@ -149,6 +154,18 @@ public abstract class ExternalNetworkManagerServer extends NetworkManagerServer 
 	
 	protected abstract void sendUdpLogout(SocketAddress remoteAddress);
 
+	/**
+	 * <h2>Internal use only</h2>
+	 * <p>
+	 * This method is used internally by the API and should not be called directly.
+	 * </p><hr><p>
+	 * Sends the content of the {@link ByteBuffer} to the address using the UDP protocol.
+	 * The byte data might be split into multiple {@link DatagramPacket}s depending
+	 * on {@link ServerConfig#getDatagramPacketMaxSize()}.
+	 * </p>
+	 * @param address The destination {@link SocketAddress}
+	 * @param buffer The byte data to send
+	 */
 	@Internal
 	public void sendRawUdpByteData(SocketAddress address, ByteBuffer buffer) {
 		if(hasUdp || hasLan) {
@@ -170,6 +187,16 @@ public abstract class ExternalNetworkManagerServer extends NetworkManagerServer 
 		}
 	}
 	
+	/**
+	 * <h2>Internal use only</h2>
+	 * <p>
+	 * This method is used internally by the API and should not be called directly.
+	 * </p><hr><p>
+	 * Called when this server receives a server info request packet (usually from a {@link ServerInfoRequest}
+	 * request on the client side).
+	 * </p>
+	 * @param from The source of the request, and the destination of the server's response
+	 */
 	@Internal
 	public void receiveServerInfoRequest(InetSocketAddress from) {
 		if(hasLan) {
