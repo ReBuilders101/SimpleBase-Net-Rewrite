@@ -23,7 +23,7 @@ public interface ThreadsafeIterable<T, I> extends ThreadsafeAction<T> {
 	 * Iterates over this iterable while holding a lock/monitor to prevent concurrent modification.
 	 * The exact type of lock or monitor object depends on the implementation.
 	 * As any other operation waiting for a lock/monitor, calling this method carelessly can lead to deadlocks.
-	 * @param iteratorHandler The threadsafe operation that should be executed for every item in the iterable
+	 * @param itemAction The threadsafe operation that should be executed for every item in the iterable
 	 */
 	@Threadsafe
 	public void forEach(Consumer<? super I> itemAction);
@@ -36,7 +36,9 @@ public interface ThreadsafeIterable<T, I> extends ThreadsafeAction<T> {
 	 * If the function returns an empty optional for an item, the iteration will continue with the next item.
 	 * If the function returns an optional with a value, the iteration will stop and the optional will be returned.
 	 * If no iteration step produces an optional with a value, this method returns an empty optional.
-	 * @param iteratorHandler The threadsafe operation that should be executed for every item in the iterable
+	 * @param <R> The type of the return value
+	 * @param itemFunction The threadsafe operation that should be executed for every item in the iterable
+	 * @return An {@link Optional} with the returned value, or an empty one if no value was found
 	 */
 	@Threadsafe
 	public <R> Optional<R> forEachReturn(Function<? super I, Optional<R>> itemFunction);

@@ -46,6 +46,11 @@ public interface PacketHandler {
 		return reference.get()::handlePacket;
 	}
 	
+	/**
+	 * Creates a {@link PacketHandler} that delegates the handling to an exchangable handler.
+	 * @param initial The initial delegate handler
+	 * @return A {@link Pair} contining the handler and a function that updates the delegate
+	 */
 	public static Pair<PacketHandler, Consumer<PacketHandler>> createUpdatable(PacketHandler initial) {
 		final AtomicReference<PacketHandler> ref = new AtomicReference<>(initial);
 		return new Pair<>(createUpdatable(ref), ref::set);
@@ -75,7 +80,7 @@ public interface PacketHandler {
 				first0.addHandler(second);
 			}
 			return first;
-		//Second, but not first   is a list
+		//Second, but not first is a list
 		} else if(second instanceof MultiPacketHandler) {
 			final MultiPacketHandler second0 = (MultiPacketHandler) second;
 			second0.addHandler(first);

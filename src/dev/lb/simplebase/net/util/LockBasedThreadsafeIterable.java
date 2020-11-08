@@ -8,6 +8,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import dev.lb.simplebase.net.annotation.Internal;
+
+@Internal
+@SuppressWarnings("javadoc")
 public final class LockBasedThreadsafeIterable<T, I> implements ThreadsafeIterable<T, I>{
 
 	private final T object;

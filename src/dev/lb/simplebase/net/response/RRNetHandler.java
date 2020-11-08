@@ -10,9 +10,13 @@ import dev.lb.simplebase.net.manager.NetworkManagerCommon;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
 import dev.lb.simplebase.net.packet.handler.PacketHandler;
+import dev.lb.simplebase.net.response.RRPacket.Request;
 import dev.lb.simplebase.net.task.ValueTask;
 import dev.lb.simplebase.net.util.Pair;
 
+/**
+ * A {@link RRNetHandler} can provide support for a simple request/response packet model.
+ */
 public class RRNetHandler implements PacketHandler {
 	static final Logger LOGGER = NetworkManager.getModuleLogger("packet-handler");
 	
@@ -21,16 +25,36 @@ public class RRNetHandler implements PacketHandler {
 	private final NetworkManagerCommon manager;
 	private final PacketHandler defaultHandler;
 	
+	/**
+	 * Creates a new {@link RRNetHandler} for a network manager and a default handler.
+	 * @param manager The {@link NetworkManagerCommon} used to send requests
+	 * @param defaultHandler The {@link PacketHandler} that will handle all packets that are not a subtype of {@link RRPacket}
+	 */
 	public RRNetHandler(NetworkManagerCommon manager, PacketHandler defaultHandler) {
 		this.activeRequests = new HashMap<>();
 		this.defaultHandler = defaultHandler;
 		this.manager = manager;
 	}
 	
+	/**
+	 * Creates a new {@link RRNetHandler} for a network manager and an empty default handler.
+	 * @param manager The {@link NetworkManagerCommon} used to send requests
+	 */
 	public RRNetHandler(NetworkManagerCommon manager) {
 		this(manager, PacketHandler.createEmpty());
 	}
 	
+	/**
+	 * Sends a request packet from a client to the connected server.
+	 * <p>
+	 * This method will only work when the manager used in the constructor is an instance of {@link NetworkManagerClient}.
+	 * </p>
+	 * @param <ResponseType> The type of response packet for this request
+	 * @param packet The {@link Request} packet to send
+	 * @return A {@link ValueTask} that will complete once the response has been received.
+	 * Both response packet and a {@link PacketContext} are included with the task
+	 * @throws UnsupportedOperationException When the manager is not an instance of {@link NetworkManagerClient}
+	 */
 	public <ResponseType extends RRPacket> ValueTask.PairTask<ResponseType, PacketContext> sendPacket(RRPacket.Request<ResponseType> packet) {
 		if(manager instanceof NetworkManagerClient) {
 			return sendPacket(((NetworkManagerClient) manager).getServerID(), packet);
@@ -39,6 +63,15 @@ public class RRNetHandler implements PacketHandler {
 		}
 	}
 	
+	/**
+	 * Sends a request packet from a client to the connected server.
+	 * @param <ResponseType> The type of response packet for this request
+	 * @param target The destination {@link NetworkID} for the packet
+	 * @param packet The {@link Request} packet to send
+	 * @return A {@link ValueTask} that will complete once the response has been received.
+	 * If the packet could not be sent, the returned task will be cancelled
+	 * Both response packet and a {@link PacketContext} are included with the task
+	 */
 	public <ResponseType extends RRPacket> ValueTask.PairTask<ResponseType, PacketContext> sendPacket(NetworkID target, RRPacket.Request<ResponseType> packet) {
 		final RequestDetails<ResponseType> details = new RequestDetails<>(packet.getUUID(), target, packet.getResponsePacketClass());
 		
@@ -89,12 +122,20 @@ public class RRNetHandler implements PacketHandler {
 		}
 	}
 	
+	/**
+	 * The amount of sent request packets that have not received a reply packet yet.
+	 * @return The amount of pending replies
+	 */
 	public int getPendingReplyCount() {
 		synchronized (activeRequests) {
 			return activeRequests.size();
 		}
 	}
 	
+	/**
+	 * Removes all request packets that have not received a response yet from the internal list.
+	 * If a response is received after the request has been removed, it will be discarded.
+	 */
 	public void cancelPendingReplies() {
 		synchronized (activeRequests) {
 			activeRequests.forEach((uuid, details) -> 
@@ -103,6 +144,11 @@ public class RRNetHandler implements PacketHandler {
 		}
 	}
 	
+	/**
+	 * The amount of sent request packets to a certain {@link NetworkID} that have not received a reply packet yet.
+	 * @param forRemote The {@link NetworkID} that the request packets have been sent to
+	 * @return The amount of pending replies
+	 */
 	public int getPendingReplyCount(NetworkID forRemote) {
 		synchronized (activeRequests) {
 			return (int) activeRequests.values().stream().filter((details) -> details.remote == forRemote).count();

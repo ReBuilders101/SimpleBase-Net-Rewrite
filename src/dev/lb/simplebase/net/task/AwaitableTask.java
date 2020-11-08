@@ -12,6 +12,9 @@ import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 
 
+/**
+ * Internal. Use {@link Task#completable()} instead.
+ */
 @Internal
 @Threadsafe
 public class AwaitableTask implements Task {
@@ -20,6 +23,9 @@ public class AwaitableTask implements Task {
 	private final List<Runnable> completeTasks;
 	private final long startTimeStamp;
 	
+	/**
+	 * Internal. Use {@link Task#completable()} instead.
+	 */
 	public AwaitableTask() {
 		this(1);
 	}
@@ -71,6 +77,9 @@ public class AwaitableTask implements Task {
 		return this;
 	}
 	
+	/**
+	 * Completes the task
+	 */
 	public synchronized void release() {
 		completeTasks.forEach(Runnable::run);
 		waiter.countDown();

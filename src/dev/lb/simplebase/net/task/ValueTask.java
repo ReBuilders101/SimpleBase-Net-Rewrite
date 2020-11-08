@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 import dev.lb.simplebase.net.GlobalTimer;
 import dev.lb.simplebase.net.util.Pair;
 
+@SuppressWarnings("javadoc")
 public interface ValueTask<V> extends Task {
 
 	public default boolean isSuccess() {

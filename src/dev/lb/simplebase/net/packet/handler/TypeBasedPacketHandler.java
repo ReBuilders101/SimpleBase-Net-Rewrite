@@ -12,18 +12,20 @@ import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
 
 /**
- * Forwards packets to different handlers depending on their implementation class.
  * <p>
+ * Forwards packets to different handlers depending on their implementation class.
+ * </p><p>
  * Every {@link TypeBasedPacketHandler} has two phases:<br>
  * In the registartion phase, {@link #canRegisterHandlers()} is {@code true} and
  * new handlers can be added using the {@link #registerHandler(Class, TypedPacketHandler)} method.<br>
  * In the second phase (locked phase), {@link #canRegisterHandlers()} will immediately return {@code false}
  * and no more handlers can be added.
- * <p>
+ * </p><p>
  * The {@code TypeBasedPacketHandler} starts in phase 1. It will switch to the
  * second phase when {@link #lock()} is called or when the first packet is received
  * (when {@link #handlePacket(Packet, PacketContext)} is first called).<br>
  * Once it is in phase 2, it can never go back to phase 1.
+ * </p>
  */
 @Threadsafe
 public class TypeBasedPacketHandler implements PacketHandler {
@@ -43,7 +45,7 @@ public class TypeBasedPacketHandler implements PacketHandler {
 	 * The instance will have no registered handlers.
 	 * The default fallback handler can be changed at any time using the 
 	 * {@link AtomicReference#set(Object)} method.
-	 * @param The default handler that receives a {@link Packet} when no handler was registered for its type
+	 * @param defaultHandler default handler that receives a {@link Packet} when no handler was registered for its type
 	 */
 	public TypeBasedPacketHandler(AtomicReference<PacketHandler> defaultHandler) {
 		this.handlers = new HashMap<>();
@@ -54,7 +56,7 @@ public class TypeBasedPacketHandler implements PacketHandler {
 	 * Creates a new {@link TypeBasedPacketHandler}.<br>
 	 * The instance will have no registered handlers.
 	 * The default fallback handler can not be changed later.
-	 * @param The default handler that receives a {@link Packet} when no handler was registered for its type
+	 * @param defaultHandler The default handler that receives a {@link Packet} when no handler was registered for its type
 	 */
 	public TypeBasedPacketHandler(PacketHandler defaultHandler) {
 		this(new AtomicReference<>(defaultHandler));
@@ -98,6 +100,11 @@ public class TypeBasedPacketHandler implements PacketHandler {
 		}
 	}
 	
+	/**
+	 * Adds a default {@link PacketHandler} that handles all packets that couldn't be matched to a typed
+	 * handler.
+	 * @param defaultHandler A default packet handler
+	 */
 	public void registerDefault(PacketHandler defaultHandler) {
 		Objects.requireNonNull(defaultHandler, "'defaultHandler' parameter must not be null");
 	    this.defaultHandler.set(defaultHandler);
@@ -124,6 +131,7 @@ public class TypeBasedPacketHandler implements PacketHandler {
 	 * The returned value is immediately outdated as another thread might have locked this object
 	 * afterwards. To ensure/check whether a hander was registered successfull, use the return value
 	 * of {@link #registerHandler(Class, TypedPacketHandler)} instead.
+	 * </p>
 	 * @return Whether a handler could have been registered at the time this method was called
 	 * @see TypeBasedPacketHandler
 	 */
@@ -143,6 +151,7 @@ public class TypeBasedPacketHandler implements PacketHandler {
 	 * Will switch from phase 1 to phase 2. After this method has been called,
 	 * no more handlers can be added.<br>
 	 * Has no effect if this object is already locked.
+	 * </p>
 	 */
 	public void lock() {
 		if(!locked) {

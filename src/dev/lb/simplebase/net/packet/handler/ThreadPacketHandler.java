@@ -60,6 +60,7 @@ public class ThreadPacketHandler implements PacketHandler {
 	 * The thread that is used to dispatch the {@link Packet}s to the delegate {@link PacketHandler}.
 	 * <p>
 	 * Interrupting this thread will cause it to end, preventing further packets from being processed.
+	 * </p>
 	 * @return The thread that handles the packets
 	 */
 	public Thread getOutputThread() {
@@ -67,17 +68,19 @@ public class ThreadPacketHandler implements PacketHandler {
 	}
 
 	/**
-	 * The delegate {@link PacketHandler} that receives {@link Packet}s on a single therad.<br>
+	 * The delegate {@link PacketHandler} that receives {@link Packet}s on a single therad.
+	 * <p>
 	 * The current handler can be changed through an {@link AtomicReference} and the returned
-	 * handler may be outdated and no longer the currrent one as soon as the method returns
-	 * @return
+	 * handler may be outdated and no longer the currrent one as soon as the method returns.
+	 * </p>
+	 * @return The {@link PacketHandler} that handles packets on a thread
 	 */
 	public PacketHandler getDelegate() {
 		return delegate.get();
 	}
 	
 	/**
-	 * The current amount of {@link Packet}s waiting in the queue to be processed
+	 * The current amount of {@link Packet}s waiting in the queue to be processed.
 	 * @return The amount of packets in the queue
 	 */
 	public int getQueueCurrentSize() {
@@ -85,8 +88,8 @@ public class ThreadPacketHandler implements PacketHandler {
 	}
 	
 	/**
-	 * The size limit of the queue that stores packets until they are processed
-	 * @return
+	 * The size limit of the queue that stores packets until they are processed.
+	 * @return The max size of the packet queue
 	 */
 	public int getQueueMaxSize() {
 		return maxSize;

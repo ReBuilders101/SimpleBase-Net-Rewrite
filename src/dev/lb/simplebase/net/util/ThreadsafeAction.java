@@ -8,7 +8,7 @@ import dev.lb.simplebase.net.annotation.Threadsafe;
 /**
  * Provides a way to execute an external action for an object while it is in a synchronized state, to prevent
  * concurrent modification while the action is running.
- * @param <T>
+ * @param <T> The type to execute the action on
  */
 public interface ThreadsafeAction<T> {
 	

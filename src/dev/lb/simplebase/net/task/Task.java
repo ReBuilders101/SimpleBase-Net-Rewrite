@@ -33,6 +33,11 @@ public interface Task {
 	 */
 	public boolean isDone();
 	
+	/**
+	 * {@code False} if the action associated with this task has been completed, {@code true} if
+	 * it is still ongoing.
+	 * @return {@code false} if this task is done, {@code true} otherwise
+	 */
 	public default boolean isRunning() {
 		return !isDone();
 	}
@@ -155,21 +160,46 @@ public interface Task {
 		return new CombinedTask(tasks);
 	}
 	
+	/**
+	 * Creates a {@link Task} and a completion function for this task.
+	 * <p>
+	 * The returned task will complete once the returned {@link Runnable} is called.
+	 * </p>
+	 * @return A {@link Task} and a {@link Runnable} that completes the task
+	 */
 	public static Pair<Task, Runnable> completable() {
 		final AwaitableTask task = new AwaitableTask();
 		return new Pair<>(task, task::release);
 	}
 	
+	/**
+	 * Creates a {@link Task} that automatically completes after a certain time
+	 * @param time The timeout to wait
+	 * @param unit The {@link TimeUnit} of that timeout
+	 * @return A {@link Task} that completes after that time
+	 */
 	public static Task timeout(long time, TimeUnit unit) {
 		final Pair<Task, Runnable> tac = Task.completable();
 		GlobalTimer.delay(tac.getRight(), time, unit);
 		return tac.getLeft();
 	}
 	
+	/**
+	 * Whether the task was completed at creation time
+	 * @param task The task to test
+	 * @return {@code true} if the task was created as complete and has never run, {@code false} otherwise
+	 */
 	public static boolean wasInitiallyCompleted(Task task) {
 		return task instanceof CompletedTask;
 	}
 	
+	/**
+	 * Creates a {@link Task} that waits for the result of a {@link BooleanSupplier} to change to {@code true}.
+	 * @param condition The condition to check
+	 * @deprecated The await methods use a loop that constantly rechecks the condition, which
+	 * prevents the waiting thread from being parked while waiting.
+	 * @return A task that waits until the condition becomes {@code true}
+	 */
 	@Deprecated
 	public static Task awaitCondition(BooleanSupplier condition) {
 		return new Task() {

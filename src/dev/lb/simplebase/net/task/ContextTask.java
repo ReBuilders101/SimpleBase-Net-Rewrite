@@ -5,6 +5,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+@SuppressWarnings("javadoc")
 public class ContextTask<T> implements Task {
 
 	private final Supplier<T> object;
