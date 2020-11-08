@@ -246,9 +246,11 @@ public abstract class NetworkConnection {
 	
 	/**
 	 * A {@link ThreadsafeAction} object that allows synchronized access to the connection object without
-	 * exposing the lock. 
+	 * exposing the lock.
+	 * @deprecated It is rarely necessary to exclusively lock a connection 
 	 * @return A {@link ThreadsafeAction} view for this connection object
 	 */
+	@Deprecated
 	public ThreadsafeAction<NetworkConnection> threadsafe() {
 		return threadsafeState;
 	}

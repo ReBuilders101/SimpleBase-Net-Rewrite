@@ -262,7 +262,7 @@ public final class NetworkManager {
 		copiedConfig.setConnectionType(actualType);
 		copiedConfig.lock();
 		
-		return register(new NetworkManagerClient(clientLocal, serverRemote, copiedConfig, 0));
+		return register(new NetworkManagerClient(clientLocal, serverRemote, copiedConfig));
 	}
 	
 	/**

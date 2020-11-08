@@ -32,6 +32,13 @@ import dev.lb.simplebase.net.util.LockBasedThreadsafeIterable;
 import dev.lb.simplebase.net.util.LockHelper;
 import dev.lb.simplebase.net.util.ThreadsafeIterable;
 
+/**
+ * The {@link NetworkManagerServer} represents the central network interface for
+ * server-side code.<br>
+ * The manager holds a list of {@link NetworkConnection}s to all connected clients
+ * <p>
+ * Can be created with {@link NetworkManager#createServer(NetworkID, ServerConfig)}.
+ */
 @Threadsafe
 public abstract class NetworkManagerServer extends NetworkManagerCommon {
 	static final Logger LOGGER = NetworkManager.getModuleLogger("server-manager");
@@ -71,10 +78,20 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 		this.writeThreadsafe = new LockBasedThreadsafeIterable<>(this, connections::values, lockServer.writeLock(), true);
 	}
 
+	/**
+	 * A {@link ThreadsafeIterable} for this manager's connection list that
+	 * provides read-only access (non-exclusive lock).
+	 * @return A read-only {@link ThreadsafeIterable}
+	 */
 	public ThreadsafeIterable<NetworkManagerServer, NetworkConnection> readOnlyThreadsafe() {
 		return readThreadsafe;
 	}
 	
+	/**
+	 * A {@link ThreadsafeIterable} for this manager's connection list that
+	 * provides read and write access (exclusive lock).
+	 * @return A read/write {@link ThreadsafeIterable}
+	 */
 	public ThreadsafeIterable<NetworkManagerServer, NetworkConnection> exclusiveThreadsafe() {
 		return writeThreadsafe;
 	}
@@ -102,7 +119,8 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 	 * <b>May only be called from threadsafe code</b><br>
 	 * Use {@link #readOnlyThreadsafe()} or {@link #exclusiveThreadsafe()} and 
 	 * {@link ThreadsafeIterable#action(Consumer)} to acquire a lock for the connections list
-	 * @return A stream of all currently present connections
+	 * </p>
+	 * @return A collection all currently present connections
 	 * @throws IllegalStateException If the lock is not held by the current thread (optional)
 	 * @see #getConnectionsCopy()
 	 */
@@ -114,6 +132,18 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 		}
 	}
 	
+	/**
+	 * Lists all {@link NetworkID}s that have an active connection.
+	 * This method avoids making a copy of the connections list for quick read-only access.
+	 * <p>
+	 * <b>May only be called from threadsafe code</b><br>
+	 * Use {@link #readOnlyThreadsafe()} or {@link #exclusiveThreadsafe()} and 
+	 * {@link ThreadsafeIterable#action(Consumer)} to acquire a lock for the connections list.
+	 * </p>
+	 * @return A collection of all currently present connections
+	 * @throws IllegalStateException If the lock is not held by the current thread (optional)
+	 * @see #getClientsCopy()
+	 */
 	public Collection<NetworkID> getClientsFast() {
 		if(LockHelper.isHeldByCurrentThread(lockServer.readLock(), true)) { 
 			return connections.keySet();
@@ -122,6 +152,13 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 		}
 	}
 	
+	/**
+	 * Lists all {@link NetworkID}s that have an active connection.
+	 * Creates a mutable <b>copy</b> of the current connection list.
+	 * The list will no longer be modified and can safely be stored.
+	 * @return A list of all currently present connections
+	 * @see #getClientsFast()
+	 */
 	public Set<NetworkID> getClientsCopy() {
 		try {
 			lockServer.readLock().lock();
@@ -131,10 +168,22 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 		}
 	}
 	
+	/**
+	 * The amount of currently connected clients.
+	 * @return The amount of connected clients
+	 */
 	public int getClientCount() {
 		return connections.size();
 	}
 	
+	/**
+	 * Starts the server.
+	 * <p>
+	 * To detect a successful start / failed start, check the {@link ServerManagerState} of this
+	 * manager after the returned Task completes.
+	 * </p>
+	 * @return A {@link Task} that will complete when the server has started
+	 */
 	public Task startServer() {
 		try {
 			lockServer.writeLock().lock();
@@ -163,6 +212,13 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 	@Internal
 	protected abstract Task startServerImpl();
 	
+	/**
+	 * Starts the server.
+	 * <p>
+	 * This will automatically disconnect all clients and stop all threads associated with this server
+	 * </p>
+	 * @return A {@link Task} that will complete when the server has stopped
+	 */
 	public Task stopServer() {
 		try {
 			lockServer.writeLock().lock();
@@ -198,9 +254,6 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 	 */
 	protected abstract Task stopServerImpl();
 	
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public ServerConfig getConfig() {
 		return (ServerConfig) super.getConfig();
@@ -239,10 +292,23 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 		}
 	}
 	
+	/**
+	 * Creates the packet that this server will reply when sending a acket info request
+	 * from an unknown source.
+	 * @return The server info packet
+	 */
 	public Packet createServerInfoPacket() {
 		return getConfig().getServerInfoPacket().createPacket(this, Optional.empty());
 	}
 	
+	/**
+	 * Send a packet to a destination {@link NetworkID}, if a connection with that id is present on
+	 * this manager.
+	 * @param client The {@link NetworkID} of the packet destination
+	 * @param packet The {@link Packet} to send
+	 * @return {@code false} if no connection for that {@link NetworkID} was found,
+	 * otherwise the result of {@link NetworkConnection#sendPacket(Packet)}
+	 */
 	public boolean sendPacketToClient(NetworkID client, Packet packet) {
 		try {
 			lockServer.readLock().lock();
@@ -257,6 +323,12 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 		}
 	}
 	
+	/**
+	 * Send a packet to all clients connected to this server.
+	 * @param packet The {@link Packet} to send
+	 * @return {@code true} if all packets were sent successfully (as in {@link NetworkConnection#sendPacket(Packet)},
+	 * {@code false} if one or more packets could not be sent
+	 */
 	public boolean sendPacketToAllClients(Packet packet) {
 		try {
 			lockServer.readLock().lock();
@@ -271,7 +343,7 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 	}
 
 	/**
-	 * The connection will simply be added, the connection creator is responsible for posting the correct events
+	 * The connection will simply be added, the connection creator is responsible for posting the correct events.
 	 * @param newConnection The new connection
 	 * @return Whether the connection was successful
 	 */
@@ -325,6 +397,11 @@ public abstract class NetworkManagerServer extends NetworkManagerCommon {
 		}
 	}
 
+	/**
+	 * Closes the connection to a client.
+	 * @param clientId The {@link NetworkID} of the client
+	 * @return {@code false} if no client with that id could be found, {@code true} otherwise.
+	 */
 	public boolean disconnectClient(NetworkID clientId) {
 		try {
 			lockServer.writeLock().lock();

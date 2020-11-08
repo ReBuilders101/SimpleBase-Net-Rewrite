@@ -63,6 +63,7 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 	 * <li>That the {@link PacketHandler}s for this manager take to long or block their thread,
 	 * so that the queue of unhandled packets overflowed</li>
 	 * </ul>
+	 * </p>
 	 */
 	public final EventAccessor<PacketReceiveRejectedEvent> PacketReceiveRejected;
 	
@@ -120,6 +121,7 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 
 	/**
 	 * The container for {@link PacketIDMapping}s that are used to convert the packets sent form this manager to bytes.
+	 * @return A {@link PacketIDMappingProvider} that holds the mappings for this manager
 	 */
 	@Override
 	public final PacketIDMappingProvider getMappingContainer() {
@@ -127,13 +129,23 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 	}
 	
 	
-	//PACKAGE ONLY
+	/**
+	 * Creates a new encoder thread pool using a stack frame in the {@link NetworkManagerCommon} class
+	 * @param np The {@link CommonConfig} for the thread pool
+	 * @param p1 The error handler for the thread pool
+	 * @return A new encoder thread pool
+	 */
 	@Internal
 	static CoderThreadPool.Encoder stackHackE(CommonConfig np, Predicate<RejectedExecutionException> p1) {
 		return new CoderThreadPool.Encoder(np, p1);
 	}
 
-	//PACKAGE ONLY
+	/**
+	 * Creates a new decoder thread pool using a stack frame in the {@link NetworkManagerCommon} class
+	 * @param np The {@link CommonConfig} for the thread pool
+	 * @param p1 The error handler for the thread pool
+	 * @return A new decoder thread pool
+	 */
 	@Internal
 	static CoderThreadPool.Decoder stackHackD(CommonConfig np, Predicate<RejectedExecutionException> p1) {
 		return new CoderThreadPool.Decoder(np, p1);
@@ -147,6 +159,8 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 	 * <p>
 	 * If more than one handler is added, all handlers receive the same packet in no fixed order.<br>
 	 * In some implementations handling might be faster if only a single handler is added.
+	 * </p>
+	 * @param handler The handler to add
 	 */
 	public void addPacketHandler(PacketHandler handler) {
 		singleThreadHandler.getAndUpdate((old) -> PacketHandler.combineHandlers(old, handler));
@@ -180,7 +194,7 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 	}
 	
 	/**
-	 * The amount of unprocessed packets. If no managed thread is used, this method always returns 0.<br>
+	 * The amount of unprocessed packets. If no managed thread is used, this method always returns 0.
 	 * @return The amount of unprocessed packets.
 	 */
 	public int getPacketQueueSize() {
@@ -188,10 +202,17 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 	}
 	
 	/**
-	 * <b>Internal.</b> Use {@link NetworkConnection#receivePacket(Packet)}
-	 * to simulate a received packet instead.<p>
+	 * <h2>Internal use only</h2>
+	 * <p>
+	 * This method is used internally by the API and should not be called directly.
+	 * </p><hr><p>
+	 * Use {@link NetworkConnection#receivePacket(Packet)}
+	 * to simulate a received packet instead.</p><p>
 	 * Push a packet received by a connection to this manager.
 	 * The manager can accept packets on any thread and will handle it correctly.
+	 * </p>
+	 * @param packet The recieved packet
+	 * @param context The corresponding {@link PacketContext}
 	 */
 	@Internal
 	public void receivePacketOnConnectionThread(Packet packet, PacketContext context) {
@@ -203,18 +224,40 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 	}
 	
 	/**
-	 * <b>Internal only.</b> Using this can leave connections in a broken state where 
-	 * handler threads might not be closed.
+	 * <h2>Internal use only</h2>
+	 * <p>
+	 * This method is used internally by the API and should not be called directly.
+	 * </p><hr><p>
+	 * Using this can leave connections in a broken state where 
+	 * handler threads might not be stopped.
+	 * </p><p>
 	 * Removes the connection with the proper synchronization, without causing any other
-	 * side effects like closing the connection or posting an event to the dispatcher
+	 * side effects like closing the connection or posting an event to the dispatcher.
+	 * </p>
+	 * @param connection The connection to remove
 	 */
 	@Internal
 	public	abstract void removeConnectionSilently(NetworkConnection connection);
 	
+	/**
+	 * Send a packet to a destination {@link NetworkID}, if a connection with that id is present on
+	 * this manager.
+	 * @param remote The {@link NetworkID} of the packet destination
+	 * @param packet The {@link Packet} to send
+	 * @return {@code false} if no connection for that {@link NetworkID} was found,
+	 * otherwise the result of {@link NetworkConnection#sendPacket(Packet)}
+	 */
 	public abstract boolean sendPacketTo(NetworkID remote, Packet packet);
 	
 	/**
-	 * The event dispatcher. Only API-internal code may post events
+	 * <h2>Internal use only</h2>
+	 * <p>
+	 * This method is used internally by the API and should not be called directly.
+	 * </p><hr><p>
+	 * The {@link EventDispatcher} that posts the events for all {@link EventAccessor}s in the manager class
+	 * and subclasses.
+	 * </p>
+	 * @return The {@link EventDispatcher} for this manager
 	 */
 	@Internal
 	public EventDispatcher getEventDispatcher() {
@@ -237,7 +280,7 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 	 * register handlers for all events on this manager.
 	 * <p>
 	 * The returned array <b>must not be modified</b>.
-	 * @return
+	 * @return An array of all event accessors declared by this manager type
 	 */
 	public abstract EventAccessor<?>[] getEvents();
 	
@@ -258,19 +301,42 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 	 */
 	public abstract void updateConnectionStatus();
 	
+	/**
+	 * <h2>Internal use only</h2>
+	 * <p>
+	 * This method is used internally by the API and should not be called directly.
+	 * </p><hr><p>
+	 * A {@link CoderThreadPool} that is used for encoding packets
+	 * </p>
+	 * @return A {@link CoderThreadPool} that is used for encoding packets
+	 */
 	@Override
 	public CoderThreadPool.Encoder getEncoderPool() {
 		return encoderPool;
 	}
 	
-	
+	/**
+	 * <h2>Internal use only</h2>
+	 * <p>
+	 * This method is used internally by the API and should not be called directly.
+	 * </p><hr><p>
+	 * A {@link CoderThreadPool} that is used for decoding packets
+	 * </p>
+	 * @return A {@link CoderThreadPool} that is used for decoding packets
+	 */
 	@Override
 	public CoderThreadPool.Decoder getDecoderPool() {
 		return decoderPool;
 	}
 	
 	/**
+	 * <h2>Internal use only</h2>
+	 * <p>
+	 * This method is used internally by the API and should not be called directly.
+	 * </p><hr><p>
 	 * A {@link PacketToByteConverter} that is configured with the configs of this manager
+	 * </p>
+	 * @return A {@link PacketToByteConverter} used by this manager's connections
 	 */
 	@Override
 	@Internal
@@ -279,7 +345,13 @@ public abstract class NetworkManagerCommon implements NetworkManagerProperties {
 	}
 	
 	/**
+	 * <h2>Internal use only</h2>
+	 * <p>
+	 * This method is used internally by the API and should not be called directly.
+	 * </p><hr><p>
 	 * A {@link ByteToPacketConverter} that is configured with the configs of this manager
+	 * </p>
+	 * @return A {@link ByteToPacketConverter} used by this manager's connections
 	 */
 	@Override
 	@Internal
