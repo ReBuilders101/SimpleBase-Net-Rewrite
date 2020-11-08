@@ -37,6 +37,11 @@ public interface PacketHandler {
 		return (p, c) -> c.replyPacket(p);
 	}
 	
+	/**
+	 * Creates a {@link PacketHandler} that can be switched out later by updating the value of the {@link AtomicReference}.
+	 * @param reference The {@link AtomicReference} to the initial handler
+	 * @return A {@link PacketHandler} delegating to the reference value.
+	 */
 	public static PacketHandler createUpdatable(AtomicReference<PacketHandler> reference) {
 		return reference.get()::handlePacket;
 	}
@@ -65,7 +70,7 @@ public interface PacketHandler {
 			final MultiPacketHandler first0 = (MultiPacketHandler) first;
 			if(second instanceof MultiPacketHandler) {
 				final MultiPacketHandler second0 = (MultiPacketHandler) second;
-				second0.readOnlyThreadsafe().forEach(first0::addHandler);
+				second0.exclusiveThreadsafe().forEach(first0::addHandler);
 			} else { //otherwise, just add the handler
 				first0.addHandler(second);
 			}

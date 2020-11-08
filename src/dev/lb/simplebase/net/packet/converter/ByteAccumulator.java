@@ -10,6 +10,9 @@ import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormat;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormats;
 
+/**
+ * Accumulates bytes arriving from a stream or a sequence of buffers until a packet is ready for decoding.s
+ */
 public class ByteAccumulator {
 static final Logger LOGGER = NetworkManager.getModuleLogger("packet-decode");
 	
@@ -22,6 +25,11 @@ static final Logger LOGGER = NetworkManager.getModuleLogger("packet-decode");
 	private ByteBuffer buffer; //Will be ready for put() operations
 	private int requiredBytes;
 
+	/**
+	 * Creates a new {@link ByteAccumulator}.
+	 * @param manager A {@link NetworkManagerProperties} that provides context such as configs and converters
+	 * @param connection The {@link ConnectionAdapter} that will receive finished packets
+	 */
 	public ByteAccumulator(NetworkManagerProperties manager, ConnectionAdapter connection) {
 		this.receiver = connection;
 		this.bufferSize = manager.getConfig().getPacketBufferInitialSize();
@@ -87,13 +95,20 @@ static final Logger LOGGER = NetworkManager.getModuleLogger("packet-decode");
 		resetToFindFormat();
 	}
 	
+	/**
+	 * Reset the accumulation buffer and current decode format.
+	 */
 	public void resetToFindFormat() {
 		currentFormat = null;
 		buffer.clear();
 		requiredBytes = 4; //The format ID
 	}
 	
-	public boolean isDone() {
+	 /**
+	  * Whether the accumulation buffer is currently empty and no format is active
+	  * @return {@code true} if no partial data is stored
+	  */
+	 public boolean isDone() {
 		return currentFormat == null && buffer.position() == 0;
 	}
 	
@@ -139,6 +154,10 @@ static final Logger LOGGER = NetworkManager.getModuleLogger("packet-decode");
 		}
 	}
 	
+	/**
+	 * The {@link ConnectionAdapter} that receives finished packets.
+	 * @return The {@link ConnectionAdapter} that receives finished packets
+	 */
 	public ConnectionAdapter getConnectionAdapter() {
 		return receiver;
 	}

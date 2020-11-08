@@ -7,7 +7,6 @@ import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.io.ByteDataHelper;
 import dev.lb.simplebase.net.log.Logger;
 import dev.lb.simplebase.net.manager.NetworkManagerProperties;
-import dev.lb.simplebase.net.packet.PacketIDMapping;
 import dev.lb.simplebase.net.packet.PacketIDMappingProvider;
 import dev.lb.simplebase.net.packet.format.NetworkPacketFormat;
 
@@ -22,9 +21,8 @@ public final class PacketToByteConverter {
 	private final IntFunction<ByteDeflater> chooseDeflater;
 	
 	/**
-	 * Creates a new instance
-	 * @param provider Provides {@link PacketIDMapping}s to look up numerical packet IDs
-	 * @param destination The next stage that sends bytes through a connection
+	 * Creates a new instance.
+	 * @param managerLike The {@link NetworkManagerProperties} that holds necessary configs and mappings
 	 */
 	public PacketToByteConverter(NetworkManagerProperties managerLike) {
 		this.managerLike = managerLike;
@@ -40,6 +38,12 @@ public final class PacketToByteConverter {
 		}
 	}
 	
+	/**
+	 * Convert a network packet to bytes.
+	 * @param format The {@link NetworkPacketFormat} to use for encoding
+	 * @param data The payload data for the packet
+	 * @return The {@link ByteBuffer} with the encoded packet
+	 */
 	public final <Data> ByteBuffer convert(NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider, Data> format, Data data) {
 		
 		final ByteBuffer rawPacketData = format.encode(managerLike.getMappingContainer(), data, bufferSize);

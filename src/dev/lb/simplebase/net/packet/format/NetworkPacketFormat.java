@@ -9,6 +9,7 @@ import dev.lb.simplebase.net.log.Logger;
  * A pattern to decode bytes into packet-representing objects
  *
  * @param <Connection> The next stage of handling that will receive the data
+ * @param <DecodeContext> A Context object that is required for the decode process
  * @param <Data> The object produced by decoding
  */
 public abstract class NetworkPacketFormat<Connection, DecodeContext, Data> {	
@@ -41,7 +42,7 @@ public abstract class NetworkPacketFormat<Connection, DecodeContext, Data> {
 	
 	/**
 	 * If {@code true}, data can be optionally compressed before sending
-	 * @return
+	 * @return Whether payload comression is supported
 	 */
 	public abstract boolean supportsCompression();
 	
@@ -49,7 +50,7 @@ public abstract class NetworkPacketFormat<Connection, DecodeContext, Data> {
 	 * Queries how many more bytes have to be read, depending on the currently read bytes.
 	 * <p>
 	 * If the return value is negative, the packet is considered invalid and will be discarded.<br>
-	 * If the return value is zero, the packet is complete and the {@link #decode(ByteBuffer)} method
+	 * If the return value is zero, the packet is complete and the {@link #decode(Object, ByteBuffer)} method
 	 * will be called with the data (It might be called at somepoint inbetween as well).<br>
 	 * If the return value is positive, this method will be re-called after that amount of bytes has
 	 * been accumulated in the buffer.
@@ -67,7 +68,7 @@ public abstract class NetworkPacketFormat<Connection, DecodeContext, Data> {
 	 * Queries how many more bytes have to be read, depending on the currently read bytes.
 	 * <p>
 	 * If the return value is negative, the packet is considered invalid and will be discarded.<br>
-	 * If the return value is zero, the packet is complete and the {@link #decode(ByteBuffer)} method
+	 * If the return value is zero, the packet is complete and the {@link #decode(Object, ByteBuffer)} method
 	 * will be called with the data (It might be called at somepoint inbetween as well).<br>
 	 * If the return value is positive, this method will be re-called after that amount of bytes has
 	 * been accumulated in the buffer.
@@ -98,9 +99,10 @@ public abstract class NetworkPacketFormat<Connection, DecodeContext, Data> {
 	public abstract void publish(Connection connection, Data data);
 	
 	/**
-	 * {@link #decode(ByteBuffer)} and {@link #publish(Object, Object)}
-	 * @param connection
-	 * @param allBytes
+	 * {@link #decode(Object, ByteBuffer)} and {@link #publish(Object, Object)}
+	 * @param connection The connection to publish to
+	 * @param context The decode context
+	 * @param allBytes All bytes of the packet to decode
 	 */
 	public void decodeAndPublish(Connection connection, DecodeContext context, ByteBuffer allBytes) {
 		final Data data = decode(context, allBytes);
@@ -116,6 +118,7 @@ public abstract class NetworkPacketFormat<Connection, DecodeContext, Data> {
 	 * The returned buffer will be ready for relative read operations
 	 * @param context The context that can contain additional data for encoding
 	 * @param data The packet to encode
+	 * @param bufferSize The size of the encode buffer
 	 * @return The filled {@link ByteBuffer}, or {@code null} if the packet is invalid
 	 */
 	public abstract ByteBuffer encode(DecodeContext context, Data data, int bufferSize);

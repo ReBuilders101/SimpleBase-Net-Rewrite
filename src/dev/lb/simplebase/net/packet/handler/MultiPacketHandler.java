@@ -4,6 +4,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import dev.lb.simplebase.net.annotation.Internal;
 import dev.lb.simplebase.net.annotation.Threadsafe;
 import dev.lb.simplebase.net.packet.Packet;
 import dev.lb.simplebase.net.packet.PacketContext;
@@ -19,15 +21,16 @@ public final class MultiPacketHandler implements PacketHandler {
 	//Will be asked to iterate from many different threads at the same time
 	private final ReadWriteLock lockHandlers;
 	private final List<PacketHandler> handlers;	
-	
-	private final ThreadsafeIterable<MultiPacketHandler, PacketHandler> readThreadsafe;
+
 	private final ThreadsafeIterable<MultiPacketHandler, PacketHandler> writeThreadsafe;
 	
+	/**
+	 * Creates a new {@link MultiPacketHandler} with no child handlers.
+	 */
 	public MultiPacketHandler() {
 		//List dynamically expands, only used operations are add and iterate, so LinkedList is good
 		handlers = new LinkedList<>();
 		lockHandlers = new ReentrantReadWriteLock();
-		readThreadsafe  = new LockBasedThreadsafeIterable<>(this, () -> handlers, lockHandlers.readLock(), true);
 		writeThreadsafe = new LockBasedThreadsafeIterable<>(this, () -> handlers, lockHandlers.writeLock(), true);
 	}
 	
@@ -57,12 +60,9 @@ public final class MultiPacketHandler implements PacketHandler {
 			lockHandlers.readLock().unlock();
 		}
 	}
-
-	public ThreadsafeIterable<MultiPacketHandler, PacketHandler> exclusiveThreadsafe() {
-		return writeThreadsafe;
-	}
 	
-	public ThreadsafeIterable<MultiPacketHandler, PacketHandler> readOnlyThreadsafe() {
-		return readThreadsafe;
+	@Internal
+	ThreadsafeIterable<MultiPacketHandler, PacketHandler> exclusiveThreadsafe() {
+		return writeThreadsafe;
 	}
 }

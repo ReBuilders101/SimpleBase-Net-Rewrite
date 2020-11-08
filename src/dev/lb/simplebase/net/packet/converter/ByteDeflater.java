@@ -11,9 +11,17 @@ import dev.lb.simplebase.net.io.ByteDataHelper;
  */
 public abstract class ByteDeflater implements AutoCloseable {
 
+	/**
+	 * Deflate byte buffer contets.
+	 * @param data The input data
+	 * @return The processed data
+	 */
 	public abstract ByteBuffer deflate(ByteBuffer data);
 	@Override public abstract void close();
 	
+	/**
+	 * Applies no compression to the buffer.
+	 */
 	public static final ByteDeflater NO_COMPRESSION = new ByteDeflater() {
 		@Override
 		public ByteBuffer deflate(ByteBuffer data) {
@@ -24,6 +32,10 @@ public abstract class ByteDeflater implements AutoCloseable {
 		public void close() {}
 	};
 	
+	/**
+	 * Uses the zip/deflate algorithm as implemented in the {@link Deflater} class.
+	 * The uncompressed length of the data will be written as a 4-byte prefix.
+	 */
 	public static final ByteDeflater ZIP_COMPRESSION_PREFIXED = new ByteDeflater() {
 		
 		{

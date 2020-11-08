@@ -10,6 +10,10 @@ import java.util.function.Function;
 
 import dev.lb.simplebase.net.manager.NetworkManagerProperties;
 
+/**
+ * Maintains a pool of {@link ByteAccumulator}s with exchangable decode targets
+ * (Wrapped in a {@link MutableAddressConnectionAdapter}).
+ */
 public class AddressBasedDecoderPool {
 	
 	private final Function<InetSocketAddress, ? extends MutableAddressConnectionAdapter> factory;
@@ -18,6 +22,12 @@ public class AddressBasedDecoderPool {
 	private final Object mapLock;
 	private final NetworkManagerProperties manager;
 	
+	/**
+	 * Creates a new decoder pool.
+	 * @param newAdapters A function that produces reuseable decode targets ({@link MutableAddressConnectionAdapter}s)
+	 * initialized with a certain {@link InetSocketAddress}.
+	 * @param manager A {@link NetworkManagerProperties} that provides context such as configs and converters
+	 */
 	public AddressBasedDecoderPool(Function<InetSocketAddress, ? extends MutableAddressConnectionAdapter> newAdapters, NetworkManagerProperties manager) {
 		this.factory = newAdapters;
 		this.mapLock = new Object();
@@ -26,6 +36,13 @@ public class AddressBasedDecoderPool {
 		this.manager = manager;
 	}
 	
+	/**
+	 * Decode a received buffer from a source address.
+	 * The decoded packet will be passed to an {@link ConnectionAdapter} produced by the factory method
+	 * defined in the constructor
+	 * @param source The source {@link InetSocketAddress} of the data
+	 * @param data The data in a {@link ByteBuffer}
+	 */	
 	public void decode(InetSocketAddress source, ByteBuffer data) {
 		final ByteAccumulator decoder = getAndMoveDecoder(source);
 		decoder.acceptBytes(data);

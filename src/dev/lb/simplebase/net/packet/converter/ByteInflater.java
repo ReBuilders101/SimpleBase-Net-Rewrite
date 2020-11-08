@@ -8,11 +8,23 @@ import java.util.zip.Inflater;
 import dev.lb.simplebase.net.NetworkManager;
 import dev.lb.simplebase.net.io.ByteDataHelper;
 
+/**
+ * Optionally decompresses byte data
+ */
 public abstract class ByteInflater implements AutoCloseable {
 
+	/**
+	 * Deflate byte buffer contets.
+	 * @param data The input data
+	 * @return The processed data
+	 * @throws IOException When the inflate alogrithm encounters a {@link DataFormatException}.
+	 */
 	public abstract ByteBuffer inflate(ByteBuffer data) throws IOException;
 	@Override public abstract void close();
 	
+	/**
+	 * Applies no decompression to the buffer.
+	 */
 	public static final ByteInflater NO_COMPRESSION = new ByteInflater() {
 		
 		@Override
@@ -24,6 +36,10 @@ public abstract class ByteInflater implements AutoCloseable {
 		public void close() {}
 	};
 	
+	/**
+	 * Uses the zip/deflate algorithm as implemented in the {@link Inflater} class.
+	 * The uncompressed length of the data read from a 4-byte prefix.s
+	 */
 	public static final ByteInflater ZIP_COMPRESSION_PREFIXED = new ByteInflater() {
 		
 		{

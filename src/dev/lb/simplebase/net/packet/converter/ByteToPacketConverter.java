@@ -21,6 +21,10 @@ public final class ByteToPacketConverter {
 	private final PacketIDMappingProvider provider;
 	private final IntFunction<ByteInflater> chooseInflater;
 
+	/**
+	 * Creates a new {@link ByteToPacketConverter}.
+	 * @param managerLike The {@link NetworkManagerProperties} holding configs
+	 */
 	public ByteToPacketConverter(NetworkManagerProperties managerLike) {
 		this.provider = managerLike.getMappingContainer();
 		this.chooseInflater = makeFunction(managerLike.getConfig().getCompressionSize());
@@ -34,6 +38,12 @@ public final class ByteToPacketConverter {
 		}
 	}
 	
+	/**
+	 * Converts the content of the buffer into a network packet and sends it to the adapter
+	 * @param data The {@link ByteBuffer} with the complete packet data
+	 * @param format The {@link NetworkPacketFormat} to use for decoding
+	 * @param adapter The {@link ConnectionAdapter} that will receive the network packet
+	 */
 	public void convertAndPublish(ByteBuffer data, NetworkPacketFormat<ConnectionAdapter, ? super PacketIDMappingProvider, ?> format, ConnectionAdapter adapter) {
 		try {
 			ByteBuffer uncompressed = decompress(data, format);
